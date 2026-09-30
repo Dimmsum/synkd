@@ -368,6 +368,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      confirm_age: { Args: { birth_year: number }; Returns: string };
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
       ensure_current_user: {
         Args: { avatar_url?: string; name: string; timezone?: string };
