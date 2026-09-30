@@ -239,6 +239,41 @@ export type Database = {
           },
         ];
       };
+      rate_limits: {
+        Row: {
+          action: string;
+          count: number;
+          created_at: string;
+          user_id: string;
+          window_end: string;
+          window_start: string;
+        };
+        Insert: {
+          action: string;
+          count?: number;
+          created_at?: string;
+          user_id: string;
+          window_end: string;
+          window_start: string;
+        };
+        Update: {
+          action?: string;
+          count?: number;
+          created_at?: string;
+          user_id?: string;
+          window_end?: string;
+          window_start?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'rate_limits_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       sources: {
         Row: {
           created_at: string;

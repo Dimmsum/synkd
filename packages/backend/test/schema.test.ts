@@ -42,6 +42,7 @@ describe('migrations', () => {
       'friendships',
       'group_members',
       'groups',
+      'rate_limits',
       'sources',
       'users',
       'visibility_rules',
