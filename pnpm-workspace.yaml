@@ -1,3 +1,8 @@
 packages:
   - apps/*
   - packages/*
+
+# Security: browserslist <= 4.28.6 (pulled in by @serwist/turbopack) has two high advisories
+# (GHSA-c83g-rgw3-j3cx, GHSA-73wf-gq98-2v4g). Drop once Serwist depends on a patched version.
+overrides:
+  browserslist: '>=4.28.7'
