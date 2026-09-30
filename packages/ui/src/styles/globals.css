@@ -1,0 +1,265 @@
+/*
+ * whosfree design tokens (Tailwind v4 + shadcn/ui conventions).
+ *
+ * Light values come from the "Who's Free" design canvas: Onest + JetBrains Mono,
+ * purple primary oklch(0.52 0.2 280), green accent oklch(0.72 0.15 155),
+ * background #F6F5FA, text #17152A, borders #ECEAF2.
+ * The dark palette is derived (the design only shows light) and follows the
+ * system setting (NFR-UX-3). Text/background pairs are chosen for WCAG AA contrast.
+ *
+ * Apps import this file and add their own `@source` lines so Tailwind scans
+ * this package's components.
+ */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@source '../components';
+
+/* Dark mode follows the OS setting only (no manual toggle in the MVP). */
+@custom-variant dark (@media (prefers-color-scheme: dark));
+
+:root {
+  --radius: 0.75rem;
+
+  --background: #f6f5fa;
+  --foreground: #17152a;
+  --card: #ffffff;
+  --card-foreground: #17152a;
+  --popover: #ffffff;
+  --popover-foreground: #17152a;
+  --primary: oklch(0.52 0.2 280);
+  --primary-hover: oklch(0.46 0.2 280);
+  --primary-foreground: #ffffff;
+  /* Tinted surface + ink for active nav items, selected chips, links. */
+  --primary-soft: oklch(0.96 0.03 280);
+  --primary-ink: oklch(0.45 0.2 280);
+  --secondary: #f1eff5;
+  --secondary-foreground: #17152a;
+  --muted: #f1eff5;
+  /* #6B6880 on white is ~5.3:1 (AA). The design's #8A879C is only used for non-text. */
+  --muted-foreground: #6b6880;
+  --subtle-foreground: #8a879c;
+  --body-foreground: #4a475c;
+  --accent: #f1eff5;
+  --accent-foreground: #17152a;
+  --destructive: oklch(0.58 0.21 25);
+  --destructive-foreground: #ffffff;
+  --border: #eceaf2;
+  --border-subtle: #f1eff5;
+  --input: #e2dfea;
+  --ring: oklch(0.52 0.2 280);
+  --segment: #eceaf2;
+  --now-line: #e5484d;
+
+  /* Brand green (logo ring, "everyone free" highlights). */
+  --brand-green: oklch(0.72 0.15 155);
+
+  /* Status colours. Every status also has an icon and text (NFR-UX-1). */
+  --status-free: oklch(0.62 0.15 155);
+  --status-free-ink: oklch(0.45 0.13 155);
+  --status-free-soft: oklch(0.96 0.045 155);
+  --status-soon: oklch(0.74 0.15 70);
+  --status-soon-ink: oklch(0.48 0.11 60);
+  --status-soon-soft: oklch(0.97 0.045 85);
+  --status-busy: #a8a4b8;
+  --status-busy-ink: #4a475c;
+  --status-busy-soft: #f1eff5;
+  --status-dnd: #e5484d;
+  --status-dnd-ink: oklch(0.5 0.19 25);
+  --status-dnd-soft: oklch(0.96 0.03 25);
+  --status-away: oklch(0.68 0.06 250);
+  --status-away-ink: oklch(0.45 0.07 250);
+  --status-away-soft: oklch(0.96 0.02 250);
+  --status-off: #c9c6d4;
+  --status-off-ink: #6b6880;
+  --status-off-soft: #f6f5fa;
+
+  /* Event source badges (FR-VIEW-5). */
+  --source-upload: oklch(0.52 0.2 280);
+  --source-manual: oklch(0.5 0.11 60);
+  --source-gcal: oklch(0.5 0.13 250);
+
+  /* Group overlap week view (the design's "overlap" style). */
+  /* Darker than the design's oklch(0.62 0.15 155) so white labels pass AA (4.5:1). */
+  --overlap-all: oklch(0.5 0.13 155);
+  --overlap-all-ink: #ffffff;
+  --overlap-most: oklch(0.9 0.07 155);
+  --overlap-most-border: oklch(0.82 0.1 155);
+  --overlap-most-ink: oklch(0.32 0.1 155);
+  --overlap-few: oklch(0.955 0.035 155);
+  --overlap-few-border: oklch(0.88 0.06 155);
+  --overlap-few-ink: oklch(0.4 0.11 155);
+  --overlap-none: oklch(0.97 0.02 155);
+  --today-column: oklch(0.985 0.01 280);
+  --grid-line: #f1eff5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.165 0.02 285);
+    --foreground: oklch(0.95 0.01 285);
+    --card: oklch(0.205 0.024 285);
+    --card-foreground: oklch(0.95 0.01 285);
+    --popover: oklch(0.225 0.026 285);
+    --popover-foreground: oklch(0.95 0.01 285);
+    --primary: oklch(0.56 0.2 280);
+    --primary-hover: oklch(0.62 0.19 280);
+    --primary-foreground: #ffffff;
+    --primary-soft: oklch(0.29 0.07 280);
+    --primary-ink: oklch(0.8 0.11 280);
+    --secondary: oklch(0.27 0.025 285);
+    --secondary-foreground: oklch(0.95 0.01 285);
+    --muted: oklch(0.25 0.022 285);
+    --muted-foreground: oklch(0.74 0.025 285);
+    --subtle-foreground: oklch(0.6 0.025 285);
+    --body-foreground: oklch(0.84 0.02 285);
+    --accent: oklch(0.27 0.025 285);
+    --accent-foreground: oklch(0.95 0.01 285);
+    --destructive: oklch(0.55 0.2 25);
+    --destructive-foreground: #ffffff;
+    --border: oklch(0.3 0.025 285);
+    --border-subtle: oklch(0.26 0.022 285);
+    --input: oklch(0.36 0.03 285);
+    --ring: oklch(0.72 0.14 280);
+    --segment: oklch(0.25 0.022 285);
+    --now-line: oklch(0.68 0.19 25);
+
+    --brand-green: oklch(0.76 0.15 155);
+
+    --status-free: oklch(0.7 0.15 155);
+    --status-free-ink: oklch(0.82 0.14 155);
+    --status-free-soft: oklch(0.29 0.06 155);
+    --status-soon: oklch(0.78 0.14 75);
+    --status-soon-ink: oklch(0.85 0.12 80);
+    --status-soon-soft: oklch(0.3 0.05 75);
+    --status-busy: oklch(0.58 0.03 285);
+    --status-busy-ink: oklch(0.84 0.02 285);
+    --status-busy-soft: oklch(0.27 0.025 285);
+    --status-dnd: oklch(0.66 0.19 25);
+    --status-dnd-ink: oklch(0.8 0.12 25);
+    --status-dnd-soft: oklch(0.29 0.06 25);
+    --status-away: oklch(0.66 0.06 250);
+    --status-away-ink: oklch(0.8 0.06 250);
+    --status-away-soft: oklch(0.27 0.03 250);
+    --status-off: oklch(0.45 0.02 285);
+    --status-off-ink: oklch(0.74 0.025 285);
+    --status-off-soft: oklch(0.22 0.02 285);
+
+    --source-upload: oklch(0.8 0.11 280);
+    --source-manual: oklch(0.85 0.12 80);
+    --source-gcal: oklch(0.8 0.09 250);
+
+    --overlap-all: oklch(0.47 0.12 155);
+    --overlap-all-ink: #ffffff;
+    --overlap-most: oklch(0.38 0.08 155);
+    --overlap-most-border: oklch(0.48 0.1 155);
+    --overlap-most-ink: oklch(0.9 0.08 155);
+    --overlap-few: oklch(0.27 0.045 155);
+    --overlap-few-border: oklch(0.36 0.06 155);
+    --overlap-few-ink: oklch(0.84 0.1 155);
+    --overlap-none: oklch(0.23 0.02 155);
+    --today-column: oklch(0.22 0.035 280);
+    --grid-line: oklch(0.26 0.022 285);
+  }
+}
+
+@theme inline {
+  --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-ink: var(--primary-ink);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-body-foreground: var(--body-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-segment: var(--segment);
+  --color-now-line: var(--now-line);
+  --color-brand-green: var(--brand-green);
+
+  --color-status-free: var(--status-free);
+  --color-status-free-ink: var(--status-free-ink);
+  --color-status-free-soft: var(--status-free-soft);
+  --color-status-soon: var(--status-soon);
+  --color-status-soon-ink: var(--status-soon-ink);
+  --color-status-soon-soft: var(--status-soon-soft);
+  --color-status-busy: var(--status-busy);
+  --color-status-busy-ink: var(--status-busy-ink);
+  --color-status-busy-soft: var(--status-busy-soft);
+  --color-status-dnd: var(--status-dnd);
+  --color-status-dnd-ink: var(--status-dnd-ink);
+  --color-status-dnd-soft: var(--status-dnd-soft);
+  --color-status-away: var(--status-away);
+  --color-status-away-ink: var(--status-away-ink);
+  --color-status-away-soft: var(--status-away-soft);
+  --color-status-off: var(--status-off);
+  --color-status-off-ink: var(--status-off-ink);
+  --color-status-off-soft: var(--status-off-soft);
+
+  --color-source-upload: var(--source-upload);
+  --color-source-manual: var(--source-manual);
+  --color-source-gcal: var(--source-gcal);
+
+  --color-overlap-all: var(--overlap-all);
+  --color-overlap-all-ink: var(--overlap-all-ink);
+  --color-overlap-most: var(--overlap-most);
+  --color-overlap-most-border: var(--overlap-most-border);
+  --color-overlap-most-ink: var(--overlap-most-ink);
+  --color-overlap-few: var(--overlap-few);
+  --color-overlap-few-border: var(--overlap-few-border);
+  --color-overlap-few-ink: var(--overlap-few-ink);
+  --color-overlap-none: var(--overlap-none);
+  --color-today-column: var(--today-column);
+  --color-grid-line: var(--grid-line);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    color-scheme: light dark;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  /* Visible focus for every interactive element (NFR-UX-1). */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

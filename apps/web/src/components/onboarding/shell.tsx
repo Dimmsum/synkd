@@ -1,0 +1,69 @@
+import Link from 'next/link';
+import { Logo } from '@whosfree/ui/components/misc';
+import { cn } from '@whosfree/ui/lib/utils';
+import { nextStepHref, ONBOARDING_STEPS, type OnboardingStep } from '@/lib/onboarding';
+
+/**
+ * Frame for each onboarding step: progress, title, and "Skip for now" (every step after
+ * sign-up can be skipped and picked up later, WF-068).
+ */
+export function OnboardingShell({
+  step,
+  title,
+  subtitle,
+  children,
+  skippable = true,
+}: {
+  step: OnboardingStep;
+  title: string;
+  subtitle?: React.ReactNode;
+  children: React.ReactNode;
+  skippable?: boolean;
+}) {
+  const current = ONBOARDING_STEPS.findIndex((s) => s.key === step);
+  return (
+    <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-4 py-5 sm:py-8">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <Logo />
+        {skippable ? (
+          <Link
+            href={nextStepHref(step)}
+            className="inline-flex min-h-11 items-center rounded-md px-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
+          >
+            Skip for now
+          </Link>
+        ) : null}
+      </div>
+      <ol aria-label="Setup progress" className="mb-8 flex gap-2">
+        {ONBOARDING_STEPS.map((s, i) => (
+          <li
+            key={s.key}
+            aria-current={i === current ? 'step' : undefined}
+            className="flex flex-1 flex-col gap-1.5"
+          >
+            <span
+              aria-hidden="true"
+              className={cn('h-1.5 rounded-full', i <= current ? 'bg-primary' : 'bg-segment')}
+            />
+            <span
+              className={cn(
+                'text-xs font-medium',
+                i === current ? 'text-primary-ink' : 'text-muted-foreground',
+              )}
+            >
+              {s.label}
+              {i < current ? <span className="sr-only"> (done)</span> : null}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <main className="flex flex-1 flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{title}</h1>
+          {subtitle ? <p className="text-body-foreground">{subtitle}</p> : null}
+        </div>
+        {children}
+      </main>
+    </div>
+  );
+}
