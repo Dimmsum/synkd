@@ -49,9 +49,13 @@ async function engineInput(clerkId: string): Promise<AvailabilityInput> {
       startsAt: o.starts_at.getTime(),
       endsAt: o.ends_at?.getTime() ?? null,
     }));
-    const sources = (await tx.query<{ id: string }>(`select id from public.sources`)).rows.map(
-      (s) => ({ id: s.id, events: [] }),
-    );
+    // Only the user's own sources: those of their offline friends (D44) are
+    // not their schedule and must never make them look busy or "have a schedule".
+    const sources = (
+      await tx.query<{ id: string }>(
+        `select id from public.sources where offline_friend_id is null`,
+      )
+    ).rows.map((s) => ({ id: s.id, events: [] }));
     return {
       timeZone: user?.timezone,
       sharingPaused: user?.sharing_paused,
@@ -171,5 +175,24 @@ describe('manual overrides in the engine', () => {
     await db.asUser('user_alice').query(`select public.clear_status()`);
     const input = await engineInput('user_alice');
     expect(statusAt(input, Date.now() + 1000).cause.type).not.toBe('override');
+  });
+});
+
+describe('offline friends in the engine (D44)', () => {
+  it('an offline friend’s schedule doesn’t give the owner a schedule', async () => {
+    await db.admin.query(`delete from public.sources`);
+    await db
+      .asUser('user_alice')
+      .query(`select public.create_offline_friend('Tash', null, true) as id`)
+      .then(([row]) =>
+        db.admin.query(
+          `insert into public.sources (user_id, type, offline_friend_id)
+           select user_id, 'upload', id from public.offline_friends where id = $1`,
+          [row?.id],
+        ),
+      );
+    const input = await engineInput('user_alice');
+    expect(input.sources).toEqual([]);
+    expect(statusAt(input, Date.now()).status).toBe('no_schedule');
   });
 });

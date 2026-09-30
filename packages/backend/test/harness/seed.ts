@@ -111,13 +111,25 @@ export async function setRule(
 export async function addSource(
   db: TestDb,
   userId: string,
-  opts: { type?: 'upload' | 'manual' | 'gcal'; periodStart?: string; periodEnd?: string } = {},
+  opts: {
+    type?: 'upload' | 'manual' | 'gcal';
+    periodStart?: string;
+    periodEnd?: string;
+    /** The source is this offline friend's schedule (owned by `userId`), not `userId`'s (D44). */
+    offlineFriendId?: string;
+  } = {},
 ): Promise<string> {
   const row = await one<{ id: string }>(
     db,
-    `insert into public.sources (user_id, type, period_start, period_end)
-     values ($1, $2, $3, $4) returning id`,
-    [userId, opts.type ?? 'upload', opts.periodStart ?? null, opts.periodEnd ?? null],
+    `insert into public.sources (user_id, type, period_start, period_end, offline_friend_id)
+     values ($1, $2, $3, $4, $5) returning id`,
+    [
+      userId,
+      opts.type ?? 'upload',
+      opts.periodStart ?? null,
+      opts.periodEnd ?? null,
+      opts.offlineFriendId ?? null,
+    ],
   );
   return row.id;
 }
@@ -131,6 +143,8 @@ export interface EventInput {
   exdates?: string[];
   isPrivate?: boolean;
   busy?: boolean;
+  /** Must match the source's offline friend (D44). */
+  offlineFriendId?: string;
 }
 
 export async function addEvent(
@@ -142,8 +156,9 @@ export async function addEvent(
   const row = await one<{ id: string }>(
     db,
     `insert into public.events
-       (user_id, source_id, title, category, starts_at, ends_at, rrule, exdates, is_private, busy)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id`,
+       (user_id, source_id, title, category, starts_at, ends_at, rrule, exdates, is_private, busy,
+        offline_friend_id)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) returning id`,
     [
       userId,
       sourceId,
@@ -155,6 +170,7 @@ export async function addEvent(
       e.exdates ?? [],
       e.isPrivate ?? false,
       e.busy ?? true,
+      e.offlineFriendId ?? null,
     ],
   );
   return row.id;

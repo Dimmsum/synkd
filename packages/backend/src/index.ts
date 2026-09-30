@@ -196,3 +196,29 @@ export const GROUP_ERRORS = {
   approvalNotSupported: 'Joining groups that need approval is not supported yet',
   rateLimited: 'Too many attempts',
 } as const;
+
+type OfflineFriendRow = Fn['list_offline_friends']['Returns'][number];
+
+/**
+ * One row of `list_offline_friends` (WF-127): someone not on whosfree whom the caller added
+ * (D44). Only ever the caller's own. `has_schedule` is false until a schedule is confirmed for
+ * them. Their events are read directly under RLS: `events` where `offline_friend_id` is the id.
+ */
+export type OfflineFriend = Omit<OfflineFriendRow, 'emoji'> & { emoji: string | null };
+
+/**
+ * The messages the offline friend functions raise (WF-127), so clients can tell errors apart.
+ * Match on `error.message`. SQLSTATEs: WF001 no account and PT429 rate limited (see
+ * `DB_ERROR`), 22023 bad argument (nickname, emoji, missing permission tick), P0001 limit
+ * reached (MAX_OFFLINE_FRIENDS), P0002 not found (also another user's offline friend).
+ */
+export const OFFLINE_FRIEND_ERRORS = {
+  noAccount: 'No account for this sign-in',
+  notFound: 'Offline friend not found',
+  invalidNickname: 'Nickname must be 1 to 40 characters',
+  nicknameControlCharacters: 'Nickname must not contain control characters',
+  invalidEmoji: 'Emoji must be at most 16 characters',
+  permissionRequired: 'Confirm you have their permission to add their schedule',
+  limitReached: 'You have reached the limit of offline friends',
+  rateLimited: 'Too many attempts',
+} as const;
