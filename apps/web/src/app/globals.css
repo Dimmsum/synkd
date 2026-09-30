@@ -1,0 +1,5 @@
+@import '@whosfree/ui/globals.css';
+
+/* Scan this app's sources and the shared UI package for class names. */
+@source '../';
+@source '../../../../packages/ui/src';
