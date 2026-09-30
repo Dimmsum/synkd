@@ -1,0 +1,7 @@
+{
+  "extends": "@whosfree/config/tsconfig/base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["src", "test", "scripts", "vitest.config.ts"]
+}
