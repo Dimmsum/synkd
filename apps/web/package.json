@@ -1,0 +1,35 @@
+{
+  "name": "@whosfree/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "next typegen && tsc",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@whosfree/shared": "workspace:*",
+    "@whosfree/ui": "workspace:*",
+    "lucide-react": "^1.49.0",
+    "next": "16.3.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@next/eslint-plugin-next": "16.3.8",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.20.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@whosfree/config": "workspace:*",
+    "eslint": "^10.11.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
+  }
+}
