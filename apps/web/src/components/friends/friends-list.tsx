@@ -103,7 +103,11 @@ export function FriendsList({
           </ul>
         ) : (
           <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-            {query ? `No friends match “${query}”.` : 'Nobody is free right now.'}
+            {query
+              ? `No friends match “${query}”.`
+              : friends.length
+                ? 'Nobody is free right now.'
+                : 'No friends yet. Add someone by their handle, or share your friend link.'}
           </p>
         )}
       </section>

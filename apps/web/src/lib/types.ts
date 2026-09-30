@@ -100,10 +100,19 @@ export interface FriendDetail {
 }
 
 export interface FriendRequest {
+  /** The other person's user id: requests are keyed by the pair (WF-042). */
   id: string;
   person: Person;
   direction: 'incoming' | 'outgoing';
   sentAt: Iso;
+}
+
+/** How someone relates to the viewer (`get_profile`, `find_user_by_handle`, WF-040). */
+export type Relationship = 'self' | 'friend' | 'request_sent' | 'request_received' | 'none';
+
+/** Someone found by handle or friend link: their public profile only (FR-AUTH-2). */
+export interface PublicPerson extends Person {
+  relationship: Relationship;
 }
 
 export interface GroupMember extends Connection {
@@ -113,11 +122,14 @@ export interface GroupMember extends Connection {
 }
 
 export interface GroupInvite {
+  id: string;
   code: string;
   url: string;
   expiresAt: Iso | null;
   maxUses: number | null;
   uses: number;
+  /** The viewer made this link, so they may revoke or regenerate it (WF-045). */
+  createdByMe: boolean;
 }
 
 export interface GroupDetail extends GroupSummary {

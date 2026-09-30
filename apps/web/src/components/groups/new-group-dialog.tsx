@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
+import type { Route } from 'next';
 import { DEFAULT_GROUP_MAX_MEMBERS } from '@whosfree/shared';
 import { Check, Plus } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
+import { Button, buttonVariants } from '@whosfree/ui/components/button';
 import {
   Dialog,
   DialogContent,
@@ -39,7 +41,7 @@ export function NewGroupDialog({ defaultOpen = false }: { defaultOpen?: boolean 
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState(GROUP_EMOJIS[0] ?? '🏠');
   const [error, setError] = useState<string>();
-  const [created, setCreated] = useState(false);
+  const [created, setCreated] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   return (
@@ -47,7 +49,7 @@ export function NewGroupDialog({ defaultOpen = false }: { defaultOpen?: boolean 
       open={open}
       onOpenChange={(o) => {
         setOpen(o);
-        if (!o) setCreated(false);
+        if (!o) setCreated(null);
       }}
     >
       <DialogTrigger asChild>
@@ -64,10 +66,16 @@ export function NewGroupDialog({ defaultOpen = false }: { defaultOpen?: boolean 
             </span>
             <DialogTitle>{name} is ready</DialogTitle>
             <DialogDescription>
-              You&apos;re the admin. Share the invite link from the group&apos;s settings to bring
-              people in.
+              You&apos;re the admin. Make an invite link to bring people in.
             </DialogDescription>
             <Check aria-hidden="true" className="size-6 text-status-free-ink" />
+            <Link
+              href={`/groups/${created}/settings#invite` as Route}
+              onClick={() => setOpen(false)}
+              className={buttonVariants({ className: 'w-full' })}
+            >
+              Invite people
+            </Link>
           </div>
         ) : (
           <form
@@ -77,7 +85,7 @@ export function NewGroupDialog({ defaultOpen = false }: { defaultOpen?: boolean 
               setError(undefined);
               startTransition(async () => {
                 const res = await createGroup({ name, emoji });
-                if (res.ok) setCreated(true);
+                if (res.ok) setCreated(res.data.groupId);
                 else setError(res.error);
               });
             }}

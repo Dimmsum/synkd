@@ -13,3 +13,13 @@ export const LEGAL_VERSIONS = {
 
 /** Timezone used until we know the viewer's own (FR-AUTH-3). */
 export const FALLBACK_TIMEZONE = DEFAULT_TIMEZONE;
+
+/**
+ * The app's public origin (`NEXT_PUBLIC_APP_URL`), for links people share: invite links
+ * (FR-SOC-3) and friend links (FR-SOC-1).
+ */
+export function appUrl(): string {
+  const url = process.env.NEXT_PUBLIC_APP_URL;
+  if (!url) throw new Error('NEXT_PUBLIC_APP_URL is not set (see .env.example)');
+  return url;
+}

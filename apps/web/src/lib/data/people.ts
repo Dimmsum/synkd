@@ -1,9 +1,10 @@
 // Data access for the viewer, the Now screen, friends and groups.
 //
-// Screens call these async functions and never touch lib/mock directly. Today they read
-// mock data; when wiring, keep the signatures and swap the bodies for server calls made
-// as the signed-in user (Clerk token → Supabase RLS). Everything about other people must
-// come back already redacted to the viewer's tier (FR-VIS-5, D41).
+// Screens call these async functions and never touch lib/mock directly. The viewer, friends,
+// requests and groups are real (WF-004, WF-042, WF-043): database functions called as the
+// signed-in user (Clerk token → Supabase RLS). Statuses, timelines and free/busy still come
+// from the mock until WF-064/065/066 wire them. Everything about other people must come back
+// already redacted to the viewer's tier (FR-VIS-5, D41).
 
 import { redirect } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
@@ -18,10 +19,31 @@ import type {
   OverlapWeek,
   Viewer,
 } from '@/lib/types';
+import { appUrl } from '@/lib/config';
 import { hueFor } from '@/lib/hue';
 import { rankSlots } from '@/lib/overlap';
 import { createServerSupabase } from '@/lib/supabase/server';
-import { FRIEND_REQUESTS, GROUPS, PEOPLE, VIEWER } from '@/lib/mock/data';
+import {
+  groupMembershipIndex,
+  listFriendRequests,
+  listFriends,
+  listGroupInvites,
+  listGroupMembers,
+  listMyGroups,
+} from '@/lib/data/social';
+import {
+  friendToPerson,
+  isUuid,
+  mostRestrictiveGroup,
+  pickInvite,
+  toConnection as socialConnection,
+  toFriendRequest,
+  toGroupInvite,
+  toGroupMember,
+  toGroupSummary,
+  toPermissions,
+} from '@/lib/social/mappers';
+import { GROUPS, VIEWER } from '@/lib/mock/data';
 import { statusAt } from '@/lib/mock/engine';
 import {
   busyDays,
@@ -29,12 +51,9 @@ import {
   ctx,
   excludedPeople,
   findPerson,
-  groupsOf,
-  minutesAgo,
   nextDates,
   toConnection,
-  toGroupDetail,
-  toGroupSummary,
+  toGroupSummary as mockGroupSummary,
   toPerson,
   viewerGroups,
   visibleBlocks,
@@ -91,72 +110,93 @@ export async function getNowForViewer(): Promise<{
 }> {
   return {
     connections: connections().map(toConnection),
-    groups: viewerGroups().map(toGroupSummary),
+    groups: viewerGroups().map(mockGroupSummary),
   };
 }
 
-/** TODO(WF-042): friends list query. */
+/**
+ * The viewer's friends (FR-SOC-1), by name, each with the viewer's groups they're also in.
+ * Status and tier fields wait for the Now data (PENDING_PRESENCE, TODO(WF-064)).
+ */
 export async function getFriends(): Promise<Connection[]> {
-  return PEOPLE.filter((p) => p.isFriend).map(toConnection);
+  const [friends, index] = await Promise.all([listFriends(), groupMembershipIndex()]);
+  return friends.map((f) =>
+    socialConnection(friendToPerson(f), { isFriend: true, groupIds: index.get(f.user_id) ?? [] }),
+  );
 }
 
-/** TODO(WF-042): friend requests query. */
+/** Pending friend requests both ways, newest first (WF-042). */
 export async function getFriendRequests(): Promise<FriendRequest[]> {
-  return FRIEND_REQUESTS.map((r) => ({
-    id: r.id,
-    person: r.person,
-    direction: r.direction,
-    sentAt: minutesAgo(r.minutesAgo),
-  }));
+  return (await listFriendRequests()).map(toFriendRequest);
 }
 
 /**
- * A friend's detail: today's and tomorrow's timeline at the viewer's tier (FR-VIEW-4).
- * TODO(WF-065): `events_for_viewer` for today + tomorrow, redacted on the server.
+ * A friend's detail: who they are, the groups you share and the tier you show them
+ * (WF-042/043). Null if they aren't a friend (or either of you blocked the other).
+ * TODO(WF-065): the timeline and "You're both free" come from `events_for_viewer` for today +
+ * tomorrow, redacted on the server (FR-VIEW-4). Until then they're empty, as for someone
+ * without a schedule.
  */
 export async function getFriend(id: string): Promise<FriendDetail | null> {
-  const p = findPerson(id);
-  if (!p || !p.isFriend) return null;
-  const { today, now, tz } = ctx();
-  const dates = nextDates(today, 2);
-  const week = nextDates(today, 7);
-  const together = rankSlots(busyDays([VIEWER, p], week), {
-    minDuration: 60,
-    window: [8 * 60, 22 * 60],
-    maxMissing: 0,
-    notBefore: { date: today, minute: minutesIntoDay(now, tz) },
-  });
+  if (!isUuid(id)) return null;
+  const [friends, groups, index] = await Promise.all([
+    listFriends(),
+    listMyGroups(),
+    groupMembershipIndex(),
+  ]);
+  const row = friends.find((f) => f.user_id === id);
+  if (!row) return null;
+  const groupIds = index.get(id) ?? [];
+  const shared = groups.filter((g) => groupIds.includes(g.id));
+  const { today } = ctx();
   return {
-    person: toConnection(p),
-    timeline: dates.map((date) => ({
-      date,
-      blocks: visibleBlocks(p, date),
-      hours: p.paused || p.noSchedule ? null : p.hours,
-    })),
-    sharedGroups: groupsOf(p.id).map(toGroupSummary),
-    viewerTierForThem: p.viewerTier,
-    groupTier: (() => {
-      const g = [...groupsOf(p.id)].sort((a, b) => a.viewerTier - b.viewerTier)[0];
-      return g ? { tier: g.viewerTier, groupName: g.name } : null;
-    })(),
-    freeTogether: (p.paused || p.noSchedule ? [] : together)
-      .slice(0, 3)
-      .map((s) => ({ date: s.date, start: s.start, end: s.end })),
+    person: socialConnection(friendToPerson(row), { isFriend: true, groupIds }),
+    timeline: nextDates(today, 2).map((date) => ({ date, blocks: [], hours: null })),
+    sharedGroups: shared.map(toGroupSummary),
+    viewerTierForThem: row.tier,
+    groupTier: mostRestrictiveGroup(shared),
+    freeTogether: [],
   };
 }
 
-/** TODO(WF-043): the viewer's groups. */
+/** The viewer's groups, oldest membership first (WF-043). */
 export async function getGroups(): Promise<GroupSummary[]> {
-  return viewerGroups().map(toGroupSummary);
+  return (await listMyGroups()).map(toGroupSummary);
 }
 
 /**
- * One group with members at each member's chosen tier. Being admin gives no extra
- * visibility (FR-SOC-10). TODO(WF-043, WF-044): group + members query.
+ * One group with its members, their roles and permissions, the viewer's tier for it and an
+ * invite link if the viewer may invite (WF-043/044/045). Null if the viewer isn't a member.
+ * Being admin gives no extra visibility (FR-SOC-10): members carry no schedule data here.
  */
 export async function getGroup(id: string): Promise<GroupDetail | null> {
-  const g = GROUPS.find((x) => x.id === id && x.memberIds.includes(VIEWER.id));
-  return g ? toGroupDetail(g) : null;
+  if (!isUuid(id)) return null;
+  const [groups, members, friends] = await Promise.all([
+    listMyGroups(),
+    listGroupMembers(id),
+    listFriends(),
+  ]);
+  const row = groups.find((g) => g.id === id);
+  if (!row || !members) return null;
+  const permissions = toPermissions(row);
+  const [invites, viewer] = await Promise.all([
+    permissions.invite ? listGroupInvites(id) : [],
+    getViewer(),
+  ]);
+  const friendIds = new Set(friends.map((f) => f.user_id));
+  const invite = pickInvite(invites);
+  return {
+    ...toGroupSummary(row),
+    members: members.map((m) => {
+      const member = toGroupMember(m, { isFriend: friendIds.has(m.user_id), groupIds: [id] });
+      // The viewer's own status is already on the viewer (the sidebar shows the same).
+      return m.is_me ? { ...member, tier: 3, status: viewer.status, until: viewer.until } : member;
+    }),
+    maxMembers: row.max_members,
+    viewerPermissions: permissions,
+    viewerTier: row.my_tier,
+    invite: invite ? toGroupInvite(invite, appUrl()) : null,
+  };
 }
 
 /**

@@ -1,21 +1,9 @@
 // Builds view models from the mock data. Only lib/data/* should import this.
 // TODO(WF-064): delete with the rest of lib/mock.
 
-import {
-  DEFAULT_MEMBER_PERMISSIONS,
-  DEFAULT_TIMEZONE,
-  type GroupPermissions,
-} from '@whosfree/shared';
+import { DEFAULT_TIMEZONE } from '@whosfree/shared';
 import { addDays, dateKey } from '@whosfree/ui/lib/time';
-import type {
-  Connection,
-  GroupDetail,
-  GroupMember,
-  GroupSummary,
-  MemberBusyDay,
-  Person,
-  VisibleBlock,
-} from '@/lib/types';
+import type { Connection, GroupSummary, MemberBusyDay, Person, VisibleBlock } from '@/lib/types';
 import { getMockNow } from './clock';
 import { GROUPS, PEOPLE, VIEWER, type MockGroup, type MockPerson } from './data';
 import { busyIntervals, eventsOn, redact, statusAt } from './engine';
@@ -76,62 +64,6 @@ export function toGroupSummary(g: MockGroup): GroupSummary {
 function toStatus(p: MockPerson) {
   const { now, today, tz } = ctx();
   return statusAt(p, now, today, tz).status;
-}
-
-const ALL_PERMISSIONS: GroupPermissions = {
-  invite: true,
-  manageMembers: true,
-  editGroup: true,
-  groupPing: true,
-};
-
-export function permissionsFor(g: MockGroup, id: string): GroupPermissions {
-  if (g.adminId === id) return ALL_PERMISSIONS; // FR-SOC-9
-  return { ...DEFAULT_MEMBER_PERMISSIONS, ...g.permissions?.[id] };
-}
-
-export function toGroupDetail(g: MockGroup): GroupDetail {
-  const members: GroupMember[] = g.memberIds
-    .map(findPerson)
-    .filter((p): p is MockPerson => Boolean(p))
-    .map((p) => ({
-      ...(p.id === VIEWER.id ? viewerAsConnection() : toConnection(p)),
-      role: g.adminId === p.id ? 'admin' : 'member',
-      permissions: permissionsFor(g, p.id),
-      isViewer: p.id === VIEWER.id,
-    }));
-  return {
-    ...toGroupSummary(g),
-    members,
-    maxMembers: g.maxMembers,
-    viewerPermissions: permissionsFor(g, VIEWER.id),
-    viewerTier: g.viewerTier,
-    invite: g.inviteCode
-      ? {
-          code: g.inviteCode,
-          url: `https://whosfree.app/i/${g.inviteCode}`,
-          expiresAt: null,
-          maxUses: null,
-          uses: g.memberIds.length - 1,
-        }
-      : null,
-  };
-}
-
-export function viewerAsConnection(): Connection {
-  const { now, today, tz } = ctx();
-  const s = statusAt(VIEWER, now, today, tz);
-  return {
-    ...toPerson(VIEWER),
-    isFriend: false,
-    tier: 3,
-    status: s.status,
-    until: s.until,
-    nextFreeAt: s.nextFreeAt,
-    activity: s.activity,
-    stale: false,
-    groupIds: viewerGroups().map((g) => g.id),
-  };
 }
 
 /** A person's busy blocks on a date, redacted to `tier` (the viewer sees their own in full). */

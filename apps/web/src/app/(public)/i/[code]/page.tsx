@@ -1,5 +1,6 @@
-import type { Metadata } from 'next';
+import type { Metadata, Route } from 'next';
 import Link from 'next/link';
+import { auth } from '@clerk/nextjs/server';
 import { CircleX, EyeOff, UsersRound } from 'lucide-react';
 import { buttonVariants } from '@whosfree/ui/components/button';
 import { GroupEmoji } from '@whosfree/ui/components/person-avatar';
@@ -19,11 +20,12 @@ export async function generateMetadata({ params }: PageProps<'/i/[code]'>): Prom
   };
 }
 
-// Invite page (FR-WEB-3, WF-045). Works signed out.
-// TODO(WF-045): remember the code (cookie) through sign-up and onboarding; signed-in
-// visitors go straight to the tier picker, then join (join_group, one transaction).
+// Invite page (FR-WEB-3, WF-045). Works signed out. proxy.ts remembers the code in a cookie so
+// it survives sign-up and onboarding, where the tier picker appears before joining (J1.7).
+// Signed-in visitors go to /join/<code>: the tier picker, then join_group (one transaction).
 export default async function InvitePage({ params }: PageProps<'/i/[code]'>) {
-  const invite = await getInvite((await params).code);
+  const [invite, { userId }] = await Promise.all([getInvite((await params).code), auth()]);
+  const joinPath = `/join/${invite.code}` as Route;
 
   return (
     <div className="flex min-h-dvh flex-col items-center px-4 py-6 sm:justify-center sm:py-12">
@@ -64,9 +66,12 @@ export default async function InvitePage({ params }: PageProps<'/i/[code]'>) {
                 role="status"
                 className="w-full rounded-xl bg-status-off-soft p-3 text-sm font-semibold text-status-off-ink"
               >
-                This group is full ({invite.maxMembers} people). Ask{' '}
-                {invite.inviterName.split(' ')[0]} to make some room.
+                This group is full. Ask {invite.inviterName.split(' ')[0]} to make some room.
               </p>
+            ) : userId ? (
+              <Link href={joinPath} className={buttonVariants({ size: 'lg', className: 'w-full' })}>
+                Join {invite.groupName}
+              </Link>
             ) : (
               <>
                 <p className="text-body-foreground">
@@ -81,7 +86,7 @@ export default async function InvitePage({ params }: PageProps<'/i/[code]'>) {
                 <p className="text-sm text-muted-foreground">
                   Already on Who&apos;s Free?{' '}
                   <Link
-                    href={{ pathname: '/sign-in', query: { invite: invite.code } }}
+                    href={{ pathname: '/sign-in', query: { redirect_url: joinPath } }}
                     className="inline-flex min-h-11 items-center font-semibold text-primary-ink underline-offset-2 hover:underline"
                   >
                     Sign in to join
