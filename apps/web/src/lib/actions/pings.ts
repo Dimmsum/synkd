@@ -3,7 +3,6 @@
 // Pings (WF-092) and replies (WF-093). Stubs: validate, then pretend it worked.
 
 import {
-  ManualStatus,
   PING_REPLIES,
   PING_TEMPLATES,
   PingText,
@@ -57,19 +56,6 @@ export async function blockPerson(_personId: string): Promise<ActionResult> {
 
 export async function nudgeToAddSchedule(_personId: string): Promise<ActionResult> {
   // TODO(WF-069): "Nudge them to add a schedule" notification (FR-VIEW-7).
-  await mockDelay();
-  return ok;
-}
-
-export async function setManualStatus(input: {
-  status: ManualStatus | null;
-  /** ISO instant, or null for "until I change it". */
-  until: string | null;
-}): Promise<ActionResult> {
-  if (input.status !== null && !ManualStatus.safeParse(input.status).success) {
-    return fail('Unknown status.');
-  }
-  // TODO(WF-063): write/clear the statusOverrides row (null = back to automatic).
   await mockDelay();
   return ok;
 }
