@@ -62,11 +62,6 @@ export default async function GroupPage({ params, searchParams }: PageProps<'/gr
   const bestDays = slots
     .filter((s, i) => slots.findIndex((x) => x.date === s.date) === i)
     .slice(0, 3);
-  const canManage =
-    group.viewerRole === 'admin' ||
-    group.viewerPermissions.manageMembers ||
-    group.viewerPermissions.editGroup ||
-    group.viewerPermissions.invite;
 
   return (
     <>
@@ -82,19 +77,14 @@ export default async function GroupPage({ params, searchParams }: PageProps<'/gr
           <div className="flex min-w-0 flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold tracking-[-0.02em]">{group.name}</h1>
-              {canManage ? (
-                <Link
-                  href={`/groups/${id}/settings`}
-                  className={buttonVariants({
-                    variant: 'outline',
-                    size: 'sm',
-                    className: 'md:h-7',
-                  })}
-                >
-                  <Settings aria-hidden="true" />
-                  Manage
-                </Link>
-              ) : null}
+              {/* Every member can set their own tier there; admins get more options. */}
+              <Link
+                href={`/groups/${id}/settings`}
+                className={buttonVariants({ variant: 'outline', size: 'sm', className: 'md:h-7' })}
+              >
+                <Settings aria-hidden="true" />
+                Manage
+              </Link>
             </div>
             <p className="text-[13.5px] text-muted-foreground">
               {group.memberCount} members ·{' '}

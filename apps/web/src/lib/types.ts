@@ -93,6 +93,8 @@ export interface FriendDetail {
   sharedGroups: GroupSummary[];
   /** The tier the viewer shows this friend, or null to use group settings. */
   viewerTierForThem: Tier | null;
+  /** What applies without a friend-level tier: the most restrictive shared group (FR-VIS-3). */
+  groupTier: { tier: Tier; groupName: string } | null;
   /** Upcoming times you're both free. */
   freeTogether: { date: string; start: number; end: number }[];
 }

@@ -111,6 +111,10 @@ export async function getFriend(id: string): Promise<FriendDetail | null> {
     })),
     sharedGroups: groupsOf(p.id).map(toGroupSummary),
     viewerTierForThem: p.viewerTier,
+    groupTier: (() => {
+      const g = [...groupsOf(p.id)].sort((a, b) => a.viewerTier - b.viewerTier)[0];
+      return g ? { tier: g.viewerTier, groupName: g.name } : null;
+    })(),
     freeTogether: (p.paused || p.noSchedule ? [] : together)
       .slice(0, 3)
       .map((s) => ({ date: s.date, start: s.start, end: s.end })),
