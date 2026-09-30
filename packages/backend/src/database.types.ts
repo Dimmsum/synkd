@@ -508,7 +508,19 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      remove_group_member: { Args: { group_id: string; user_id: string }; Returns: undefined };
       revoke_group_invite: { Args: { invite_id: string }; Returns: undefined };
+      set_group_member_permissions: {
+        Args: {
+          can_edit_group?: boolean;
+          can_group_ping?: boolean;
+          can_invite?: boolean;
+          can_manage_members?: boolean;
+          group_id: string;
+          user_id: string;
+        };
+        Returns: undefined;
+      };
       transfer_group_admin: {
         Args: { group_id: string; new_admin_id: string };
         Returns: undefined;

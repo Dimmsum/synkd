@@ -173,7 +173,9 @@ const AUTHENTICATED_FUNCTIONS = [
   'list_group_invites(uuid)',
   'list_my_groups()',
   'regenerate_group_invite(uuid)',
+  'remove_group_member(uuid,uuid)',
   'revoke_group_invite(uuid)',
+  'set_group_member_permissions(uuid,uuid,boolean,boolean,boolean,boolean)',
   'transfer_group_admin(uuid,uuid)',
   'update_group(uuid,text,text)',
 ];
