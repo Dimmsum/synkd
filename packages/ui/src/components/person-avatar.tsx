@@ -10,9 +10,9 @@ const SIZES = {
   xl: 'size-18 text-xl',
 } as const;
 
-/** Colour for a person, from a stable hue (0–360). Mid lightness keeps white initials legible. */
+/** Colour for a person, from a stable hue (0–360). Dark enough for white initials at AA (4.5:1). */
 export function personColor(hue: number) {
-  return `oklch(0.6 0.13 ${hue})`;
+  return `oklch(0.5 0.12 ${hue})`;
 }
 
 export function initialsOf(name: string) {

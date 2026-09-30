@@ -80,7 +80,8 @@
   --source-gcal: oklch(0.5 0.13 250);
 
   /* Group overlap week view (the design's "overlap" style). */
-  --overlap-all: oklch(0.62 0.15 155);
+  /* Darker than the design's oklch(0.62 0.15 155) so white labels pass AA (4.5:1). */
+  --overlap-all: oklch(0.5 0.13 155);
   --overlap-all-ink: #ffffff;
   --overlap-most: oklch(0.9 0.07 155);
   --overlap-most-border: oklch(0.82 0.1 155);
@@ -114,7 +115,7 @@
     --body-foreground: oklch(0.84 0.02 285);
     --accent: oklch(0.27 0.025 285);
     --accent-foreground: oklch(0.95 0.01 285);
-    --destructive: oklch(0.62 0.2 25);
+    --destructive: oklch(0.55 0.2 25);
     --destructive-foreground: #ffffff;
     --border: oklch(0.3 0.025 285);
     --border-subtle: oklch(0.26 0.022 285);
@@ -148,7 +149,7 @@
     --source-manual: oklch(0.85 0.12 80);
     --source-gcal: oklch(0.8 0.09 250);
 
-    --overlap-all: oklch(0.6 0.14 155);
+    --overlap-all: oklch(0.47 0.12 155);
     --overlap-all-ink: #ffffff;
     --overlap-most: oklch(0.38 0.08 155);
     --overlap-most-border: oklch(0.48 0.1 155);

@@ -89,7 +89,7 @@ export function CalendarToolbar({
             href={href(v, date)}
             aria-current={view === v ? 'true' : undefined}
             className={cn(
-              'flex min-h-10 items-center rounded-lg px-4 text-[13.5px] font-semibold text-muted-foreground md:min-h-8',
+              'flex min-h-10 items-center rounded-lg px-4 text-[13.5px] font-semibold text-body-foreground md:min-h-8',
               view === v && 'bg-card text-foreground shadow-[0_1px_2px_rgb(23_21_42/0.12)]',
             )}
           >
