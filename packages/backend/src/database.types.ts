@@ -274,6 +274,57 @@ export type Database = {
           },
         ];
       };
+      invites: {
+        Row: {
+          code: string;
+          created_at: string;
+          expires_at: string | null;
+          group_id: string | null;
+          id: string;
+          inviter_id: string;
+          max_uses: number | null;
+          revoked: boolean;
+          uses: number;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          expires_at?: string | null;
+          group_id?: string | null;
+          id?: string;
+          inviter_id: string;
+          max_uses?: number | null;
+          revoked?: boolean;
+          uses?: number;
+        };
+        Update: {
+          code?: string;
+          created_at?: string;
+          expires_at?: string | null;
+          group_id?: string | null;
+          id?: string;
+          inviter_id?: string;
+          max_uses?: number | null;
+          revoked?: boolean;
+          uses?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invites_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'invites_inviter_id_fkey';
+            columns: ['inviter_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       rate_limits: {
         Row: {
           action: string;
@@ -492,9 +543,21 @@ export type Database = {
       cancel_friend_request: { Args: { user_id: string }; Returns: undefined };
       clear_status: { Args: Record<PropertyKey, never>; Returns: undefined };
       confirm_age: { Args: { birth_year: number }; Returns: string };
+      create_group: { Args: { emoji?: string; name: string; tier?: number }; Returns: string };
+      create_group_invite: {
+        Args: { expires_at?: string; group_id: string; max_uses?: number };
+        Returns: Database['public']['CompositeTypes']['group_invite'];
+        SetofOptions: {
+          from: '*';
+          to: 'group_invite';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       current_consent_version: { Args: Record<PropertyKey, never>; Returns: string };
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
       decline_friend_request: { Args: { user_id: string }; Returns: undefined };
+      delete_group: { Args: { group_id: string }; Returns: undefined };
       ensure_current_user: {
         Args: { avatar_url?: string; name: string; timezone?: string };
         Returns: {
@@ -540,6 +603,32 @@ export type Database = {
           relationship: string;
         }[];
       };
+      get_group_members: {
+        Args: { group_id: string };
+        Returns: {
+          avatar_url: string;
+          can_edit_group: boolean;
+          can_group_ping: boolean;
+          can_invite: boolean;
+          can_manage_members: boolean;
+          handle: string;
+          is_me: boolean;
+          joined_at: string;
+          name: string;
+          role: string;
+          user_id: string;
+        }[];
+      };
+      get_invite_summary: {
+        Args: { code: string };
+        Returns: {
+          group_emoji: string;
+          group_name: string;
+          inviter_name: string;
+          member_count: number;
+          status: string;
+        }[];
+      };
       get_profile: {
         Args: { user_id: string };
         Returns: {
@@ -550,6 +639,8 @@ export type Database = {
           relationship: string;
         }[];
       };
+      join_group: { Args: { code: string; tier?: number }; Returns: string };
+      leave_group: { Args: { group_id: string }; Returns: undefined };
       list_blocked_users: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -582,11 +673,61 @@ export type Database = {
           user_id: string;
         }[];
       };
+      list_group_invites: {
+        Args: { group_id: string };
+        Returns: Database['public']['CompositeTypes']['group_invite'][];
+        SetofOptions: {
+          from: '*';
+          to: 'group_invite';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
+      list_my_groups: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          can_edit_group: boolean;
+          can_group_ping: boolean;
+          can_invite: boolean;
+          can_manage_members: boolean;
+          emoji: string;
+          id: string;
+          joined_at: string;
+          max_members: number;
+          member_count: number;
+          my_tier: number;
+          name: string;
+          role: string;
+        }[];
+      };
+      regenerate_group_invite: {
+        Args: { invite_id: string };
+        Returns: Database['public']['CompositeTypes']['group_invite'];
+        SetofOptions: {
+          from: '*';
+          to: 'group_invite';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      remove_group_member: { Args: { group_id: string; user_id: string }; Returns: undefined };
+      revoke_group_invite: { Args: { invite_id: string }; Returns: undefined };
       send_friend_request: { Args: { tier?: number; user_id: string }; Returns: string };
       send_friend_request_by_handle: { Args: { handle: string; tier?: number }; Returns: string };
       set_day_hours: {
         Args: { day: string; end_time?: string; start_time?: string };
         Returns: Json;
+      };
+      set_group_member_permissions: {
+        Args: {
+          can_edit_group?: boolean;
+          can_group_ping?: boolean;
+          can_invite?: boolean;
+          can_manage_members?: boolean;
+          group_id: string;
+          user_id: string;
+        };
+        Returns: undefined;
       };
       set_handle: { Args: { handle: string }; Returns: string };
       set_status: {
@@ -607,14 +748,27 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      transfer_group_admin: {
+        Args: { group_id: string; new_admin_id: string };
+        Returns: undefined;
+      };
       unblock_user: { Args: { user_id: string }; Returns: undefined };
       unfriend: { Args: { user_id: string }; Returns: undefined };
+      update_group: { Args: { emoji: string; group_id: string; name: string }; Returns: undefined };
     };
     Enums: {
       [_ in never]: never;
     };
     CompositeTypes: {
-      [_ in never]: never;
+      group_invite: {
+        id: string | null;
+        code: string | null;
+        expires_at: string | null;
+        max_uses: number | null;
+        uses: number | null;
+        created_at: string | null;
+        created_by_me: boolean | null;
+      };
     };
   };
 };

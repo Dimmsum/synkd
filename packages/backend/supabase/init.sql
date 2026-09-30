@@ -10,13 +10,17 @@
 --   * Existing project: do NOT rerun this file. Apply only the migration files newer than
 --     the last one you applied, in filename order, from supabase/migrations.
 --
--- Includes 11 migrations (latest last):
+-- Includes 15 migrations (latest last):
 --   20260930201536_users_and_current_user_id.sql
 --   20260930201538_visibility_tiers_and_redaction.sql
 --   20261001100000_rate_limits.sql
 --   20261001100100_profiles_and_handles.sql
 --   20261001100200_friend_requests.sql
 --   20261001100300_block_unblock_unfriend.sql
+--   20261001200000_groups.sql
+--   20261001200100_invites.sql
+--   20261001200200_group_member_permissions.sql
+--   20261001200300_leave_group.sql
 --   20261001300000_ensure_current_user.sql
 --   20261001300100_age_gate.sql
 --   20261001300200_consent_record.sql
@@ -1811,6 +1815,1388 @@ comment on function public.list_blocked_users() is
 
 revoke all on function public.list_blocked_users() from public, anon, authenticated, service_role;
 grant execute on function public.list_blocked_users() to authenticated;
+
+-- ============================================================================================
+-- 20261001200000_groups.sql
+-- ============================================================================================
+
+-- WF-043: groups. Create, edit, transfer the admin role, delete, list my
+-- groups, and the member list (PRD §6.3 FR-SOC-2, FR-SOC-5, FR-SOC-7,
+-- FR-SOC-9, FR-SOC-10, FR-SOC-11; §7.4 NFR-SCALE-4; D17, D20, D26, D41, D43).
+--
+-- `groups`, `group_members` and `visibility_rules` were created by WF-041 and
+-- are read-only for clients. Every write goes through the security definer
+-- functions below (and those of WF-044, WF-045 and WF-047), which:
+--   * take the actor from `public.current_user_id()`, never from an argument;
+--   * lock the group row (FOR UPDATE) before reading anything they check, so
+--     every change to a group's membership, permissions or invites is
+--     serialised on that row (this is what makes the member cap race-free);
+--   * check permissions on the server: the admin always holds every
+--     permission (FR-SOC-9), whatever the member row's columns say.
+--
+-- Errors are raised with a stable message (the client may match on it) and
+-- a SQLSTATE: WF001 no account for this sign-in (private.require_user),
+-- 42501 not allowed, P0002 not found, 22023 bad argument, P0001 a rule of the
+-- group was broken (e.g. "This group is full"), PT429 rate limited.
+-- Non-members get "Group not found" whether or not the group exists.
+--
+-- Being admin grants management rights only, never extra visibility
+-- (FR-SOC-10): nothing here touches `resolve_tier`, and an admin reads other
+-- members' schedules through `events_for_viewer` like everyone else.
+
+-- ---------------------------------------------------------------------------
+-- Invariant: groups.admin_id names the group's single admin member row.
+--
+-- The partial unique index `group_members_one_admin_key` (WF-041) allows at
+-- most one admin row. These deferred constraint triggers check, at commit,
+-- that every group touched in the transaction has exactly one admin row and
+-- that it belongs to `groups.admin_id`. The functions keep them in sync; this
+-- makes a future path that forgets (e.g. account deletion, WF-114) fail loudly
+-- instead of leaving a group with no admin or two versions of the truth.
+-- Deferred, because a transfer or a new group needs several statements.
+-- ---------------------------------------------------------------------------
+create function private.assert_group_admin_in_sync(group_id uuid) returns void
+language plpgsql
+stable
+set search_path = ''
+as $$
+declare
+  group_admin uuid;
+  admin_member uuid;
+begin
+  select g.admin_id into group_admin
+  from public.groups g
+  where g.id = assert_group_admin_in_sync.group_id;
+  if not found then
+    return; -- the group was deleted
+  end if;
+
+  select m.user_id into admin_member
+  from public.group_members m
+  where m.group_id = assert_group_admin_in_sync.group_id
+    and m.role = 'admin';
+
+  if admin_member is distinct from group_admin then
+    raise exception 'Group % must have exactly one admin member, matching groups.admin_id',
+      assert_group_admin_in_sync.group_id
+      using errcode = '23514';
+  end if;
+end;
+$$;
+
+revoke all on function private.assert_group_admin_in_sync(uuid) from public;
+
+create function private.group_admin_in_sync_trigger() returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_table_name = 'groups' then
+    perform private.assert_group_admin_in_sync(new.id);
+    return null;
+  end if;
+  if tg_op in ('UPDATE', 'DELETE') then
+    perform private.assert_group_admin_in_sync(old.group_id);
+  end if;
+  if tg_op in ('INSERT', 'UPDATE') then
+    perform private.assert_group_admin_in_sync(new.group_id);
+  end if;
+  return null;
+end;
+$$;
+
+revoke all on function private.group_admin_in_sync_trigger() from public;
+
+create constraint trigger groups_admin_in_sync
+  after insert or update of admin_id on public.groups
+  deferrable initially deferred
+  for each row execute function private.group_admin_in_sync_trigger();
+
+-- Only admin rows can break the invariant (a plain member's row is irrelevant
+-- to it), so the member-row triggers skip everything else: joins and leaves
+-- of ordinary members cost nothing extra.
+create constraint trigger group_members_admin_in_sync_insert
+  after insert on public.group_members
+  deferrable initially deferred
+  for each row when (new.role = 'admin')
+  execute function private.group_admin_in_sync_trigger();
+
+create constraint trigger group_members_admin_in_sync_update
+  after update on public.group_members
+  deferrable initially deferred
+  for each row when (old.role = 'admin' or new.role = 'admin')
+  execute function private.group_admin_in_sync_trigger();
+
+create constraint trigger group_members_admin_in_sync_delete
+  after delete on public.group_members
+  deferrable initially deferred
+  for each row when (old.role = 'admin')
+  execute function private.group_admin_in_sync_trigger();
+
+-- ---------------------------------------------------------------------------
+-- Internal helpers (private schema: clients can't call them).
+-- ---------------------------------------------------------------------------
+
+-- Reused from earlier migrations (WF-040/042): private.require_user() (the
+-- caller's users.id, or WF001 "No account for this sign-in"),
+-- private.check_tier(integer) (22023 "tier must be 1, 2 or 3") and
+-- private.is_blocked(a, b) (a block in either direction, D43).
+
+-- A group name without surrounding spaces, 1–60 characters.
+create function private.clean_group_name(name text) returns text
+language plpgsql
+immutable
+set search_path = ''
+as $$
+declare
+  cleaned text := btrim(name);
+begin
+  if cleaned is null or char_length(cleaned) not between 1 and 60 then
+    raise exception 'Group name must be 1 to 60 characters' using errcode = '22023';
+  end if;
+  return cleaned;
+end;
+$$;
+
+revoke all on function private.clean_group_name(text) from public;
+
+-- An optional emoji (null or blank = none), at most 16 characters. It is
+-- stored as plain text; clients render it as text, never as HTML.
+create function private.clean_group_emoji(emoji text) returns text
+language plpgsql
+immutable
+set search_path = ''
+as $$
+declare
+  cleaned text := nullif(btrim(emoji), '');
+begin
+  if cleaned is not null and char_length(cleaned) > 16 then
+    raise exception 'Emoji must be at most 16 characters' using errcode = '22023';
+  end if;
+  return cleaned;
+end;
+$$;
+
+revoke all on function private.clean_group_emoji(text) from public;
+
+-- Locks the group row (FOR UPDATE) and returns it. Every function that changes
+-- a group's membership, permissions or invites calls this first, before
+-- checking anything, so concurrent changes to one group run one after the
+-- other and each sees the other's committed result (the member cap relies on
+-- this). Always lock the group before any invite row, so there is a single
+-- lock order.
+create function private.lock_group(group_id uuid) returns public.groups
+language plpgsql
+volatile
+set search_path = ''
+as $$
+declare
+  g public.groups;
+begin
+  select * into g
+  from public.groups gr
+  where gr.id = lock_group.group_id
+  for update;
+  if not found then
+    raise exception 'Group not found' using errcode = 'P0002';
+  end if;
+  return g;
+end;
+$$;
+
+revoke all on function private.lock_group(uuid) from public;
+
+-- The actor's membership row, after checking they may act on the group:
+--   'member'        any member;
+--   'admin'         the admin only;
+--   'invite', 'manageMembers', 'editGroup', 'groupPing' (FR-SOC-8, named as in
+--                   GROUP_PERMISSIONS in @whosfree/shared): the admin, or a
+--                   member whose column is true.
+-- A non-member gets "Group not found", whether or not the group exists.
+create function private.authorize_group(group_id uuid, actor uuid, permission text)
+returns public.group_members
+language plpgsql
+stable
+set search_path = ''
+as $$
+declare
+  m public.group_members;
+  allowed boolean;
+begin
+  select * into m
+  from public.group_members gm
+  where gm.group_id = authorize_group.group_id
+    and gm.user_id = authorize_group.actor;
+  if not found then
+    raise exception 'Group not found' using errcode = 'P0002';
+  end if;
+
+  allowed := case permission
+    when 'member' then true
+    when 'admin' then m.role = 'admin'
+    when 'invite' then m.role = 'admin' or m.can_invite
+    when 'manageMembers' then m.role = 'admin' or m.can_manage_members
+    when 'editGroup' then m.role = 'admin' or m.can_edit_group
+    when 'groupPing' then m.role = 'admin' or m.can_group_ping
+  end;
+  if allowed is null then
+    raise exception 'Unknown group permission: %', permission using errcode = '22023';
+  end if;
+  if not allowed then
+    raise exception 'Not allowed' using errcode = '42501';
+  end if;
+  return m;
+end;
+$$;
+
+revoke all on function private.authorize_group(uuid, uuid, text) from public;
+
+-- ---------------------------------------------------------------------------
+-- create_group(name, emoji, tier): creates a group; the caller becomes its
+-- admin with every permission, and their visibility rule for the group is
+-- created with the tier they chose (FR-VIS-1, D20: T1 by default).
+-- max_members and join_mode take their column defaults (20, 'open'); clients
+-- can't set them (NFR-SCALE-4: the cap is raised per group by the operator).
+-- ---------------------------------------------------------------------------
+create function public.create_group(name text, emoji text default null, tier integer default 1)
+returns uuid
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid := private.require_user();
+  clean_name text := private.clean_group_name(create_group.name);
+  clean_emoji text := private.clean_group_emoji(create_group.emoji);
+  chosen_tier smallint := private.check_tier(create_group.tier);
+  new_group uuid;
+begin
+  -- NFR-SEC-9: at most 10 new groups per user per day. Plenty for real use
+  -- (clubs, flats, study groups), and it stops scripted group spam. The unit
+  -- is only used if the group is actually created (the counter rolls back
+  -- with a failed call).
+  perform private.consume_rate_limit(actor, 'create_group', 10, interval '1 day');
+
+  insert into public.groups (name, emoji, admin_id)
+  values (clean_name, clean_emoji, actor)
+  returning groups.id into new_group;
+
+  insert into public.group_members (
+    group_id, user_id, role, can_invite, can_manage_members, can_edit_group, can_group_ping
+  )
+  values (new_group, actor, 'admin', true, true, true, true);
+
+  insert into public.visibility_rules (owner_id, target_type, target_id, tier)
+  values (actor, 'group', new_group, chosen_tier);
+
+  return new_group;
+end;
+$$;
+
+comment on function public.create_group(text, text, integer) is
+  'WF-043: creates a group; the caller becomes its admin and their group visibility rule gets the chosen tier (default T1).';
+
+revoke all on function public.create_group(text, text, integer)
+  from public, anon, authenticated, service_role;
+grant execute on function public.create_group(text, text, integer) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- update_group(group_id, name, emoji): renames the group and sets its emoji
+-- (null = no emoji). Needs editGroup (or admin).
+-- ---------------------------------------------------------------------------
+create function public.update_group(group_id uuid, name text, emoji text)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid := private.require_user();
+  clean_name text := private.clean_group_name(update_group.name);
+  clean_emoji text := private.clean_group_emoji(update_group.emoji);
+begin
+  perform private.lock_group(update_group.group_id);
+  perform private.authorize_group(update_group.group_id, actor, 'editGroup');
+
+  update public.groups g
+  set name = clean_name, emoji = clean_emoji
+  where g.id = update_group.group_id;
+end;
+$$;
+
+comment on function public.update_group(uuid, text, text) is
+  'WF-043/044: renames a group and sets its emoji. Admin or editGroup.';
+
+revoke all on function public.update_group(uuid, text, text)
+  from public, anon, authenticated, service_role;
+grant execute on function public.update_group(uuid, text, text) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- transfer_group_admin(group_id, new_admin_id): the admin hands the role to
+-- another member (FR-SOC-7). The new admin gets every permission; the old
+-- admin becomes a member with the D26 defaults (the new admin can grant more).
+-- groups.admin_id moves with the role (checked at commit by the trigger).
+--
+-- Works on membership only, whatever blocks exist, so its outcome never
+-- reveals a block.
+-- ---------------------------------------------------------------------------
+create function public.transfer_group_admin(group_id uuid, new_admin_id uuid)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid := private.require_user();
+begin
+  perform private.lock_group(transfer_group_admin.group_id);
+  perform private.authorize_group(transfer_group_admin.group_id, actor, 'admin');
+
+  if new_admin_id is null or new_admin_id = actor then
+    raise exception 'Choose another member to become admin' using errcode = '22023';
+  end if;
+  if not exists (
+    select 1
+    from public.group_members m
+    where m.group_id = transfer_group_admin.group_id
+      and m.user_id = transfer_group_admin.new_admin_id
+  ) then
+    raise exception 'Member not found' using errcode = 'P0002';
+  end if;
+
+  -- Demote first: at most one admin row may exist at any moment.
+  update public.group_members m
+  set role = 'member',
+      can_invite = default,
+      can_manage_members = default,
+      can_edit_group = default,
+      can_group_ping = default
+  where m.group_id = transfer_group_admin.group_id
+    and m.user_id = actor;
+
+  update public.group_members m
+  set role = 'admin',
+      can_invite = true,
+      can_manage_members = true,
+      can_edit_group = true,
+      can_group_ping = true
+  where m.group_id = transfer_group_admin.group_id
+    and m.user_id = transfer_group_admin.new_admin_id;
+
+  update public.groups g
+  set admin_id = transfer_group_admin.new_admin_id
+  where g.id = transfer_group_admin.group_id;
+end;
+$$;
+
+comment on function public.transfer_group_admin(uuid, uuid) is
+  'WF-043: the admin hands the role to another member; the old admin becomes a member with default permissions.';
+
+revoke all on function public.transfer_group_admin(uuid, uuid)
+  from public, anon, authenticated, service_role;
+grant execute on function public.transfer_group_admin(uuid, uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- delete_group(group_id): admin only (FR-SOC-9). Members and invites go with
+-- the group (on delete cascade); group visibility rules have no foreign key,
+-- so they are deleted here.
+-- ---------------------------------------------------------------------------
+create function public.delete_group(group_id uuid)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid := private.require_user();
+begin
+  perform private.lock_group(delete_group.group_id);
+  perform private.authorize_group(delete_group.group_id, actor, 'admin');
+
+  delete from public.visibility_rules r
+  where r.target_type = 'group'
+    and r.target_id = delete_group.group_id;
+
+  delete from public.groups g
+  where g.id = delete_group.group_id;
+end;
+$$;
+
+comment on function public.delete_group(uuid) is
+  'WF-043: deletes a group, its memberships, invites and group visibility rules. Admin only.';
+
+revoke all on function public.delete_group(uuid)
+  from public, anon, authenticated, service_role;
+grant execute on function public.delete_group(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- list_my_groups(): the caller's groups, with their own role, effective
+-- permissions (the admin's are all true) and the tier they chose for the
+-- group (no rule = T1, as in resolve_tier).
+--
+-- member_count counts the members the caller can see: people they have
+-- blocked or who have blocked them are left out, as in get_group_members, so
+-- the count always matches the member list.
+-- ---------------------------------------------------------------------------
+create function public.list_my_groups()
+returns table (
+  id uuid,
+  name text,
+  emoji text,
+  role text,
+  member_count integer,
+  max_members integer,
+  my_tier smallint,
+  can_invite boolean,
+  can_manage_members boolean,
+  can_edit_group boolean,
+  can_group_ping boolean,
+  joined_at timestamptz
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  viewer uuid := private.require_user();
+begin
+  return query
+    select
+      g.id,
+      g.name,
+      g.emoji,
+      me.role,
+      (
+        select count(*)::integer
+        from public.group_members o
+        where o.group_id = g.id
+          and not private.is_blocked(viewer, o.user_id)
+      ),
+      g.max_members,
+      coalesce(r.tier, 1::smallint),
+      me.role = 'admin' or me.can_invite,
+      me.role = 'admin' or me.can_manage_members,
+      me.role = 'admin' or me.can_edit_group,
+      me.role = 'admin' or me.can_group_ping,
+      me.joined_at
+    from public.group_members me
+    join public.groups g on g.id = me.group_id
+    left join public.visibility_rules r
+      on r.owner_id = viewer
+     and r.target_type = 'group'
+     and r.target_id = g.id
+    where me.user_id = viewer
+    order by me.joined_at, g.id;
+end;
+$$;
+
+comment on function public.list_my_groups() is
+  'WF-043: the caller''s groups with their role, effective permissions, chosen tier and visible member count.';
+
+revoke all on function public.list_my_groups()
+  from public, anon, authenticated, service_role;
+grant execute on function public.list_my_groups() to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- get_group_members(group_id): the member list, for members only, with each
+-- member's public profile (name, handle, avatar), role and effective
+-- permissions. Admin first, then by join time.
+--
+-- Blocks (FR-SOC-6, D43): members the caller has blocked, or who have blocked
+-- the caller, are left out, with no placeholder. Nothing about schedules or
+-- the tier each member chose is returned; schedules are only readable through
+-- events_for_viewer (FR-SOC-10).
+-- ---------------------------------------------------------------------------
+create function public.get_group_members(group_id uuid)
+returns table (
+  user_id uuid,
+  name text,
+  handle text,
+  avatar_url text,
+  role text,
+  can_invite boolean,
+  can_manage_members boolean,
+  can_edit_group boolean,
+  can_group_ping boolean,
+  joined_at timestamptz,
+  is_me boolean
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  viewer uuid := private.require_user();
+begin
+  perform private.authorize_group(get_group_members.group_id, viewer, 'member');
+
+  return query
+    select
+      m.user_id,
+      u.name,
+      u.handle,
+      u.avatar_url,
+      m.role,
+      m.role = 'admin' or m.can_invite,
+      m.role = 'admin' or m.can_manage_members,
+      m.role = 'admin' or m.can_edit_group,
+      m.role = 'admin' or m.can_group_ping,
+      m.joined_at,
+      m.user_id = viewer
+    from public.group_members m
+    join public.users u on u.id = m.user_id
+    where m.group_id = get_group_members.group_id
+      and not private.is_blocked(viewer, m.user_id)
+    order by m.role = 'admin' desc, m.joined_at, m.user_id;
+end;
+$$;
+
+comment on function public.get_group_members(uuid) is
+  'WF-043: a group''s members with public profiles, hiding anyone blocked either way. Members only.';
+
+revoke all on function public.get_group_members(uuid)
+  from public, anon, authenticated, service_role;
+grant execute on function public.get_group_members(uuid) to authenticated;
+
+-- ============================================================================================
+-- 20261001200100_invites.sql
+-- ============================================================================================
+
+-- WF-045: invite links, the public invite summary for /i/[code], and the join
+-- flow (PRD §6.3 FR-SOC-3, FR-SOC-5, FR-SOC-11, FR-SOC-13; §6.1 FR-WEB-3;
+-- FR-VIS-1; §8.5 "Joining a group"; §9 `invites`; D17, D20, D26, D41).
+--
+-- Conventions as in 20261001200000_groups.sql: every write is a security
+-- definer function that takes the actor from current_user_id(), locks the
+-- group row first, and checks permissions on the server.
+
+-- ---------------------------------------------------------------------------
+-- invites
+--
+-- `group_id` is nullable so friend invite links (WF-042) can share this table
+-- later; until they exist, `invites_group_required` keeps every invite a group
+-- invite, and every function here treats an invite without a group as not
+-- found. Dropping that constraint is the only schema change friend invites
+-- need here.
+--
+-- `code` is 128 random bits, base64url-encoded (22 characters, no padding):
+-- unguessable, so /i/[code] can't be enumerated. The unique constraint is the
+-- index lookups use.
+-- ---------------------------------------------------------------------------
+create table public.invites (
+  id uuid primary key default gen_random_uuid(),
+  code text not null check (code ~ '^[A-Za-z0-9_-]{22}$'),
+  group_id uuid references public.groups (id) on delete cascade,
+  -- Who created the link. The invite page shows their display name.
+  inviter_id uuid not null references public.users (id) on delete cascade,
+  expires_at timestamptz,
+  max_uses integer check (max_uses is null or max_uses between 1 and 1000),
+  uses integer not null default 0 check (uses >= 0),
+  revoked boolean not null default false,
+  created_at timestamptz not null default now(),
+  constraint invites_code_key unique (code),
+  constraint invites_uses_within_max check (max_uses is null or uses <= max_uses),
+  constraint invites_group_required check (group_id is not null)
+);
+create index invites_group_id_idx on public.invites (group_id);
+create index invites_inviter_id_idx on public.invites (inviter_id);
+
+comment on table public.invites is
+  'Invite links (PRD §9, FR-SOC-3). Not readable by clients: codes are listed by list_group_invites and resolved by get_invite_summary / join_group.';
+
+-- No client privileges at all, and RLS on with no policies: codes are
+-- secrets, so they are only returned by the functions below, which check the
+-- caller may see them.
+alter table public.invites enable row level security;
+revoke all on table public.invites from anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- The invite shape returned by create/regenerate/list (a named type, because
+-- the input arguments `expires_at` and `max_uses` would clash with OUT
+-- parameters of the same name). It leaves out the group and the inviter's id.
+-- ---------------------------------------------------------------------------
+create type public.group_invite as (
+  id uuid,
+  code text,
+  expires_at timestamptz,
+  max_uses integer,
+  uses integer,
+  created_at timestamptz,
+  created_by_me boolean
+);
+
+-- ---------------------------------------------------------------------------
+-- private.new_invite_code(): 128 bits from gen_random_uuid(), which draws on
+-- Postgres's cryptographically strong random source (pg_strong_random). A
+-- version-4 UUID has 122 random bits: its version nibble (hex digit 13) is
+-- always 4 and its variant nibble (digit 17) has only 2 random bits, so both
+-- are dropped, leaving 30 random hex digits per UUID. Two UUIDs give 60; the
+-- first 32 (128 bits) are encoded as base64url without padding. Core
+-- Postgres only, so it doesn't depend on pgcrypto's schema.
+-- ---------------------------------------------------------------------------
+create function private.new_invite_code() returns text
+language sql
+volatile
+set search_path = ''
+as $$
+  select translate(
+    rtrim(
+      encode(
+        decode(
+          left(
+            (
+              select string_agg(
+                overlay(
+                  overlay(replace(gen_random_uuid()::text, '-', '') placing '' from 17 for 1)
+                  placing '' from 13 for 1
+                ),
+                ''
+              )
+              from generate_series(1, 2)
+            ),
+            32
+          ),
+          'hex'
+        ),
+        'base64'
+      ),
+      '='
+    ),
+    '+/',
+    '-_'
+  )
+$$;
+
+revoke all on function private.new_invite_code() from public;
+
+-- ---------------------------------------------------------------------------
+-- private.invite_status(invite): what the invite can do right now.
+--   'revoked'  revoked, or its inviter is no longer a member allowed to invite
+--              (they left, were removed or lost `invite`; those paths also set
+--              `revoked`, this is the safety net);
+--   'expired'  past expires_at;
+--   'used_up'  uses reached max_uses;
+--   'full'     the group has max_members members (FR-SOC-11);
+--   'valid'    otherwise.
+-- Null for an invite that isn't a group invite.
+-- ---------------------------------------------------------------------------
+create function private.invite_status(invite public.invites) returns text
+language sql
+stable
+set search_path = ''
+as $$
+  select case
+    when invite.group_id is null then null
+    when invite.revoked
+      or not exists (
+        select 1
+        from public.group_members m
+        where m.group_id = invite.group_id
+          and m.user_id = invite.inviter_id
+          and (m.role = 'admin' or m.can_invite)
+      )
+      then 'revoked'
+    when invite.expires_at is not null and invite.expires_at <= now() then 'expired'
+    when invite.max_uses is not null and invite.uses >= invite.max_uses then 'used_up'
+    when (select count(*) from public.group_members m where m.group_id = invite.group_id)
+      >= (select g.max_members from public.groups g where g.id = invite.group_id)
+      then 'full'
+    else 'valid'
+  end
+$$;
+
+revoke all on function private.invite_status(public.invites) from public;
+
+-- The group_invite shape of an invite, as seen by `viewer`.
+create function private.to_group_invite(invite public.invites, viewer uuid)
+returns public.group_invite
+language sql
+immutable
+set search_path = ''
+as $$
+  select row(
+    invite.id,
+    invite.code,
+    invite.expires_at,
+    invite.max_uses,
+    invite.uses,
+    invite.created_at,
+    invite.inviter_id = viewer
+  )::public.group_invite
+$$;
+
+revoke all on function private.to_group_invite(public.invites, uuid) from public;
+
+-- Inserts a new group invite from `inviter` (already authorised by the caller).
+create function private.insert_group_invite(
+  group_id uuid,
+  inviter uuid,
+  expires_at timestamptz,
+  max_uses integer
+)
+returns public.invites
+language plpgsql
+volatile
+set search_path = ''
+as $$
+declare
+  created public.invites;
+begin
+  if expires_at is not null and expires_at <= now() then
+    raise exception 'Invite expiry must be in the future' using errcode = '22023';
+  end if;
+  if max_uses is not null and max_uses not between 1 and 1000 then
+    raise exception 'Invite max uses must be between 1 and 1000' using errcode = '22023';
+  end if;
+
+  insert into public.invites (code, group_id, inviter_id, expires_at, max_uses)
+  values (
+    private.new_invite_code(),
+    insert_group_invite.group_id,
+    insert_group_invite.inviter,
+    insert_group_invite.expires_at,
+    insert_group_invite.max_uses
+  )
+  returning * into created;
+  return created;
+end;
+$$;
+
+revoke all on function private.insert_group_invite(uuid, uuid, timestamptz, integer) from public;
+
+-- Finds an invite by id and locks its group, for revoke/regenerate. Callers
+-- that aren't members of the invite's group get "Invite not found", the same
+-- as for an id that doesn't exist. Returns the invite, re-read under the lock.
+create function private.lock_invite_for_member(invite_id uuid, actor uuid)
+returns public.invites
+language plpgsql
+volatile
+set search_path = ''
+as $$
+declare
+  invite_group uuid;
+  invite public.invites;
+begin
+  select i.group_id into invite_group
+  from public.invites i
+  where i.id = lock_invite_for_member.invite_id;
+  if invite_group is null then
+    raise exception 'Invite not found' using errcode = 'P0002';
+  end if;
+
+  -- Group first, then the invite: the one lock order.
+  perform private.lock_group(invite_group);
+  if not exists (
+    select 1
+    from public.group_members m
+    where m.group_id = invite_group
+      and m.user_id = lock_invite_for_member.actor
+  ) then
+    raise exception 'Invite not found' using errcode = 'P0002';
+  end if;
+
+  select * into invite
+  from public.invites i
+  where i.id = lock_invite_for_member.invite_id
+  for update;
+  return invite;
+end;
+$$;
+
+revoke all on function private.lock_invite_for_member(uuid, uuid) from public;
+
+-- Who may revoke or regenerate an invite: the admin (FR-SOC-9), or the member
+-- who created it while they still hold `invite`.
+create function private.authorize_invite_change(invite public.invites, actor uuid)
+returns void
+language plpgsql
+stable
+set search_path = ''
+as $$
+declare
+  m public.group_members := private.authorize_group(invite.group_id, actor, 'member');
+begin
+  if m.role = 'admin' then
+    return;
+  end if;
+  if invite.inviter_id = actor and m.can_invite then
+    return;
+  end if;
+  raise exception 'Not allowed' using errcode = '42501';
+end;
+$$;
+
+revoke all on function private.authorize_invite_change(public.invites, uuid) from public;
+
+-- ---------------------------------------------------------------------------
+-- create_group_invite(group_id, expires_at, max_uses): a new invite link for
+-- the group. Needs `invite` (or admin). Both limits are optional.
+-- ---------------------------------------------------------------------------
+create function public.create_group_invite(
+  group_id uuid,
+  expires_at timestamptz default null,
+  max_uses integer default null
+)
+returns public.group_invite
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid := private.require_user();
+  created public.invites;
+begin
+  perform private.lock_group(create_group_invite.group_id);
+  perform private.authorize_group(create_group_invite.group_id, actor, 'invite');
+
+  -- NFR-SEC-9: at most 30 new invite links per user per day, shared with
+  -- regenerate_group_invite (same action). A group needs a handful of links;
+  -- this stops a member minting codes in bulk.
+  perform private.consume_rate_limit(actor, 'group_invite', 30, interval '1 day');
+
+  created := private.insert_group_invite(
+    create_group_invite.group_id,
+    actor,
+    create_group_invite.expires_at,
+    create_group_invite.max_uses
+  );
+  return private.to_group_invite(created, actor);
+end;
+$$;
+
+comment on function public.create_group_invite(uuid, timestamptz, integer) is
+  'WF-045: creates an invite link for a group, with optional expiry and max uses. Admin or invite permission.';
+
+revoke all on function public.create_group_invite(uuid, timestamptz, integer)
+  from public, anon, authenticated, service_role;
+grant execute on function public.create_group_invite(uuid, timestamptz, integer) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- revoke_group_invite(invite_id): the admin can revoke any of the group's
+-- invites; a member can revoke the ones they created while they hold
+-- `invite`. Revoking twice is a no-op.
+-- ---------------------------------------------------------------------------
+create function public.revoke_group_invite(invite_id uuid)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid := private.require_user();
+  invite public.invites := private.lock_invite_for_member(revoke_group_invite.invite_id, actor);
+begin
+  perform private.authorize_invite_change(invite, actor);
+
+  update public.invites i
+  set revoked = true
+  where i.id = invite.id;
+end;
+$$;
+
+comment on function public.revoke_group_invite(uuid) is
+  'WF-045: revokes an invite link. Admin, or the member who created it.';
+
+revoke all on function public.revoke_group_invite(uuid)
+  from public, anon, authenticated, service_role;
+grant execute on function public.revoke_group_invite(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- regenerate_group_invite(invite_id): revokes the invite and issues a new
+-- code from the caller, with the same max_uses (uses start again at 0) and
+-- the same validity period starting now (a 7-day link gives a new 7-day
+-- link). Same permission as revoking. Works on an invite that has already
+-- expired, been used up or been revoked.
+-- ---------------------------------------------------------------------------
+create function public.regenerate_group_invite(invite_id uuid)
+returns public.group_invite
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid := private.require_user();
+  previous public.invites := private.lock_invite_for_member(regenerate_group_invite.invite_id, actor);
+  created public.invites;
+begin
+  perform private.authorize_invite_change(previous, actor);
+
+  -- NFR-SEC-9: counts towards the same 30-a-day invite allowance as
+  -- create_group_invite.
+  perform private.consume_rate_limit(actor, 'group_invite', 30, interval '1 day');
+
+  update public.invites i
+  set revoked = true
+  where i.id = previous.id;
+
+  created := private.insert_group_invite(
+    previous.group_id,
+    actor,
+    now() + (previous.expires_at - previous.created_at),
+    previous.max_uses
+  );
+  return private.to_group_invite(created, actor);
+end;
+$$;
+
+comment on function public.regenerate_group_invite(uuid) is
+  'WF-045: revokes an invite link and issues a new code with the same limits. Admin, or the member who created it.';
+
+revoke all on function public.regenerate_group_invite(uuid)
+  from public, anon, authenticated, service_role;
+grant execute on function public.regenerate_group_invite(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- list_group_invites(group_id): the group's active invites (not revoked,
+-- expired or used up; a full group's invites are still listed), newest first.
+-- Needs `invite` (or admin): invite links are there to be shared, so anyone
+-- who may invite sees all of the group's links.
+-- ---------------------------------------------------------------------------
+create function public.list_group_invites(group_id uuid)
+returns setof public.group_invite
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid := private.require_user();
+begin
+  perform private.authorize_group(list_group_invites.group_id, actor, 'invite');
+
+  return query
+    select gi.*
+    from public.invites i
+    cross join lateral private.to_group_invite(i, actor) gi
+    where i.group_id = list_group_invites.group_id
+      and private.invite_status(i) in ('valid', 'full')
+    order by i.created_at desc, i.id;
+end;
+$$;
+
+comment on function public.list_group_invites(uuid) is
+  'WF-045: a group''s active invite links. Admin or invite permission.';
+
+revoke all on function public.list_group_invites(uuid)
+  from public, anon, authenticated, service_role;
+grant execute on function public.list_group_invites(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- get_invite_summary(code): what the public invite page /i/[code] may show,
+-- to anyone, signed in or not (FR-WEB-3).
+--
+-- Returns no rows for a code that doesn't exist or isn't well formed (the
+-- page shows a generic "not found"). Otherwise one row:
+--   status        'valid', 'full', 'expired', 'used_up' or 'revoked';
+--   inviter_name  the inviter's display name   } only while the link still
+--   group_name    the group's name             } works ('valid' or 'full');
+--   group_emoji   the group's emoji (nullable) } null once it's revoked,
+--   member_count  how many members it has      } expired or used up.
+-- Nothing else: no ids, handles, avatars, member names or schedules. A dead
+-- link stops describing the group, because it may have been revoked
+-- precisely because it reached the wrong people.
+--
+-- member_count is the true count (it decides "full"), not filtered by blocks:
+-- there may be no viewer, and the page shows the same thing to everyone.
+--
+-- TODO(NFR-SEC-9): callable by anon, so there is no user id to limit on;
+-- limit it per IP on the web route (/i/[code]). Guessing codes is not a
+-- practical attack (2^128 codes).
+-- ---------------------------------------------------------------------------
+create function public.get_invite_summary(code text)
+returns table (
+  status text,
+  inviter_name text,
+  group_name text,
+  group_emoji text,
+  member_count integer
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  invite public.invites;
+  invite_state text;
+begin
+  if code is null or code !~ '^[A-Za-z0-9_-]{22}$' then
+    return;
+  end if;
+
+  select * into invite
+  from public.invites i
+  where i.code = get_invite_summary.code;
+  if not found then
+    return;
+  end if;
+
+  invite_state := private.invite_status(invite);
+  if invite_state is null then
+    return; -- not a group invite
+  end if;
+
+  if invite_state not in ('valid', 'full') then
+    return query select invite_state, null::text, null::text, null::text, null::integer;
+    return;
+  end if;
+
+  return query
+    select
+      invite_state,
+      u.name,
+      g.name,
+      g.emoji,
+      (select count(*)::integer from public.group_members m where m.group_id = g.id)
+    from public.groups g
+    join public.users u on u.id = invite.inviter_id
+    where g.id = invite.group_id;
+end;
+$$;
+
+comment on function public.get_invite_summary(text) is
+  'WF-045: the public summary for /i/[code]: status, and while the link works the inviter''s name, group name, emoji and member count. No rows for an unknown code.';
+
+revoke all on function public.get_invite_summary(text)
+  from public, anon, authenticated, service_role;
+grant execute on function public.get_invite_summary(text) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- join_group(code, tier): joins the invite's group, in one transaction
+-- (PRD §8.5):
+--   1. lock the group row, then the invite row;
+--   2. already a member?  -> "You are already a member of this group" (the
+--      error's DETAIL is the group id, so the client can open the group);
+--   3. the invite: revoked / expired / used up -> its own error;
+--   4. join_mode 'approval' (FR-SOC-13, a Could) -> "not supported yet"; no
+--      member row is created. Nothing can set this mode yet;
+--   5. the cap: members >= groups.max_members -> "This group is full";
+--   5a. the rate limit (20 joins a day, PT429);
+--   6. insert the member row with the D26 default permissions, and the
+--      caller's visibility rule for the group with the chosen tier (FR-VIS-1,
+--      D20: T1 by default);
+--   7. count the use.
+-- Returns the group id.
+--
+-- Concurrency: the count in step 5 runs after the lock in step 1, so two
+-- joins racing for the last place run one after the other and the second sees
+-- the first's member row. The same lock serialises `uses`.
+--
+-- Joining never creates a friendship (FR-SOC-5).
+--
+-- Blocks: a join is never refused because of a block. Refusing would tell
+-- the joiner that someone in the group blocked them (FR-SOC-6), and the
+-- inviter may be someone else entirely. Instead, blocks keep applying inside
+-- the group: resolve_tier gives no access either way, and get_group_members
+-- hides each from the other.
+-- ---------------------------------------------------------------------------
+create function public.join_group(code text, tier integer default 1)
+returns uuid
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid := private.require_user();
+  chosen_tier smallint := private.check_tier(join_group.tier);
+  invite_group uuid;
+  grp public.groups;
+  invite public.invites;
+  invite_state text;
+begin
+  if code is not null and code ~ '^[A-Za-z0-9_-]{22}$' then
+    select i.group_id into invite_group
+    from public.invites i
+    where i.code = join_group.code;
+  end if;
+  if invite_group is null then
+    raise exception 'Invite not found' using errcode = 'P0002';
+  end if;
+
+  grp := private.lock_group(invite_group);
+  select * into invite
+  from public.invites i
+  where i.code = join_group.code
+    and i.group_id = grp.id
+  for update;
+  if not found then
+    raise exception 'Invite not found' using errcode = 'P0002';
+  end if;
+
+  if exists (
+    select 1
+    from public.group_members m
+    where m.group_id = grp.id
+      and m.user_id = actor
+  ) then
+    raise exception 'You are already a member of this group'
+      using errcode = 'P0001', detail = grp.id::text;
+  end if;
+
+  invite_state := private.invite_status(invite);
+  if invite_state = 'revoked' then
+    raise exception 'This invite has been revoked' using errcode = 'P0001';
+  elsif invite_state = 'expired' then
+    raise exception 'This invite has expired' using errcode = 'P0001';
+  elsif invite_state = 'used_up' then
+    raise exception 'This invite has reached its maximum number of uses' using errcode = 'P0001';
+  end if;
+
+  if grp.join_mode <> 'open' then
+    raise exception 'Joining groups that need approval is not supported yet'
+      using errcode = '0A000';
+  end if;
+
+  if (select count(*) from public.group_members m where m.group_id = grp.id) >= grp.max_members then
+    raise exception 'This group is full' using errcode = 'P0001';
+  end if;
+
+  -- NFR-SEC-9: at most 20 group joins per user per day. Only successful joins
+  -- count (a failed call rolls the counter back), so this limits how fast one
+  -- account can spread into groups, not how many codes it can try; codes are
+  -- unguessable anyway.
+  perform private.consume_rate_limit(actor, 'join_group', 20, interval '1 day');
+
+  -- Role and permissions take the column defaults: member, D26.
+  insert into public.group_members (group_id, user_id)
+  values (grp.id, actor);
+
+  -- A rule left behind earlier would grant nothing (resolve_tier only reads
+  -- rules while both are members), but replace it so the chosen tier applies.
+  insert into public.visibility_rules (owner_id, target_type, target_id, tier)
+  values (actor, 'group', grp.id, chosen_tier)
+  on conflict (owner_id, target_type, target_id) do update set tier = excluded.tier;
+
+  update public.invites i
+  set uses = i.uses + 1
+  where i.id = invite.id;
+
+  return grp.id;
+end;
+$$;
+
+comment on function public.join_group(text, integer) is
+  'WF-045: joins a group through an invite code with the chosen tier (default T1), in one transaction. Checks the invite and the member cap under a lock on the group.';
+
+revoke all on function public.join_group(text, integer)
+  from public, anon, authenticated, service_role;
+grant execute on function public.join_group(text, integer) to authenticated;
+
+-- ============================================================================================
+-- 20261001200200_group_member_permissions.sql
+-- ============================================================================================
+
+-- WF-044: group member permissions and removing members (PRD §6.3 FR-SOC-8,
+-- FR-SOC-9, FR-SOC-10; J7; D26).
+--
+-- The four permissions are the group_members columns can_invite,
+-- can_manage_members, can_edit_group and can_group_ping (`invite`,
+-- `manageMembers`, `editGroup`, `groupPing` in @whosfree/shared). New members
+-- get the D26 defaults from the column defaults (join_group). The admin always
+-- holds every permission (FR-SOC-9): private.authorize_group treats the admin
+-- as allowed whatever the columns say, and their columns can't be changed.
+-- `can_group_ping` is stored for group pings (WF-096); nothing reads it yet.
+--
+-- Conventions as in 20261001200000_groups.sql.
+
+-- ---------------------------------------------------------------------------
+-- private.drop_membership(group_id, user_id): ends a membership, for removal
+-- (here) and leaving (WF-047). Visibility ends at once, because resolve_tier
+-- only counts groups both people are in now; the member's own group rule is
+-- deleted too, and the invite links they created are revoked so they can't
+-- be used to join a group the inviter is no longer in. Callers lock the group
+-- and authorise first.
+-- ---------------------------------------------------------------------------
+create function private.drop_membership(group_id uuid, user_id uuid) returns void
+language plpgsql
+volatile
+set search_path = ''
+as $$
+begin
+  delete from public.group_members m
+  where m.group_id = drop_membership.group_id
+    and m.user_id = drop_membership.user_id;
+
+  delete from public.visibility_rules r
+  where r.owner_id = drop_membership.user_id
+    and r.target_type = 'group'
+    and r.target_id = drop_membership.group_id;
+
+  update public.invites i
+  set revoked = true
+  where i.group_id = drop_membership.group_id
+    and i.inviter_id = drop_membership.user_id
+    and not i.revoked;
+end;
+$$;
+
+revoke all on function private.drop_membership(uuid, uuid) from public;
+
+-- ---------------------------------------------------------------------------
+-- set_group_member_permissions(group_id, user_id, can_invite,
+-- can_manage_members, can_edit_group, can_group_ping): the admin grants or
+-- revokes permissions for one member (FR-SOC-8). A null argument leaves that
+-- permission as it is. Taking `invite` away also revokes the member's active
+-- invite links for the group.
+-- ---------------------------------------------------------------------------
+create function public.set_group_member_permissions(
+  group_id uuid,
+  user_id uuid,
+  can_invite boolean default null,
+  can_manage_members boolean default null,
+  can_edit_group boolean default null,
+  can_group_ping boolean default null
+)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid := private.require_user();
+  target public.group_members;
+begin
+  perform private.lock_group(set_group_member_permissions.group_id);
+  perform private.authorize_group(set_group_member_permissions.group_id, actor, 'admin');
+
+  select * into target
+  from public.group_members m
+  where m.group_id = set_group_member_permissions.group_id
+    and m.user_id = set_group_member_permissions.user_id;
+  if not found then
+    raise exception 'Member not found' using errcode = 'P0002';
+  end if;
+  if target.role = 'admin' then
+    raise exception 'The admin always holds every permission' using errcode = '22023';
+  end if;
+
+  update public.group_members m
+  set can_invite = coalesce(set_group_member_permissions.can_invite, m.can_invite),
+      can_manage_members =
+        coalesce(set_group_member_permissions.can_manage_members, m.can_manage_members),
+      can_edit_group = coalesce(set_group_member_permissions.can_edit_group, m.can_edit_group),
+      can_group_ping = coalesce(set_group_member_permissions.can_group_ping, m.can_group_ping)
+  where m.id = target.id;
+
+  if set_group_member_permissions.can_invite is false then
+    update public.invites i
+    set revoked = true
+    where i.group_id = set_group_member_permissions.group_id
+      and i.inviter_id = set_group_member_permissions.user_id
+      and not i.revoked;
+  end if;
+end;
+$$;
+
+comment on function public.set_group_member_permissions(uuid, uuid, boolean, boolean, boolean, boolean) is
+  'WF-044: the admin grants or revokes a member''s permissions (null = unchanged). Revoking invite also revokes their invite links.';
+
+revoke all on function public.set_group_member_permissions(uuid, uuid, boolean, boolean, boolean, boolean)
+  from public, anon, authenticated, service_role;
+grant execute on function public.set_group_member_permissions(uuid, uuid, boolean, boolean, boolean, boolean)
+  to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- remove_group_member(group_id, user_id): removes a member. Needs
+-- `manageMembers` (or admin). The admin can never be removed, and a member
+-- leaves with leave_group instead. Like transfer, it works on membership
+-- whatever blocks exist, so its outcome never reveals a block.
+-- ---------------------------------------------------------------------------
+create function public.remove_group_member(group_id uuid, user_id uuid)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid := private.require_user();
+  target public.group_members;
+begin
+  perform private.lock_group(remove_group_member.group_id);
+  perform private.authorize_group(remove_group_member.group_id, actor, 'manageMembers');
+
+  if remove_group_member.user_id = actor then
+    raise exception 'Use leave_group to leave a group' using errcode = '22023';
+  end if;
+
+  select * into target
+  from public.group_members m
+  where m.group_id = remove_group_member.group_id
+    and m.user_id = remove_group_member.user_id;
+  if not found then
+    raise exception 'Member not found' using errcode = 'P0002';
+  end if;
+  if target.role = 'admin' then
+    raise exception 'The admin can''t be removed from the group' using errcode = 'P0001';
+  end if;
+
+  perform private.drop_membership(remove_group_member.group_id, remove_group_member.user_id);
+end;
+$$;
+
+comment on function public.remove_group_member(uuid, uuid) is
+  'WF-044: removes a member (never the admin). Admin or manageMembers.';
+
+revoke all on function public.remove_group_member(uuid, uuid)
+  from public, anon, authenticated, service_role;
+grant execute on function public.remove_group_member(uuid, uuid) to authenticated;
+
+-- ============================================================================================
+-- 20261001200300_leave_group.sql
+-- ============================================================================================
+
+-- WF-047 (leave group only): a member leaves a group (PRD §6.3 FR-SOC-6,
+-- FR-SOC-7). Blocking and removing friends are separate work.
+--
+-- Visibility ends straight away: resolve_tier only counts groups both people
+-- are in now, and private.drop_membership also deletes the leaver's group
+-- visibility rule and revokes the invite links they created.
+
+-- ---------------------------------------------------------------------------
+-- leave_group(group_id): the caller leaves. The admin must transfer the role
+-- first (FR-SOC-7); an admin who is the only member deletes the group instead
+-- (delete_group).
+-- ---------------------------------------------------------------------------
+create function public.leave_group(group_id uuid)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid := private.require_user();
+  me public.group_members;
+begin
+  perform private.lock_group(leave_group.group_id);
+  me := private.authorize_group(leave_group.group_id, actor, 'member');
+
+  if me.role = 'admin' then
+    raise exception 'Transfer the admin role before leaving the group' using errcode = 'P0001';
+  end if;
+
+  perform private.drop_membership(leave_group.group_id, actor);
+end;
+$$;
+
+comment on function public.leave_group(uuid) is
+  'WF-047: the caller leaves a group; visibility ends at once. The admin must transfer the role first.';
+
+revoke all on function public.leave_group(uuid)
+  from public, anon, authenticated, service_role;
+grant execute on function public.leave_group(uuid) to authenticated;
 
 -- ============================================================================================
 -- 20261001300000_ensure_current_user.sql

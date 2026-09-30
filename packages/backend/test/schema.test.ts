@@ -2,6 +2,7 @@
 // make every privilege and security definer function a deliberate, reviewed
 // choice: adding a table, grant or function changes a snapshot below.
 
+import { readFile } from 'node:fs/promises';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   DEFAULT_GROUP_MAX_MEMBERS,
@@ -11,6 +12,7 @@ import {
   SOURCE_TYPES,
   TIERS,
 } from '@whosfree/shared';
+import { GROUP_ERRORS } from '../src/index';
 import { createTestDb, migrationFiles } from './harness/db';
 import type { TestDb } from './harness/db';
 import { addSource, addUser } from './harness/seed';
@@ -43,6 +45,7 @@ describe('migrations', () => {
       'friendships',
       'group_members',
       'groups',
+      'invites',
       'rate_limits',
       'sources',
       'status_overrides',
@@ -176,21 +179,36 @@ const CLIENT_DEFINER_FUNCTIONS = [
   'cancel_friend_request(uuid)',
   'clear_status()',
   'confirm_age(integer)',
+  'create_group(text,text,integer)',
+  'create_group_invite(uuid,timestamp with time zone,integer)',
   'current_user_id()',
   'decline_friend_request(uuid)',
+  'delete_group(uuid)',
   'ensure_current_user(text,text,text)',
   'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
   'find_user_by_handle(text)',
+  'get_group_members(uuid)',
+  'get_invite_summary(text)',
   'get_profile(uuid)',
+  'join_group(text,integer)',
+  'leave_group(uuid)',
   'list_blocked_users()',
   'list_friend_requests()',
   'list_friends()',
+  'list_group_invites(uuid)',
+  'list_my_groups()',
+  'regenerate_group_invite(uuid)',
+  'remove_group_member(uuid,uuid)',
+  'revoke_group_invite(uuid)',
   'send_friend_request(uuid,integer)',
   'send_friend_request_by_handle(text,integer)',
+  'set_group_member_permissions(uuid,uuid,boolean,boolean,boolean,boolean)',
   'set_handle(text)',
   'set_status(text,text,timestamp with time zone)',
+  'transfer_group_admin(uuid,uuid)',
   'unblock_user(uuid)',
   'unfriend(uuid)',
+  'update_group(uuid,text,text)',
 ];
 
 /** Client-callable functions that run as the caller, so RLS applies. `authenticated` only. */
@@ -200,18 +218,33 @@ const CLIENT_INVOKER_FUNCTIONS = [
   'set_day_hours(text,text,text)',
 ];
 
-/** Every function clients can call. */
+/** The only function callable without signing in: the /i/[code] invite page (FR-WEB-3). */
+const ANON_FUNCTIONS = ['get_invite_summary(text)'];
+
+/** Every function signed-in clients can call. */
 const CLIENT_FUNCTIONS = [...CLIENT_DEFINER_FUNCTIONS, ...CLIENT_INVOKER_FUNCTIONS].sort();
 
 /** Internal helpers in `private`: not security definer, not callable by clients. */
 const PRIVATE_FUNCTIONS = [
+  'private.assert_group_admin_in_sync(uuid)',
+  'private.authorize_group(uuid,uuid,text)',
+  'private.authorize_invite_change(invites,uuid)',
   'private.check_tier(integer)',
+  'private.clean_group_emoji(text)',
+  'private.clean_group_name(text)',
   'private.close_active_status(uuid)',
   'private.consume_rate_limit(uuid,text,integer,interval)',
   'private.create_default_availability_prefs()',
   'private.delete_friend_rules(uuid,uuid)',
+  'private.drop_membership(uuid,uuid)',
+  'private.group_admin_in_sync_trigger()',
+  'private.insert_group_invite(uuid,uuid,timestamp with time zone,integer)',
+  'private.invite_status(invites)',
   'private.is_blocked(uuid,uuid)',
+  'private.lock_group(uuid)',
+  'private.lock_invite_for_member(uuid,uuid)',
   'private.lock_pair(uuid,uuid)',
+  'private.new_invite_code()',
   'private.normalize_handle(text)',
   'private.protect_age_confirmation()',
   'private.purge_expired_rate_limits()',
@@ -222,6 +255,7 @@ const PRIVATE_FUNCTIONS = [
   'private.resolve_tier(uuid,uuid)',
   'private.send_friend_request(uuid,uuid,integer)',
   'private.set_friend_rule(uuid,uuid,smallint)',
+  'private.to_group_invite(invites,uuid)',
   'private.try_consume_rate_limit(uuid,text,integer,interval)',
   'private.validate_user_timezone()',
   'private.validate_weekly_hours()',
@@ -258,7 +292,7 @@ describe('functions', () => {
     expect(loose).toEqual([]);
   });
 
-  it('clients can execute only CLIENT_FUNCTIONS, and only when signed in', async () => {
+  it('clients can execute only CLIENT_FUNCTIONS, anon only ANON_FUNCTIONS', async () => {
     for (const role of CLIENT_ROLES) {
       const callable = await rows<{ fn: string }>(
         `select p.oid::regprocedure::text as fn from pg_proc p
@@ -271,7 +305,8 @@ describe('functions', () => {
       );
       expect({ role, callable: callable.map((c) => c.fn) }).toEqual({
         role,
-        callable: role === 'authenticated' ? CLIENT_FUNCTIONS : [],
+        callable:
+          role === 'authenticated' ? CLIENT_FUNCTIONS : role === 'anon' ? ANON_FUNCTIONS : [],
       });
     }
   });
@@ -284,6 +319,40 @@ describe('functions', () => {
       );
       expect({ role, usage: row?.usage }).toEqual({ role, usage: false });
     }
+  });
+});
+
+describe('GROUP_ERRORS (src/index.ts) matches what the migrations raise', () => {
+  it('every message is raised somewhere, verbatim', async () => {
+    const sql = (await Promise.all((await migrationFiles()).map((f) => readFile(f, 'utf8')))).join(
+      '\n',
+    );
+    for (const message of Object.values(GROUP_ERRORS))
+      expect({ message, raised: sql.includes(`'${message.replaceAll("'", "''")}'`) }).toEqual({
+        message,
+        raised: true,
+      });
+  });
+});
+
+describe('triggers', () => {
+  it('are exactly these (the admin-sync ones are deferred constraint triggers)', async () => {
+    const triggers = await rows<{ t: string; deferred: boolean }>(
+      `select c.relname || '.' || t.tgname as t, t.tginitdeferred as deferred
+       from pg_trigger t join pg_class c on c.oid = t.tgrelid
+       join pg_namespace n on n.oid = c.relnamespace
+       where n.nspname = 'public' and not t.tgisinternal order by 1`,
+    );
+    expect(triggers).toEqual([
+      { t: 'availability_prefs.availability_prefs_validate_weekly', deferred: false },
+      { t: 'group_members.group_members_admin_in_sync_delete', deferred: true },
+      { t: 'group_members.group_members_admin_in_sync_insert', deferred: true },
+      { t: 'group_members.group_members_admin_in_sync_update', deferred: true },
+      { t: 'groups.groups_admin_in_sync', deferred: true },
+      { t: 'users.users_create_default_availability_prefs', deferred: false },
+      { t: 'users.users_protect_age_confirmation', deferred: false },
+      { t: 'users.users_validate_timezone', deferred: false },
+    ]);
   });
 });
 
@@ -338,21 +407,29 @@ describe('database constraints match @whosfree/shared', () => {
 
   it('groups.max_members and member permissions default as in shared (D17, D26)', async () => {
     const admin = await addUser(db, `user_grp_${Date.now()}`);
-    const {
-      rows: [g],
-    } = await db.admin.query<{ id: string; max_members: number }>(
-      `insert into public.groups (name, admin_id) values ('G', $1) returning id, max_members`,
-      [admin],
-    );
+    const member = await addUser(db, `user_grp_member_${Date.now()}`);
+    const { g, m } = await db.admin.transaction(async (tx) => {
+      const {
+        rows: [g],
+      } = await tx.query<{ id: string; max_members: number }>(
+        `insert into public.groups (name, admin_id) values ('G', $1) returning id, max_members`,
+        [admin],
+      );
+      await tx.query(
+        `insert into public.group_members (group_id, user_id, role) values ($1, $2, 'admin')`,
+        [g?.id, admin],
+      );
+      const {
+        rows: [m],
+      } = await tx.query(
+        `insert into public.group_members (group_id, user_id) values ($1, $2)
+         returning can_invite as invite, can_manage_members as "manageMembers",
+                   can_edit_group as "editGroup", can_group_ping as "groupPing", role`,
+        [g?.id, member],
+      );
+      return { g, m };
+    });
     expect(g?.max_members).toBe(DEFAULT_GROUP_MAX_MEMBERS);
-    const {
-      rows: [m],
-    } = await db.admin.query(
-      `insert into public.group_members (group_id, user_id) values ($1, $2)
-       returning can_invite as invite, can_manage_members as "manageMembers",
-                 can_edit_group as "editGroup", can_group_ping as "groupPing", role`,
-      [g?.id, admin],
-    );
     expect(m).toEqual({ ...DEFAULT_MEMBER_PERMISSIONS, role: 'member' });
   });
 });
