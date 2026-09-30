@@ -766,6 +766,8 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 
 > From WF-041: the tables exist. Still needed here: a member-list function that applies blocks, keeping `groups.adminId` and the admin `groupMembers` row in sync, locking the group row in `join_group` so the cap holds, and no `groupMembers` row before a join request is approved.
 
+> Backend done (merged): `create_group` (10/day), `update_group`, `transfer_group_admin`, `delete_group`, `list_my_groups`, `get_group_members` (blocks hidden both ways). Cap = `groups.max_members`, enforced under a group row lock; a deferred trigger keeps `admin_id` and the admin row in sync. A lone admin must delete, not leave. Left: web wiring.
+
 **Acceptance criteria**
 - [ ] Users can create a group with a name and emoji, and the creator becomes the **admin**
 - [ ] The admin can transfer the admin role and delete the group. An admin must transfer the role before leaving.
@@ -778,6 +780,8 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - **Depends on:** WF-043
 - **PRD:** FR-SOC-8, D26
 
+> Backend done (merged): `set_group_member_permissions` (admin only), `remove_group_member` (admin or manageMembers; never the admin). Losing `invite` revokes that member's links. Left: web wiring.
+
 **Acceptance criteria**
 - [ ] Permissions are `invite`, `manageMembers`, `editGroup` and `groupPing`
 - [ ] New members start with `invite` ✓, `groupPing` ✓, `manageMembers` ✗, `editGroup` ✗
@@ -788,6 +792,8 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - **Category:** `feature` · **Area:** `social`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-041, WF-043
 - **PRD:** FR-SOC-3, FR-WEB-3, FR-VIS-1, §8.5 (joining a group)
+
+> Backend done (merged): `invites` table (128-bit codes), `create_group_invite` / `regenerate_group_invite` (30/day), `revoke_group_invite`, `list_group_invites`, public `get_invite_summary` (status valid/full/expired/used_up/revoked; details only for live links), `join_group(code, tier)` (20/day, one transaction). Joins are never refused because of a block. Approval-mode groups are rejected for now. **Wiring notes:** the web mock's invite shape (ok/full/invalid, `maxMembers`) must be mapped to the real statuses; rate-limit `/i/[code]` per IP on the route. Left: remembering the invite through sign-up.
 
 **Acceptance criteria**
 - [ ] Invite links can be created, revoked and regenerated, with optional expiry and a maximum number of uses
@@ -814,6 +820,8 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 > From WF-041: blocks live in the directed `blocks` table (D43). Blocking should also end the friendship and delete the related visibility rules, without telling the blocked person.
 
 > Friends half done (merged): `unfriend`, `block_user` (also ends the friendship and requests, silently), `unblock_user`, `list_blocked_users`. Group leave is with WF-043. Pings (WF-092/094) must call `private.is_blocked`.
+
+> Leave half done (merged): `leave_group` (admin must transfer first) revokes visibility, the leaver's group rule and their invite links at once.
 
 **Acceptance criteria**
 - [ ] A blocked user can't see, ping or invite the person who blocked them, and isn't told
