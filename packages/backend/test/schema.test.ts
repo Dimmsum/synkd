@@ -166,6 +166,7 @@ describe('functions', () => {
     );
     expect(definers.map((d) => d.fn)).toEqual([
       'current_user_id()',
+      'ensure_current_user(text,text,text)',
       'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
     ]);
     for (const d of definers) expect(d.config).toEqual(['search_path=""']);
@@ -180,7 +181,7 @@ describe('functions', () => {
     expect(loose).toEqual([]);
   });
 
-  it('clients can execute only current_user_id and events_for_viewer, and only when signed in', async () => {
+  it('clients can execute only these functions, and only when signed in', async () => {
     for (const role of CLIENT_ROLES) {
       const callable = await rows<{ fn: string }>(
         `select p.oid::regprocedure::text as fn from pg_proc p
@@ -197,6 +198,7 @@ describe('functions', () => {
           role === 'authenticated'
             ? [
                 'current_user_id()',
+                'ensure_current_user(text,text,text)',
                 'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
               ]
             : [],

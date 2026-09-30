@@ -369,6 +369,29 @@ export type Database = {
     };
     Functions: {
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
+      ensure_current_user: {
+        Args: { avatar_url?: string; name: string; timezone?: string };
+        Returns: {
+          age_confirmed_at: string | null;
+          avatar_url: string | null;
+          birth_year: number | null;
+          clerk_id: string;
+          consent_at: string | null;
+          consent_version: string | null;
+          created_at: string;
+          handle: string | null;
+          id: string;
+          name: string;
+          sharing_paused: boolean;
+          timezone: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'users';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       events_for_viewer: {
         Args: { owner_id: string; range_end: string; range_start: string };
         Returns: {
