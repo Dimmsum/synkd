@@ -139,7 +139,7 @@ export default function LandingPage() {
               </a>
             </div>
             <p className="text-sm text-muted-foreground">
-              Sign up with Google. For adults 18 and over.
+              Sign up with Google or email. For adults 18 and over.
             </p>
           </div>
           <div className="flex justify-center md:justify-end">

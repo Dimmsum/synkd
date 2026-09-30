@@ -30,7 +30,7 @@ We may suspend or delete any account we reasonably believe belongs to someone un
 
 ## 3. Your account
 
-- You sign in with a third-party provider (for example Google). Keep that account secure, because anyone with access to it can access whosfree as you.
+- You sign in with Google or with an email address and password. Keep your Google account or your password secure, because anyone with access to it can access whosfree as you.
 - You're responsible for activity on your account.
 - Tell us straight away at [SUPPORT EMAIL] if you think your account has been compromised.
 

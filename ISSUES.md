@@ -341,9 +341,9 @@ Create `packages/backend` holding the Supabase project (`supabase/` with `config
 #### WF-004 · Clerk auth with Google + Supabase integration
 - **Category:** `feature` · **Area:** `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-002, WF-003
-- **PRD:** FR-AUTH-1, FR-AUTH-3, FR-AUTH-5, FR-WEB-2, D19
+- **PRD:** FR-AUTH-1, FR-AUTH-3, FR-AUTH-5, FR-WEB-2, D19, D45
 
-Google sign-in through Clerk, connected to Supabase through **third-party auth** (Supabase validates Clerk session tokens), and a `users` row created on first sign-in. Sign-in asks for **basic scopes only**, with no calendar scopes.
+Google or email-and-password sign-in (D45) through Clerk, connected to Supabase through **third-party auth** (Supabase validates Clerk session tokens), and a `users` row created on first sign-in. Sign-in asks for **basic scopes only**, with no calendar scopes.
 
 > From WF-003/041: clients can't insert `users` rows. Create them server-side (a Clerk webhook using the service role, or a security-definer function that reads `auth.jwt()->>'sub'`), with a name of 1–100 characters and a valid timezone. Clerk session tokens must carry `role: "authenticated"`.
 

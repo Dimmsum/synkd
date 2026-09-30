@@ -20,6 +20,7 @@
 | 0.6 | 2026-09-30 | **Backend moves from Convex to Supabase** (D40): Postgres with row-level security, Supabase Storage, Realtime and Cron. Clerk stays for sign-in, connected through Supabase's third-party auth. **Authorisation and tier redaction are enforced in Postgres**, and TypeScript server logic runs on the Next.js server (D41). Updated the architecture (§8), data model (§9), NFRs and risks to match. |
 | 0.7 | 2026-09-30 | Recorded decisions from building the availability engine (D42): recurrence and timezones are handled in-house instead of with `rrule` and `date-fns-tz`, `exdates` are occurrence start instants, and week numbers count from the Monday week containing the schedule's start date (FR-IMP-5). |
 | 0.8 | 2026-09-30 | Data model matches the first migrations (D43): blocks get their own directed `blocks` table instead of a `blocked` friendship status; `events` use `startsAt`/`endsAt`; group permissions are four boolean columns; a source's period is three columns. |
+| 0.10 | 2026-09-30 | Sign-in accepts **email and password** as well as Google (D45, FR-AUTH-1). |
 | 0.9 | 2026-09-30 | Added **offline friends** (D44, FR-SOC-14 to FR-SOC-19, J8): a user can add someone who isn't on whosfree and upload or type in that person's timetable, so the app is useful before their friends join. Private to the uploader, a nickname only, with a permission confirmation. Part of Milestone A. |
 
 > **How to read this document**
@@ -204,8 +205,8 @@ Shanice is why every group gets its own visibility tier, chosen when you join it
 ### 6.2 Authentication & profile (AUTH) (D19)
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-AUTH-1 | Users sign in through **Clerk with Google**. Sign-in asks for basic profile and email scopes only, **never** calendar scopes (those come later, FR-GCAL-1). | M |
-| FR-AUTH-2 | The profile has a display name, an avatar (taken from Google, can be replaced) and an optional handle (`@kemar`). | M |
+| FR-AUTH-1 | Users sign in through **Clerk**, with **Google** or with an **email address and password** (D45). Email addresses are verified before the account is used. Google sign-in asks for basic profile and email scopes only, **never** calendar scopes (those come later, FR-GCAL-1). | M |
+| FR-AUTH-2 | The profile has a display name (from Google, or entered at email sign-up), an avatar (taken from Google when there is one, can be replaced) and an optional handle (`@kemar`). | M |
 | FR-AUTH-3 | Users have a **timezone**, detected automatically and defaulting to `America/Jamaica`. | M |
 | FR-AUTH-4 | Sign-in by email magic link or one-time code, using Clerk's built-in support. | S |
 | FR-AUTH-5 | Sessions last across PWA launches, so users don't have to sign in every time they open the app. | M |
@@ -567,7 +568,7 @@ whosfree/
 | Monorepo | **Turborepo + pnpm workspaces** | |
 | Backend | **Supabase** (decided, D40): Postgres, RLS, Storage, Realtime, Cron | Schema changes are SQL migrations managed with the Supabase CLI. TypeScript types are generated from the schema (`supabase gen types`). |
 | Web | **Next.js (App Router), React, Tailwind, shadcn/ui** | Client components for real-time screens. The landing and legal pages are static or server-rendered. |
-| Auth | **Clerk** (decided, D19), with Google sign-in, connected to Supabase through **third-party auth** (Supabase validates Clerk session tokens) | Google Calendar uses a **separate OAuth flow that we own** (D30), not Clerk's tokens. |
+| Auth | **Clerk** (decided, D19), with Google or email-and-password sign-in (D45), connected to Supabase through **third-party auth** (Supabase validates Clerk session tokens) | Google Calendar uses a **separate OAuth flow that we own** (D30), not Clerk's tokens. |
 | Google OAuth | **`google-auth-library`** / **`googleapis`**, running on the Next.js server | Handles code exchange, token refresh and revocation. The callback route lives in `apps/web`. |
 | PWA | **Serwist** (successor to `next-pwa`) | Service worker, precaching, offline fallback. |
 | Push | **Web Push with VAPID** (the `web-push` package on the Next.js server) | One subscription stored per device. |
@@ -851,6 +852,7 @@ The **[ASSUMPTION]** markers still in this document (for example the file-size a
 | D42 | 2026-09-30 | **Recurrence and timezones are handled in-house** in the availability engine, not with `rrule` or `date-fns-tz`. Occurrences keep the first occurrence's local wall-clock times. Week numbers count from the Monday week containing the schedule's start date. | We only need a small RRULE subset, and `rrule`'s timezone handling is a common source of DST bugs. Doing it ourselves keeps the rules explicit and fully tested. |
 | D43 | 2026-09-30 | **Blocks are a separate, directed table**, not a friendship status. | A shared friendship row would let the blocked person see the block. Two people can block each other independently, and blocks also apply between people who aren't friends. |
 | D44 | 2026-09-30 | **Offline friends**: users can add people who aren't on whosfree and upload or type in their timetables. Private to the uploader, nickname only, with a permission confirmation, and never merged with a real account. Part of Milestone A. | The app has to be useful before someone's friends join (R2, cold start), and people already have their friends' timetables. |
+| D45 | 2026-09-30 | **Sign-in accepts email and password as well as Google.** Clerk handles passwords, email verification and resets; we never see or store a password. Names are required at email sign-up. | Not everyone wants to use their Google account (A3, R11), and some school-managed Google accounts block third-party apps. Clerk supports both with no extra backend work. |
 
 ---
 

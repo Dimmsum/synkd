@@ -1,6 +1,6 @@
 'use server';
 
-// Sign-up steps after Google sign-in: age gate (WF-005) and consent (WF-015). Both write
+// Sign-up steps after signing in with Google or email (D45): age gate (WF-005) and consent (WF-015). Both write
 // through database functions as the signed-in user; proxy.ts only lets each one run while it's
 // the user's current step.
 

@@ -4,8 +4,8 @@ import { SignIn } from '@clerk/nextjs';
 
 export const metadata: Metadata = { title: 'Sign in' };
 
-// Clerk's sign-in (FR-WEB-2, D19). Google is the only method, set in the Clerk dashboard with
-// basic profile and email scopes (FR-AUTH-1). Hash routing keeps Clerk's own steps (e.g. the
+// Clerk's sign-in (FR-WEB-2, D19). Google and email + password (D45) are enabled in the Clerk
+// dashboard, Google with basic profile and email scopes only (FR-AUTH-1). Hash routing keeps Clerk's own steps (e.g. the
 // OAuth callback, /sign-in#/sso-callback) on this one route. After sign-in, proxy.ts sends
 // the user to the right step.
 export default function SignInPage() {

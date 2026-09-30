@@ -29,7 +29,7 @@ export default clerkMiddleware(async (auth, req) => {
   let decision = gate(kind, supabase ? await readStep(supabase) : null);
 
   if (decision.type === 'create-profile' && userId && supabase) {
-    // First sign-in: create the users row from the Clerk (Google) profile. Idempotent, and
+    // First sign-in: create the users row from the Clerk profile (Google, or the name entered at email sign-up). Idempotent, and
     // the database takes the Clerk ID from the token, never from these arguments.
     const user = await (await clerkClient()).users.getUser(userId);
     const { error } = await supabase.rpc(

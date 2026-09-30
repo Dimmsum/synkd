@@ -43,8 +43,9 @@ export function pickTimezone(candidate: string | undefined): string {
 }
 
 /**
- * Name, avatar and timezone for a new users row. The name comes from Google through Clerk
- * (FR-AUTH-2); the avatar only when the user has a real photo, not Clerk's generated one.
+ * Name, avatar and timezone for a new users row. The name comes from Google, or from the name
+ * fields of Clerk's email sign-up (FR-AUTH-2, D45); the avatar only when the user has a real
+ * photo (Google), not Clerk's generated one.
  */
 export function newProfile(user: ClerkProfile, timezoneCookie: string | undefined): NewProfile {
   const joined = [user.firstName, user.lastName].filter(Boolean).join(' ');

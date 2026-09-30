@@ -33,7 +33,7 @@ whosfree ([DOMAIN]) is operated by **[LEGAL ENTITY NAME]**, [REGISTERED ADDRESS]
 ### 2.1 Information you give us
 | What | Examples | Why we need it |
 |---|---|---|
-| **Account details** | Name, email address, profile photo (from your Google account, which you can replace), an optional handle like `@kemar` | To create your account and show you to people you connect with |
+| **Account details** | Name, email address, profile photo (from your Google account if you sign in with Google, which you can replace), an optional handle like `@kemar` | To create your account and show you to people you connect with |
 | **Age confirmation** | Your date of birth, entered at sign-up | To confirm you're 18 or over. **We keep only your birth year** and the date you confirmed. We don't store your full date of birth. |
 | **Your schedule** | Event titles (e.g. "COMP2140 Lecture", "Shift"), the type of event (class, work, meeting…), days and times, how often they repeat, and the dates your schedule covers | To work out when you're free or busy |
 | **Uploaded files** | A PDF, screenshot or photo of your timetable or roster | To read your schedule automatically. **Deleted when you confirm it** (see §6). |
@@ -131,7 +131,7 @@ We use trusted companies to run whosfree. They process data **on our behalf and 
 
 | Provider | What they do | Data involved |
 |---|---|---|
-| **Clerk** | Sign-in and account security | Name, email, profile photo, sign-in records |
+| **Clerk** | Sign-in and account security, including storing your password securely if you sign in with email (we never see it) | Name, email, profile photo, password (hashed), sign-in records |
 | **Supabase** | Database and temporary file storage | Everything in §2 |
 | **Vercel** | Hosting the website and app | Technical request data |
 | **Railway** | Processing uploaded files | Uploaded files, briefly, while they're being read |
