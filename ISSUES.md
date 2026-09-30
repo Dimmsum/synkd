@@ -192,8 +192,8 @@ Everything else at P0, which adds:
 | WF-001 | Initialise repo and Turborepo monorepo | chore | repo | P0 | 0 | A | done | — |
 | WF-002 | Scaffold Next.js web app | infra | web | P0 | 0 | A | blocked | 001 |
 | WF-003 | Set up Supabase backend package | infra | backend | P0 | 0 | A | blocked | 001 |
-| WF-004 | Clerk auth with Google + Supabase integration | feature | backend, web | P0 | 0 | A | in-progress | 002, 003 |
-| WF-005 | Age gate (date of birth at sign-up) | feature | web, backend | P0 | 0 | A | in-progress | 004 |
+| WF-004 | Clerk auth with Google + Supabase integration | feature | backend, web | P0 | 0 | A | in-review | 002, 003 |
+| WF-005 | Age gate (date of birth at sign-up) | feature | web, backend | P0 | 0 | A | in-review | 004 |
 | WF-006 | CI pipeline (lint, typecheck, test) | infra | repo | P0 | 0 | A | in-review | 001 |
 | WF-007 | Environments and preview deploys | infra | ops | P0 | 0 | B | todo | 002, 003 |
 | WF-008 | Sentry and PostHog | infra | ops | P0 | 0 | B | todo | 002 |
@@ -202,8 +202,8 @@ Everything else at P0, which adds:
 | WF-011 | Decide final name and register domain | chore | ops | P0 | 0 | B | todo | — |
 | WF-012 | Google Cloud project and OAuth consent screen | chore | gcal | P0 | 0 | B | todo | 010, 011 |
 | WF-013 | Set up OpenRouter account and data policy | chore | parser | P0 | 0 | A | todo | — |
-| WF-014 | Signed-in app shell, navigation, 404/error pages | feature | web | P0 | 0 | A | todo | 004 |
-| WF-015 | Consent record (versioned terms/privacy acceptance) | compliance | backend | P0 | 0 | A | in-progress | 004, 010 |
+| WF-014 | Signed-in app shell, navigation, 404/error pages | feature | web | P0 | 0 | A | done | 004 |
+| WF-015 | Consent record (versioned terms/privacy acceptance) | compliance | backend | P0 | 0 | A | in-review | 004, 010 |
 | WF-020 | Collect 20+ real schedule samples (eval set) | test | parser | P0 | 1 | A | todo | — |
 | WF-021 | Shared schemas package (event draft, statuses, tiers) | feature | repo | P0 | 1 | A | done | 001 |
 | WF-022 | Parser eval harness | test | parser | P0 | 1 | A | done | 013, 020, 021 |
@@ -337,7 +337,7 @@ Create `packages/backend` holding the Supabase project (`supabase/` with `config
 - [ ] A Supabase dev project is created and linked, and Clerk is added as a third-party auth provider (**blocked on the owner**: create the Supabase and Clerk projects, then enable `[auth.third_party.clerk]` in `supabase/config.toml` and in the dashboard)
 
 #### WF-004 · Clerk auth with Google + Supabase integration
-- **Category:** `feature` · **Area:** `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
+- **Category:** `feature` · **Area:** `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-002, WF-003
 - **PRD:** FR-AUTH-1, FR-AUTH-3, FR-AUTH-5, FR-WEB-2, D19
 
@@ -347,24 +347,28 @@ Google sign-in through Clerk, connected to Supabase through **third-party auth**
 
 > Backend done (merged): `ensure_current_user(name, avatar_url, timezone)` creates the row on first sign-in (idempotent, Clerk ID from the token only) and `account_status()` tells middleware what's missing. Left: Clerk pages, calling these from the server, and middleware.
 
+> Web merged: `<SignIn>`/`<SignUp>` (hash routing, themed), `apps/web/src/proxy.ts` gating by `account_status()` (rules in `lib/auth/gate.ts`, unknown paths denied by default; public: `/`, legal, `/contact`, `/help`, `/i/*`, PWA files), `ensure_current_user` on first sign-in (timezone from a `wf_tz` cookie, falling back to `America/Jamaica`). **`createServerSupabase()` in `lib/supabase/server.ts` is the only way to reach Supabase**: it sends the user's Clerk token and never the secret key. `/api/*` isn't gated, so route handlers check their own auth. **Waiting on the owner for a live check:** apply migrations, Clerk → Supabase integration, Supabase third-party auth, Google-only sign-in, component paths `/sign-in` `/sign-up` and after-sign-out `/`. Known gaps: under-18 users keep their users row and Clerk user (only signed out) until WF-114; onboarding completion isn't gated (no flag).
+
 **Acceptance criteria**
-- [ ] `/sign-in` and `/sign-up` use Clerk components
-- [ ] The first sign-in creates a `users` row (`clerkId`, name, avatar, timezone defaulting to `America/Jamaica`)
-- [ ] RLS policies and database functions identify the user from the Clerk token (`auth.jwt()->>'sub'`), and requests without a valid token can't read or write anything
+- [x] `/sign-in` and `/sign-up` use Clerk components
+- [x] The first sign-in creates a `users` row (`clerkId`, name, avatar, timezone defaulting to `America/Jamaica`)
+- [x] RLS policies and database functions identify the user from the Clerk token (`auth.jwt()->>'sub'`), and requests without a valid token can't read or write anything
 - [ ] The session survives closing and reopening the app
 
 #### WF-005 · Age gate (date of birth at sign-up)
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-004
 - **PRD:** FR-AUTH-6, NFR-COMP-7, D13, D29
 
 > Backend done (merged): `checkAge` / `localDateIn` in `@whosfree/shared` (today = the Jamaica calendar date; 29 Feb birthdays count from 1 Mar), then `confirm_age(birth_year)` with the user's own token. Write-once. Left: the web form and middleware.
 
+> Web merged: `/sign-up/age` → `confirmAge` action (full date stays in the action; only `birth_year` is sent), `/sign-up/not-eligible` signs the user out. Boundary tests are the shared ones in `packages/shared/src/age.test.ts` (the web duplicate was removed). Needs the live check with WF-004.
+
 **Acceptance criteria**
-- [ ] Sign-up asks for a date of birth, and anyone under 18 is blocked with a clear message
-- [ ] Only `birthYear` and `ageConfirmedAt` are stored. The full date of birth never reaches the database.
-- [ ] App routes are inaccessible until the age is confirmed
-- [ ] Unit tests cover the boundaries (someone turning 18 today, and someone turning 18 tomorrow)
+- [x] Sign-up asks for a date of birth, and anyone under 18 is blocked with a clear message
+- [x] Only `birthYear` and `ageConfirmedAt` are stored. The full date of birth never reaches the database.
+- [x] App routes are inaccessible until the age is confirmed
+- [x] Unit tests cover the boundaries (someone turning 18 today, and someone turning 18 tomorrow)
 
 #### WF-006 · CI pipeline (lint, typecheck, test)
 - **Category:** `infra` · **Area:** `repo` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
@@ -460,26 +464,28 @@ The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy
 - [ ] Spend limit set on the account
 
 #### WF-014 · Signed-in app shell, navigation, 404/error pages
-- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-004
 - **PRD:** §8.3, FR-WEB-8, NFR-UX-2
 
 **Acceptance criteria**
-- [ ] A signed-in layout with mobile bottom navigation (Now, Schedule, Groups, Inbox, Settings)
-- [ ] Placeholder routes from PRD §8.3 exist and are protected
-- [ ] The 404 and error pages point people somewhere useful
-- [ ] Tap targets are at least 44×44 px
+- [x] A signed-in layout with mobile bottom navigation (Now, Schedule, Groups, Inbox, Settings)
+- [x] Placeholder routes from PRD §8.3 exist and are protected
+- [x] The 404 and error pages point people somewhere useful
+- [x] Tap targets are at least 44×44 px
 
 #### WF-015 · Consent record (versioned terms/privacy acceptance)
-- **Category:** `compliance` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
+- **Category:** `compliance` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-004, WF-010
 - **PRD:** FR-SET-5
 
 > Backend done (merged): `current_consent_version()`, `accept_consent(version)`, `account_status().consent_required`. **Bumping the version is a migration** that ships with the new legal text. Left: web wiring.
 
+> Web merged: `/sign-up/terms` sends the version from `account_status().current_consent_version` (not a web constant) to `accept_consent`. The proxy sends anyone with `consent_required` back to it ("We've updated our terms"). The displayed version is `LEGAL_VERSION` in `apps/web/src/lib/legal.ts` (WF-010), and a test keeps it equal to the DB. Left: `getConsentRecord()` in `lib/data/settings.ts` is still mock data. Needs the live check with WF-004.
+
 **Acceptance criteria**
-- [ ] Sign-up records `consentVersion` and `consentAt`
-- [ ] When the policy version changes, the user must accept again on their next visit
+- [x] Sign-up records `consentVersion` and `consentAt`
+- [x] When the policy version changes, the user must accept again on their next visit
 
 ---
 
