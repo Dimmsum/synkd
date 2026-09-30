@@ -10,7 +10,9 @@
     "lint": "eslint .",
     "typecheck": "tsc",
     "test": "vitest run",
-    "db:types": "tsx scripts/gen-types.ts"
+    "db:types": "tsx scripts/gen-types.ts",
+    "db:init": "tsx scripts/gen-init-sql.ts",
+    "db:generate": "pnpm db:types && pnpm db:init"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
