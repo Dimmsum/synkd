@@ -31,7 +31,7 @@ The single tracker for **everything that needs doing** on whosfree: features, se
 ### IDs
 - Every issue has a permanent ID: `WF-###`. **IDs are never reused or renumbered.**
 - Numbers are grouped by phase (Phase 0 = 001–019, Phase 1 = 020–039, and so on). That makes an ID easy to place, but the gaps aren't meaningful.
-- **New issues (including bugs) take the next free number after the highest existing ID.** The next free number is **WF-127**.
+- **New issues (including bugs) take the next free number after the highest existing ID.** The next free number is **WF-129**.
 - Use the ID in branch names and commit messages, e.g. `feat(parser): recurring extraction (WF-028)`.
 
 ### Category (the kind of work)
@@ -136,9 +136,9 @@ Google Calendar (Phase 4) runs **alongside** this path. Google's verification (W
 
 ### MVP milestones
 
-The MVP is all **72 P0 issues**, delivered in three steps so that people can start using the app long before all 72 are finished: **A** (friends test), **Gate** (public launch), **B** (MVP complete).
+The MVP is all **74 P0 issues**, delivered in three steps so that people can start using the app long before all 74 are finished: **A** (friends test), **Gate** (public launch), **B** (MVP complete).
 
-#### Milestone A: Core loop (39 issues)
+#### Milestone A: Core loop (41 issues)
 > *"I upload my schedule, add my friends or join their group, see who's free right now, and ping them."*
 
 | Area | Issues |
@@ -148,11 +148,12 @@ The MVP is all **72 P0 issues**, delivered in three steps so that people can sta
 | Parser | WF-013, 020, 021, 022, 023, 024, 025 |
 | Schedule import | WF-026, 027, 028, 029, 030, 031 |
 | **Friends** | WF-040 (profiles), 042 (friend requests + tier choice), 047 (block/remove) |
+| **Offline friends** | WF-127 (add someone not on whosfree + import their timetable), 128 (show them on Now, detail, Find a time) |
 | Groups & privacy | WF-041 (tiers + redaction), 043 (groups), 045 (invites + join) |
 | Availability & Now | WF-060, 061, 062, 063, 064, 068 (onboarding) |
 | Pings | WF-090, 091, 092, 093, 111 (install guide, needed for iOS push) |
 
-**Milestone A is done when:** a small group of friends can each upload a schedule, add each other as friends or join a group through an invite link, see each other on the Now screen at the tier they chose, and ping each other on Android and on installed iOS.
+**Milestone A is done when:** a small group of friends can each upload a schedule (and upload timetables for friends who aren't on the app yet), add each other as friends or join a group through an invite link, see each other on the Now screen at the tier they chose, and ping each other on Android and on installed iOS.
 
 **What Milestone A doesn't include:** Google Calendar, the slot finder, group permissions, "Who can see me", rate limits, report/mute, data export/deletion, the legal review, the offline cache, and the security review. With a small, trusted test group, that's acceptable. **It isn't acceptable for anything public**, which is why the Gate comes next. (Google's 100-user cap doesn't apply here, because Milestone A never requests the calendar scope.)
 
@@ -280,6 +281,8 @@ Everything else at P0, which adds:
 | WF-124 | Schedule-expiry reminder | feature | backend | P1 | 6 | stretch | todo | 030, 091 |
 | WF-125 | Google event titles only while a T3 grant exists | security | gcal | P0 | 4 | B | todo | 041, 081 |
 | WF-126 | Manual export/deletion request process | compliance | legal | P0 | 6 | Gate | todo | 010 |
+| WF-127 | Offline friends: add someone not on whosfree and import their timetable | feature | social, backend, web | P0 | 2 | A | todo | 030, 031 |
+| WF-128 | Show offline friends on Now, detail page and Find a time | feature | web, availability | P0 | 3 | A | todo | 064, 127 |
 
 ---
 
@@ -419,6 +422,7 @@ The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy
 - [ ] Shown at `/privacy` and `/terms`
 - [ ] `/contact` is a contact page
 - [ ] Each document has a version number (used by WF-015)
+- [ ] The drafts cover offline friends (D44): the privacy policy explains we hold a nickname and schedule for people who aren't users, only for the user who added them; the terms require their permission
 
 #### WF-011 · Decide final name and register domain
 - **Category:** `chore` · **Area:** `ops` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
@@ -663,6 +667,7 @@ Confirmed files are deleted straight away, so this list only shows uploads that 
 - [ ] Each user gets 5 parse attempts per day, using the `rateLimits` counter checked inside the parse-job function
 - [ ] Uploading a file identical to one that's still pending (same `sha256`) reuses that job and doesn't use up an attempt
 - [ ] A clear message appears when the limit is reached
+- [ ] Parses for offline friends' timetables count towards the same limit (WF-127)
 
 #### WF-036 · Dated schedules (rosters)
 - **Category:** `feature` · **Area:** `parser` · **Priority:** P1 · **Milestone:** stretch · **Status:** `todo`
@@ -854,6 +859,36 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 **Acceptance criteria**
 - [ ] A toggle sets `sharingPaused`, and everyone then sees "Sharing paused"
 - [ ] Resuming restores the previous tiers
+
+#### WF-127 · Offline friends: add someone not on whosfree and import their timetable
+- **Category:** `feature` · **Area:** `social`, `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Depends on:** WF-030, WF-031
+- **PRD:** FR-SOC-14, FR-SOC-15, FR-SOC-16, FR-SOC-18, FR-SOC-19, NFR-COMP-9, R14, D44, J8
+
+Makes the app useful before someone's friends join (R2): they can upload or type in a friend's timetable and see when that friend is free. The table, RLS and tests can be built before the import pipeline; the upload part reuses WF-026 to WF-031.
+
+**Acceptance criteria**
+- [ ] `offline_friends` table (nickname 1–40 characters, optional emoji, `permission_confirmed_at`), owner-only under RLS; `sources` and `events` gain `offline_friend_id`
+- [ ] Adding one requires ticking "I have their permission to add their schedule", and the time is recorded
+- [ ] Their schedule comes from the same upload → parse → review → confirm flow (file deleted on confirm, D38) or from manual entry. Their parses count towards the owner's parse limit (WF-035).
+- [ ] **Nobody but the owner** can read an offline friend or their events, through any table or function, including `events_for_viewer`, friend lists and group views. Tests prove it.
+- [ ] Offline friends' events never affect the owner's own status, free time or what others see of the owner
+- [ ] The owner can edit the nickname, re-upload and delete (deleting removes the schedule straight away). At most 20 per user, as a config value.
+- [ ] If the same person later becomes a real friend, the owner is offered to delete the offline copy. The two are never merged automatically. (FR-SOC-19, Should)
+
+#### WF-128 · Show offline friends on Now, detail page and Find a time
+- **Category:** `feature` · **Area:** `web`, `availability` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Depends on:** WF-064, WF-127
+- **PRD:** FR-SOC-17, NFR-UX-1, J8
+
+The Find a time part waits for WF-098. The invite action uses friend invite links (WF-042).
+
+**Acceptance criteria**
+- [ ] The Now screen has a **Not on whosfree** section with each offline friend's status and "until X", computed by the availability engine from their schedule and the default available hours (08:00–22:00)
+- [ ] A detail page shows their day and week, with edit, re-upload, delete and **Invite to whosfree**
+- [ ] They can be picked as participants in the slot finder once WF-098 exists, clearly marked as not on whosfree
+- [ ] They can't be pinged; **Invite to whosfree** shares a friend invite link instead
+- [ ] Status is never shown by colour alone (NFR-UX-1)
 
 ---
 
@@ -1188,6 +1223,7 @@ Could start at any point after WF-002. It's placed here because push notificatio
 - [ ] Reveals only *when* people are free, never why they're busy
 - [ ] Anyone with `no_schedule` or `paused` is flagged and left out
 - [ ] Results in ≤ 1 s for 20 people over 14 days
+- [ ] Offline friends (WF-127) can be picked as participants, clearly marked
 
 #### WF-099 · Share a slot
 - **Category:** `feature` · **Area:** `web` · **Priority:** P1 · **Milestone:** stretch · **Status:** `todo`
@@ -1239,6 +1275,7 @@ Until this is built, export requests are handled manually (WF-126).
 **Acceptance criteria**
 - [ ] Produces a JSON bundle of the user's profile, preferences, events, connections, groups, pings, and consent records, plus any pending (unconfirmed) files
 - [ ] Only the user's own data is included, never other users' private details
+- [ ] Includes the user's offline friends and their schedules
 
 #### WF-114 · Delete my account
 - **Category:** `compliance` · **Area:** `backend` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
@@ -1254,6 +1291,7 @@ Until this is built, deletion requests are handled manually (WF-126).
 - [ ] If they're a group admin, the role passes to the longest-standing member
 - [ ] All other data is permanently deleted within 30 days
 - [ ] The Clerk user is deleted
+- [ ] Deletes the user's offline friends and their schedules straight away
 
 #### WF-115 · Notification settings
 - **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
@@ -1303,6 +1341,7 @@ Until this is built, deletion requests are handled manually (WF-126).
 - [ ] Registered as a data controller with the Office of the Information Commissioner, and a Data Protection Officer appointed if required
 - [ ] The legal basis for sending data abroad is documented
 - [ ] A breach-notification runbook is written, with the deadline confirmed
+- [ ] The review covers the lawful basis for holding schedules of people who aren't users (offline friends, NFR-COMP-9)
 
 #### WF-120 · Security review (authorisation and redaction tests)
 - **Category:** `security` · **Area:** `backend` · **Priority:** P0 · **Milestone:** Gate · **Status:** `todo`
@@ -1315,6 +1354,7 @@ Until this is built, deletion requests are handled manually (WF-126).
 - [ ] Worker HMAC and replay protection tested
 - [ ] Logs audited to confirm they hold no titles, ping text or tokens
 - [ ] Any problems found are logged as `bug` or `security` issues
+- [ ] Tests confirm no one but the owner can read an offline friend or their events (FR-SOC-15)
 
 #### WF-121 · Closed beta launch
 - **Category:** `chore` · **Area:** `ops` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`

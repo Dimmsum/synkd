@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Product | whosfree (working name, see D23) |
-| Document version | 0.8 |
+| Document version | 0.9 |
 | Status | Draft. All open questions resolved, ready for Phase 0 (see [§14](#14-open-questions)) |
 | Last updated | 2026-09-30 |
 | Owner | Dimetri Lee |
@@ -20,6 +20,7 @@
 | 0.6 | 2026-09-30 | **Backend moves from Convex to Supabase** (D40): Postgres with row-level security, Supabase Storage, Realtime and Cron. Clerk stays for sign-in, connected through Supabase's third-party auth. **Authorisation and tier redaction are enforced in Postgres**, and TypeScript server logic runs on the Next.js server (D41). Updated the architecture (§8), data model (§9), NFRs and risks to match. |
 | 0.7 | 2026-09-30 | Recorded decisions from building the availability engine (D42): recurrence and timezones are handled in-house instead of with `rrule` and `date-fns-tz`, `exdates` are occurrence start instants, and week numbers count from the Monday week containing the schedule's start date (FR-IMP-5). |
 | 0.8 | 2026-09-30 | Data model matches the first migrations (D43): blocks get their own directed `blocks` table instead of a `blocked` friendship status; `events` use `startsAt`/`endsAt`; group permissions are four boolean columns; a source's period is three columns. |
+| 0.9 | 2026-09-30 | Added **offline friends** (D44, FR-SOC-14 to FR-SOC-19, J8): a user can add someone who isn't on whosfree and upload or type in that person's timetable, so the app is useful before their friends join. Private to the uploader, a nickname only, with a permission confirmation. Part of Milestone A. |
 
 > **How to read this document**
 > - Requirements have IDs (`FR-<AREA>-<n>`, `NFR-<AREA>-<n>`) so issues, PRs and tests can refer to them.
@@ -178,6 +179,12 @@ Shanice is why every group gets its own visibility tier, chosen when you join it
 2. Shares the invite link. New members can **invite** and **ping the group** by default. The admin can also grant **manage members** and **edit group**, or take any of these away (D26).
 3. Can remove members, regenerate the invite link, transfer admin to someone else, or delete the group.
 
+
+### J8: Friend who isn't on whosfree (D44)
+1. Taps **Add a friend who isn't on whosfree**, types a nickname ("Tash"), and confirms they have Tash's permission to add her schedule.
+2. Uploads a photo or PDF of Tash's timetable (or types it in), reviews the draft and confirms, exactly as for their own schedule.
+3. Tash appears on their Now screen in a **Not on whosfree** section ("Free until 2:00 PM") and in Find a time. Nobody else can see her.
+4. Taps **Invite Tash to whosfree** to send her a link. If she joins and they become friends, they're offered to delete the offline copy.
 ---
 
 ## 6. Functional requirements
@@ -220,6 +227,12 @@ Shanice is why every group gets its own visibility tier, chosen when you join it
 | FR-SOC-11 | **Groups are capped at 20 members** (D17). When a group is full, invite links show "This group is full". The cap is a config value so it can be raised later. | M |
 | FR-SOC-12 | Suggest friends based on the groups you share. | C |
 | FR-SOC-13 | **Join requests**: the admin can switch a group to "approval required", and joins then need approval from the admin or someone with `manageMembers`. | C |
+| FR-SOC-14 | **Offline friends** (D44): a user can add a person who isn't on whosfree, identified only by a **nickname** they choose, and give them a schedule by **uploading their timetable** (same parse → review → confirm flow as FR-IMP) or by **manual entry**. | M |
+| FR-SOC-15 | An offline friend and their schedule are **visible only to the user who added them**: never shown to anyone else, never searchable, never matched or merged with a real account, and never shared at any tier. The uploader sees full detail (it's their own data). | M |
+| FR-SOC-16 | Adding an offline friend requires the user to **confirm they have that person's permission** to store their schedule, and the terms forbid adding someone's schedule without it. | M |
+| FR-SOC-17 | Offline friends appear on the **Now screen** in their own "Not on whosfree" section, have a **detail page**, and can be chosen in the **slot finder**. They can't be pinged; instead there is an **Invite to whosfree** action. | M |
+| FR-SOC-18 | Users can **edit, re-upload or delete** an offline friend at any time. Deleting removes their schedule straight away. A user can have at most **20 offline friends** (a config value). **[ASSUMPTION]** | M |
+| FR-SOC-19 | When an offline friend joins and becomes a real friend, the user is offered to **delete the offline copy**; the two are never merged automatically. | S |
 
 ### 6.4 Schedule import & parsing (IMPORT) (D3, D7, D35, D38)
 | ID | Requirement | Priority |
@@ -448,6 +461,7 @@ Location or room is **never stored or shared**, at any tier (NG1, D35).
 | NFR-COMP-6 | **Google OAuth verification** for `calendar.readonly`. Needs a privacy policy, a homepage (FR-WEB-1, FR-WEB-4), a verified domain, a demo video showing how the scope is used, and possibly a security assessment. **Start early** (D8, §13). Changing the app's name or logo afterwards may trigger a new review (see D23). |
 | NFR-COMP-7 | **Minimum age 18** (D13), enforced at sign-up with a self-declared date of birth (FR-AUTH-6, D29) and stated in the terms. Only the birth year is stored. |
 | NFR-COMP-8 | **Data retention** (D32, D36, D38): raw files are **deleted when the schedule is confirmed**, or 7 days after upload if it never is (FR-IMP-15). Google event titles are kept only while a T3 grant exists (FR-GCAL-13). **Past events are purged after 90 days.** **Pings are purged after 30 days.** Google data is deleted on disconnect (FR-GCAL-9). Everything is gone within 30 days of account deletion. The privacy notice states each retention period and the reason for it. |
+| NFR-COMP-9 | **Data about people who aren't users** (offline friends, D44): stored only for the user who added them, minimised to a nickname and schedule (no contact details, photos or locations), deleted with that user's account, covered by the retention rules above, and disclosed in the privacy notice and terms. The legal review (WF-119) must confirm the lawful basis, since the person never agreed to our terms. |
 
 ### 7.8 Cost (COST)
 | ID | Requirement |
@@ -614,10 +628,11 @@ These are Postgres tables in Supabase. Every table has an `id` (uuid) primary ke
 | `groupMembers` | `groupId`, `userId`, `role` (`admin`/`member`), permissions as `canInvite`, `canManageMembers`, `canEditGroup`, `canGroupPing` (default `true, false, false, true`, D26), `joinedAt` | Unique `groupId, userId`; index `userId`. Exactly one `admin` per group. |
 | `invites` | `code`, `groupId?`, `inviterId`, `expiresAt?`, `maxUses?`, `uses`, `revoked` | Index: `code` |
 | `visibilityRules` | `ownerId`, `targetType` (`friend`/`group`), `targetId`, `tier` (1–3) | Index: `ownerId, targetType, targetId`. Created when a user joins a group or accepts a friend. |
-| `sources` | `userId`, `type` (`upload`/`manual`/`gcal`), `status` (`healthy`/`failed`/`needs_reconnect`), `lastSyncedAt`, `gcal?: {calendarIds, syncTokens, channels}`, `periodStart?`, `periodEnd?`, `periodExceptions` | Index: `userId`. `status`, `lastSyncedAt` and `periodEnd` drive the stale-data warning (FR-VIEW-8). Clients can read their own sources, so the encrypted Google refresh token goes in a separate table clients can't read (NFR-SEC-3). |
+| `offlineFriends` | `ownerId`, `nickname` (1–40 chars), `emoji?`, `permissionConfirmedAt` | Index: `ownerId`. Owner-only under RLS, never readable by anyone else (FR-SOC-15). Deleting one cascades to its sources and events. At most 20 per owner (FR-SOC-18). |
+| `sources` | `userId`, `offlineFriendId?`, `type` (`upload`/`manual`/`gcal`), `status` (`healthy`/`failed`/`needs_reconnect`), `lastSyncedAt`, `gcal?: {calendarIds, syncTokens, channels}`, `periodStart?`, `periodEnd?`, `periodExceptions` | Index: `userId`. `offlineFriendId` set means the schedule belongs to that offline friend, not to the user (D44). `status`, `lastSyncedAt` and `periodEnd` drive the stale-data warning (FR-VIEW-8). Clients can read their own sources, so the encrypted Google refresh token goes in a separate table clients can't read (NFR-SEC-3). |
 | `scheduleFiles` | `userId`, `storageId`, `mimeType`, `sha256`, `pages`, `uploadedAt`, `deleteAt` (= uploadedAt + 7 days), `deletedAt?` | Indexes: `userId`, `deleteAt` (used by the expiry cron). The row is removed along with the file on confirm (D38). |
 | `parseJobs` | `userId`, `fileId`, `status` (`queued`/`processing`/`needs_review`/`committed`/`failed`), `draft?`, `confidence?`, `error?`, `parserVersion`, `model`, `attempts`, `costUsd?` | Indexes: `userId`, `status` |
-| `events` | `userId`, `sourceId`, `title`, `category` (`class`/`lab`/`tutorial`/`work`/`meeting`/`event`/`other`), `startsAt`, `endsAt`, `rrule?`, `exdates?` (start instants of cancelled occurrences), `isPrivate`, `externalId?`, `busy` | Indexes: `userId, startsAt` and `sourceId, externalId`. The RRULE must not run past its source's `periodEnd`. Past events are purged after 90 days (D32). **No location field** (D35). For Google events, `title` is set only while a T3 grant exists (D36). |
+| `events` | `userId`, `offlineFriendId?`, `sourceId`, `title`, `category` (`class`/`lab`/`tutorial`/`work`/`meeting`/`event`/`other`), `startsAt`, `endsAt`, `rrule?`, `exdates?` (start instants of cancelled occurrences), `isPrivate`, `externalId?`, `busy` | Indexes: `userId, startsAt` and `sourceId, externalId`. The RRULE must not run past its source's `periodEnd`. Events with `offlineFriendId` set are **never** part of the user's own availability and never returned to other viewers (D44). Past events are purged after 90 days (D32). **No location field** (D35). For Google events, `title` is set only while a T3 grant exists (D36). |
 | `pings` | `fromId`, `toId`, `groupId?`, `template?`, `text?` (≤ 140 chars, plain text), `reply?`, `replyText?`, `expiresAt`, `readAt?` | Index: `toId, createdAt`. Purged after 30 days (D32). |
 | `mutes` | `userId`, `targetType`, `targetId`, `until?` | |
 | `pushSubscriptions` | `userId`, `endpoint`, `keys`, `userAgent`, `lastUsedAt` | Index: `userId` |
@@ -668,6 +683,7 @@ Targets are **[ASSUMPTION]** placeholders for the closed beta and should be revi
 | R12 | **Uploaded files contain extra personal data** (ID numbers, photos, full names) (D38). | Low | Medium | Files are deleted on confirm (or after 7 days), the parser never extracts those fields (D35), storage is private and only the owner and worker can access it, and the privacy notice tells users they can crop before uploading. |
 | R14 | **Accidental sensitive data** in Google event titles (health, religion) and in schedule titles. | Medium | High | Google titles are stored only while a T3 grant exists (D36). Google descriptions, attendees and locations are never stored. Private events. Titles are never logged or sent to analytics. |
 | R13 | **A broader audience (D11) blurs the focus** of the MVP. | Medium | Medium | Keep the product general, but **launch in one dense seed community** where schedules are structured and coordination is frequent. |
+| R14 | **Offline friends are misused** to track someone who never agreed (D44). | Medium | High | Nickname only, no locations anywhere (D35), a permission confirmation, a clear terms clause, visible only to the uploader, a cap of 20, report and account action under the terms, and a legal review of the basis for holding non-users' data (NFR-COMP-9). |
 
 ---
 
@@ -712,11 +728,11 @@ No fixed dates (D10). Each phase ends when its exit criteria are met.
 | **7: Iterate** | Fix the biggest problems from the beta, then .ics import and shared templates. | A decision on what comes next. |
 
 ### 13.1 MVP milestones (D34)
-The phases above describe *what gets built*. The milestones below describe *when people can start using it*. The MVP is every **Must** requirement, which is every P0 issue in [ISSUES.md](ISSUES.md) (72), and it's delivered in three steps: **A → Gate → B**. A + Gate = public launch.
+The phases above describe *what gets built*. The milestones below describe *when people can start using it*. The MVP is every **Must** requirement, which is every P0 issue in [ISSUES.md](ISSUES.md) (74), and it's delivered in three steps: **A → Gate → B**. A + Gate = public launch.
 
 | Milestone | Scope | Audience | Exit criteria |
 |---|---|---|---|
-| **A: Core loop** (39 issues) | Sign-up with the age check. Upload → parse → review → commit, plus manual entry. **Friends** (requests with a tier choice, block/remove). Groups and invite links. Visibility tiers with server-side redaction. The availability engine, available hours, manual status, the Now screen and onboarding. PWA install, Web Push, pings and replies. A draft privacy notice and consent record. | Small trusted group of friends. There's no Google user cap here, because Milestone A has no calendar scope. | People can upload, add each other as friends or join a group, see each other at the tier they chose, and ping each other on Android and on installed iOS. |
+| **A: Core loop** (41 issues) | Sign-up with the age check. Upload → parse → review → commit, plus manual entry. **Friends** (requests with a tier choice, block/remove). **Offline friends** (upload a friend's timetable, D44). Groups and invite links. Visibility tiers with server-side redaction. The availability engine, available hours, manual status, the Now screen and onboarding. PWA install, Web Push, pings and replies. A draft privacy notice and consent record. | Small trusted group of friends. There's no Google user cap here, because Milestone A has no calendar scope. | People can upload, add each other as friends or join a group, see each other at the tier they chose, and ping each other on Android and on installed iOS. |
 | **Gate: Public-ready** (7 issues) | Milestone A plus parse rate limits, group member management, ping limits and mute, report and block, the Jamaica DPA legal work, the security review, and a manual process for export and deletion requests. | **The public** | Every gate issue is `done`. See D39. |
 | **B: MVP complete** (26 issues) | Google Calendar (connect, sync, disconnect, verification). Slot finder. "Who can see me". Retention jobs. Self-serve data export and account deletion. Minimal Google titles (WF-125). Offline mode, accessibility, performance. | Closed beta: 30–100 users in a seed community | WF-121 has shipped and the §10 metrics are being tracked. |
 
@@ -834,6 +850,7 @@ The **[ASSUMPTION]** markers still in this document (for example the file-size a
 | D41 | 2026-09-30 | **Authorisation and tier redaction are enforced in Postgres** (RLS plus `security definer` functions). TypeScript server logic (availability engine, Google sync, push, worker calls) runs on the Next.js server on Vercel. Realtime sends only "something changed" signals, never other users' rows. | No client path can bypass redaction, and the shared TypeScript packages run unchanged in Node. |
 | D42 | 2026-09-30 | **Recurrence and timezones are handled in-house** in the availability engine, not with `rrule` or `date-fns-tz`. Occurrences keep the first occurrence's local wall-clock times. Week numbers count from the Monday week containing the schedule's start date. | We only need a small RRULE subset, and `rrule`'s timezone handling is a common source of DST bugs. Doing it ourselves keeps the rules explicit and fully tested. |
 | D43 | 2026-09-30 | **Blocks are a separate, directed table**, not a friendship status. | A shared friendship row would let the blocked person see the block. Two people can block each other independently, and blocks also apply between people who aren't friends. |
+| D44 | 2026-09-30 | **Offline friends**: users can add people who aren't on whosfree and upload or type in their timetables. Private to the uploader, nickname only, with a permission confirmation, and never merged with a real account. Part of Milestone A. | The app has to be useful before someone's friends join (R2, cold start), and people already have their friends' timetables. |
 
 ---
 
