@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Product | whosfree (working name, see D23) |
-| Document version | 0.6 |
+| Document version | 0.7 |
 | Status | Draft. All open questions resolved, ready for Phase 0 (see [§14](#14-open-questions)) |
 | Last updated | 2026-09-30 |
 | Owner | Dimetri Lee |
@@ -18,6 +18,7 @@
 | 0.4 | 2026-09-30 | The MVP is now delivered in two milestones (D34): **A, the core loop, including friends**, then **B, MVP complete**. Added §13.1, which maps the milestones to [ISSUES.md](ISSUES.md). |
 | 0.5 | 2026-09-30 | **Data minimisation** (D35–D38): event locations are no longer stored. Google Calendar stores only what's needed, and titles only when someone has the Details tier. No IP addresses go to analytics or error tracking. **Raw files are deleted when the user confirms the schedule** (replaces D12 and D33). Added a **public-ready gate** (D39), and removed the incorrect "100 test users" note from Milestone A. Drafted the [privacy policy](docs/legal/privacy-policy.md) and [terms](docs/legal/terms.md). |
 | 0.6 | 2026-09-30 | **Backend moves from Convex to Supabase** (D40): Postgres with row-level security, Supabase Storage, Realtime and Cron. Clerk stays for sign-in, connected through Supabase's third-party auth. **Authorisation and tier redaction are enforced in Postgres**, and TypeScript server logic runs on the Next.js server (D41). Updated the architecture (§8), data model (§9), NFRs and risks to match. |
+| 0.7 | 2026-09-30 | Recorded decisions from building the availability engine (D42): recurrence and timezones are handled in-house instead of with `rrule` and `date-fns-tz`, `exdates` are occurrence start instants, and week numbers count from the Monday week containing the schedule's start date (FR-IMP-5). |
 
 > **How to read this document**
 > - Requirements have IDs (`FR-<AREA>-<n>`, `NFR-<AREA>-<n>`) so issues, PRs and tests can refer to them.
@@ -226,7 +227,7 @@ Shanice is why every group gets its own visibility tier, chosen when you join it
 | FR-IMP-2 | Users can **take a photo** of a printed schedule with the camera, via the `capture` attribute on the file input. | S |
 | FR-IMP-3 | The system extracts **structured events**: title, category (class, lab, tutorial, work/shift, meeting, other), start and end time, and a recurrence pattern or specific date. **Rooms, addresses, ID numbers and other personal details in the file are ignored and never stored** (D35). | M |
 | FR-IMP-4 | The parser **must not depend on layout** (D7). It has to handle grids with days as columns or rows, lists and different institutions' formats. | M |
-| FR-IMP-5 | **Recurring schedules**: weekly, alternating weeks (A/B or odd/even), and specific week numbers ("weeks 1–6, 8–12"). | M |
+| FR-IMP-5 | **Recurring schedules**: weekly, alternating weeks (A/B or odd/even), and specific week numbers ("weeks 1–6, 8–12"). Week 1 is the Monday–Sunday week that contains the schedule's start date, and week A is an odd week (D42). | M |
 | FR-IMP-6 | **Dated schedules** (rosters, one-off event lists): events on specific calendar dates that don't repeat. Built in Phase 1 **after** recurring schedules, and only if the eval set shows it's workable (D28). | S |
 | FR-IMP-7 | The user sets or confirms the **date range the schedule covers** (e.g. semester start and end). The parser suggests dates if the file contains them. | M |
 | FR-IMP-8 | Users can add **exceptions** such as breaks, holidays or exam periods. Jamaican public holidays are pre-filled. | S |
@@ -555,8 +556,8 @@ whosfree/
 | Google OAuth | **`google-auth-library`** / **`googleapis`**, running on the Next.js server | Handles code exchange, token refresh and revocation. The callback route lives in `apps/web`. |
 | PWA | **Serwist** (successor to `next-pwa`) | Service worker, precaching, offline fallback. |
 | Push | **Web Push with VAPID** (the `web-push` package on the Next.js server) | One subscription stored per device. |
-| Recurrence | **`rrule`** | Recurring schedules stored as RRULE + EXDATE. |
-| Dates | **`date-fns` + `date-fns-tz`**, or a **Temporal polyfill** | UTC internally. |
+| Recurrence | **In-house expander** in `packages/availability` (D42) | Recurring schedules stored as RRULE + EXDATE. Supports FREQ=DAILY/WEEKLY with INTERVAL, BYDAY, COUNT, UNTIL and WKST, and rejects anything else. |
+| Dates | **Platform `Intl`** for timezone conversion in the engine (D42); the web app may use `date-fns` for display | UTC internally. A time skipped by DST moves later, and a repeated time means the first one (Temporal's default). |
 | Validation | **zod** in shared code and at every route handler and server action | Postgres constraints (`CHECK`, foreign keys, enums) back it up in the database. |
 | Worker HTTP | **Hono** | Small, fast and typed. |
 | AI parsing | **OpenRouter** (decided, D15) with a vision model and structured output. The model is chosen from Phase 1 eval results. | Fallback models and no-data-retention provider routing (NFR-SEC-8). |
@@ -614,7 +615,7 @@ These are Postgres tables in Supabase. Every table has an `id` (uuid) primary ke
 | `sources` | `userId`, `type` (`upload`/`manual`/`gcal`), `status` (`healthy`/`failed`/`needs_reconnect`), `lastSyncedAt`, `gcal?: {calendarIds, syncTokens, channels, encRefreshToken}`, `period?: {start, end, exceptions[]}` | Index: `userId`. `status`, `lastSyncedAt` and `period.end` drive the stale-data warning (FR-VIEW-8). |
 | `scheduleFiles` | `userId`, `storageId`, `mimeType`, `sha256`, `pages`, `uploadedAt`, `deleteAt` (= uploadedAt + 7 days), `deletedAt?` | Indexes: `userId`, `deleteAt` (used by the expiry cron). The row is removed along with the file on confirm (D38). |
 | `parseJobs` | `userId`, `fileId`, `status` (`queued`/`processing`/`needs_review`/`committed`/`failed`), `draft?`, `confidence?`, `error?`, `parserVersion`, `model`, `attempts`, `costUsd?` | Indexes: `userId`, `status` |
-| `events` | `userId`, `sourceId`, `title`, `category` (`class`/`lab`/`tutorial`/`work`/`meeting`/`event`/`other`), `start`, `end`, `rrule?`, `exdates?`, `isPrivate`, `externalId?`, `busy` | Indexes: `userId, start` and `sourceId, externalId`. Past events are purged after 90 days (D32). **No location field** (D35). For Google events, `title` is set only while a T3 grant exists (D36). |
+| `events` | `userId`, `sourceId`, `title`, `category` (`class`/`lab`/`tutorial`/`work`/`meeting`/`event`/`other`), `start`, `end`, `rrule?`, `exdates?` (start instants of cancelled occurrences), `isPrivate`, `externalId?`, `busy` | Indexes: `userId, start` and `sourceId, externalId`. Past events are purged after 90 days (D32). **No location field** (D35). For Google events, `title` is set only while a T3 grant exists (D36). |
 | `pings` | `fromId`, `toId`, `groupId?`, `template?`, `text?` (≤ 140 chars, plain text), `reply?`, `replyText?`, `expiresAt`, `readAt?` | Index: `toId, createdAt`. Purged after 30 days (D32). |
 | `mutes` | `userId`, `targetType`, `targetId`, `until?` | |
 | `pushSubscriptions` | `userId`, `endpoint`, `keys`, `userAgent`, `lastUsedAt` | Index: `userId` |
@@ -829,6 +830,7 @@ The **[ASSUMPTION]** markers still in this document (for example the file-size a
 | D39 | 2026-09-30 | **Public-ready gate**: public launch needs Milestone A plus WF-035, 044, 094, 095, 119, 120 and 126. Export and deletion requests are handled by email until WF-113 and WF-114 exist. The rest of Milestone B ships after launch. Also corrects the earlier claim that Milestone A was capped at 100 users by Google. That cap only applies to the calendar scope, which A doesn't use. | Replaces "nothing public before Milestone B", which set the bar higher than needed. The gate covers the real legal, safety and cost risks. |
 | D40 | 2026-09-30 | **The backend is Supabase instead of Convex**: Postgres with row-level security, Storage, Realtime and Cron. **Clerk stays** for sign-in, connected through Supabase third-party auth. Replaces the Convex part of D6. | Owner's preference. The data is relational, RLS enforces authorisation in the database, and Postgres is portable. |
 | D41 | 2026-09-30 | **Authorisation and tier redaction are enforced in Postgres** (RLS plus `security definer` functions). TypeScript server logic (availability engine, Google sync, push, worker calls) runs on the Next.js server on Vercel. Realtime sends only "something changed" signals, never other users' rows. | No client path can bypass redaction, and the shared TypeScript packages run unchanged in Node. |
+| D42 | 2026-09-30 | **Recurrence and timezones are handled in-house** in the availability engine, not with `rrule` or `date-fns-tz`. Occurrences keep the first occurrence's local wall-clock times. Week numbers count from the Monday week containing the schedule's start date. | We only need a small RRULE subset, and `rrule`'s timezone handling is a common source of DST bugs. Doing it ourselves keeps the rules explicit and fully tested. |
 
 ---
 

@@ -100,12 +100,15 @@ These have no unfinished dependencies:
 
 | ID | Title | Category |
 |---|---|---|
-| [WF-001](#wf-001--initialise-repo-and-turborepo-monorepo) | Initialise repo and Turborepo monorepo | `chore` |
 | [WF-011](#wf-011--decide-final-name-and-register-domain) | Decide final name and register domain | `chore` |
 | [WF-013](#wf-013--set-up-openrouter-account-and-data-policy) | Set up OpenRouter account and data policy | `chore` |
 | [WF-020](#wf-020--collect-20-real-schedule-samples-eval-set) | Collect 20+ real schedule samples (eval set) | `test` |
 | [WF-119](#wf-119--jamaica-dpa-legal-review-and-oic-registration) | Jamaica DPA: legal review and OIC registration | `compliance` |
 | [WF-122](#wf-122--user-research-interviews) | User research interviews | `research` |
+| [WF-063](#wf-063--manual-status-override) | Manual status override (engine side is done; storage needs WF-003) | `feature` |
+| [WF-070](#wf-070--short-gap-rule) | Short-gap rule (stretch) | `feature` |
+
+In progress: WF-002 (web scaffold and UI with mock data), WF-003 and WF-041 (Supabase backend). WF-006 is waiting on the branch-protection decision.
 
 > WF-020 (collecting samples) is the **highest-leverage thing you can do before any code**. Every parser decision depends on it.
 
@@ -184,12 +187,12 @@ Everything else at P0, which adds:
 
 | ID | Title | Category | Area | Pri | Phase | Milestone | Status | Depends on |
 |---|---|---|---|---|---|---|---|---|
-| WF-001 | Initialise repo and Turborepo monorepo | chore | repo | P0 | 0 | A | todo | — |
-| WF-002 | Scaffold Next.js web app | infra | web | P0 | 0 | A | todo | 001 |
-| WF-003 | Set up Supabase backend package | infra | backend | P0 | 0 | A | todo | 001 |
+| WF-001 | Initialise repo and Turborepo monorepo | chore | repo | P0 | 0 | A | done | — |
+| WF-002 | Scaffold Next.js web app | infra | web | P0 | 0 | A | in-progress | 001 |
+| WF-003 | Set up Supabase backend package | infra | backend | P0 | 0 | A | in-progress | 001 |
 | WF-004 | Clerk auth with Google + Supabase integration | feature | backend, web | P0 | 0 | A | todo | 002, 003 |
 | WF-005 | Age gate (date of birth at sign-up) | feature | web, backend | P0 | 0 | A | todo | 004 |
-| WF-006 | CI pipeline (lint, typecheck, test) | infra | repo | P0 | 0 | A | todo | 001 |
+| WF-006 | CI pipeline (lint, typecheck, test) | infra | repo | P0 | 0 | A | in-review | 001 |
 | WF-007 | Environments and preview deploys | infra | ops | P0 | 0 | B | todo | 002, 003 |
 | WF-008 | Sentry and PostHog | infra | ops | P0 | 0 | B | todo | 002 |
 | WF-009 | Landing page | feature | web | P0 | 0 | B | todo | 002 |
@@ -200,7 +203,7 @@ Everything else at P0, which adds:
 | WF-014 | Signed-in app shell, navigation, 404/error pages | feature | web | P0 | 0 | A | todo | 004 |
 | WF-015 | Consent record (versioned terms/privacy acceptance) | compliance | backend | P0 | 0 | A | todo | 004, 010 |
 | WF-020 | Collect 20+ real schedule samples (eval set) | test | parser | P0 | 1 | A | todo | — |
-| WF-021 | Shared schemas package (event draft, statuses, tiers) | feature | repo | P0 | 1 | A | todo | 001 |
+| WF-021 | Shared schemas package (event draft, statuses, tiers) | feature | repo | P0 | 1 | A | done | 001 |
 | WF-022 | Parser eval harness | test | parser | P0 | 1 | A | todo | 013, 020, 021 |
 | WF-023 | Spike: compare vision models via OpenRouter | spike | parser | P0 | 1 | A | todo | 022 |
 | WF-024 | Spike: Vercel functions vs Railway worker | spike | worker | P0 | 1 | A | todo | 002 |
@@ -220,7 +223,7 @@ Everything else at P0, which adds:
 | WF-038 | Camera capture on upload | feature | web | P1 | 1 | stretch | todo | 026 |
 | WF-039 | Run parser evals in CI | test | parser | P0 | 1 | B | todo | 006, 022 |
 | WF-040 | Profiles and handles | feature | social | P0 | 2 | A | todo | 004 |
-| WF-041 | Visibility tiers and server-side redaction | security | backend | P0 | 2 | A | todo | 003, 021 |
+| WF-041 | Visibility tiers and server-side redaction | security | backend | P0 | 2 | A | in-progress | 003, 021 |
 | WF-042 | Friend requests with tier choice | feature | social | P0 | 2 | A | todo | 040, 041 |
 | WF-043 | Groups: create, edit, admin role, 20-member cap | feature | social | P0 | 2 | A | todo | 040 |
 | WF-044 | Group member permissions | feature | social | P0 | 2 | Gate | todo | 043 |
@@ -230,8 +233,8 @@ Everything else at P0, which adds:
 | WF-048 | "Who can see me" page and overlap hint | feature | web | P0 | 2 | B | todo | 041, 042, 043 |
 | WF-049 | "How others see me" preview | feature | web | P1 | 2 | stretch | todo | 048, 061 |
 | WF-050 | Pause sharing | feature | backend, web | P1 | 2 | stretch | todo | 041 |
-| WF-060 | Availability engine core | feature | availability | P0 | 3 | A | todo | 021 |
-| WF-061 | Recurrence expansion and multi-user free intervals | feature | availability | P0 | 3 | A | todo | 060 |
+| WF-060 | Availability engine core | feature | availability | P0 | 3 | A | done | 021 |
+| WF-061 | Recurrence expansion and multi-user free intervals | feature | availability | P0 | 3 | A | done | 060 |
 | WF-062 | Available hours (onboarding slider and settings) | feature | web, backend | P0 | 3 | A | todo | 014, 060 |
 | WF-063 | Manual status override | feature | web, backend | P0 | 3 | A | todo | 060 |
 | WF-064 | Now screen (real-time, redacted) | feature | web, backend | P0 | 3 | A | todo | 041, 042, 043, 061 |
@@ -284,20 +287,20 @@ Everything else at P0, which adds:
 ### Phase 0: Foundations
 
 #### WF-001 · Initialise repo and Turborepo monorepo
-- **Category:** `chore` · **Area:** `repo` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `chore` · **Area:** `repo` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** —
 - **PRD:** §8.2, D6
 
 Initialise git and set up a pnpm workspace with Turborepo, following the layout in PRD §8.2. Add `packages/config` with shared tsconfig (strict), eslint and prettier.
 
 **Acceptance criteria**
-- [ ] `git init` done, `.gitignore` includes `.env*`, `node_modules` and `.turbo`
-- [ ] `pnpm-workspace.yaml` and `turbo.json` define `build`, `dev`, `lint`, `typecheck` and `test` pipelines
-- [ ] `packages/config` exports base tsconfig and eslint configs, with `strict: true` (NFR-OPS-1)
-- [ ] `pnpm lint` and `pnpm typecheck` run from the root
+- [x] `git init` done, `.gitignore` includes `.env*`, `node_modules` and `.turbo`
+- [x] `pnpm-workspace.yaml` and `turbo.json` define `build`, `dev`, `lint`, `typecheck` and `test` pipelines
+- [x] `packages/config` exports base tsconfig and eslint configs, with `strict: true` (NFR-OPS-1)
+- [x] `pnpm lint` and `pnpm typecheck` run from the root
 
 #### WF-002 · Scaffold Next.js web app
-- **Category:** `infra` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `infra` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-001
 - **PRD:** §8.2, §8.4
 
@@ -310,7 +313,7 @@ Create `apps/web` (Next.js App Router, Tailwind, shadcn/ui) and `packages/ui`.
 - [ ] Deploys to Vercel from the repo
 
 #### WF-003 · Set up Supabase backend package
-- **Category:** `infra` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `infra` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-001
 - **PRD:** §8.1, §8.2, §9, D40, D41
 
@@ -348,14 +351,16 @@ Google sign-in through Clerk, connected to Supabase through **third-party auth**
 - [ ] Unit tests cover the boundaries (someone turning 18 today, and someone turning 18 tomorrow)
 
 #### WF-006 · CI pipeline (lint, typecheck, test)
-- **Category:** `infra` · **Area:** `repo` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `infra` · **Area:** `repo` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-001
 - **PRD:** §8.4, NFR-SEC-10
 
+`.github/workflows/ci.yml` runs format check, lint, typecheck and test (with the Turborepo cache) plus a gitleaks secret scan. Dependabot version updates (`.github/dependabot.yml`), Dependabot alerts and security fixes, secret scanning and push protection are on. Only branch protection is left.
+
 **Acceptance criteria**
-- [ ] GitHub Actions runs lint, typecheck and test on every PR, using the Turborepo cache
-- [ ] Dependabot or Renovate is enabled, and secret scanning is on
-- [ ] Branch protection on `main` requires CI to pass
+- [x] GitHub Actions runs lint, typecheck and test on every PR, using the Turborepo cache
+- [x] Dependabot or Renovate is enabled, and secret scanning is on
+- [ ] Branch protection on `main` requires CI to pass (**owner decision**: it will stop direct pushes to `main`)
 
 #### WF-007 · Environments and preview deploys
 - **Category:** `infra` · **Area:** `ops` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
@@ -473,17 +478,17 @@ The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy
 - [ ] Consent recorded for each contributor
 
 #### WF-021 · Shared schemas package (event draft, statuses, tiers)
-- **Category:** `feature` · **Area:** `repo` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `repo` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-001
 - **PRD:** §6.6, §6.7, §9, NFR-OPS-1
 
 `packages/shared`: zod schemas and types shared by web, backend, worker and parser.
 
 **Acceptance criteria**
-- [ ] `EventDraft` schema: title, category, start/end, recurrence (weekly, alternating, week numbers) or a specific date, and confidence
-- [ ] Constants for statuses (`free`, `busy`, `dnd`, `away`, `no_schedule`, `paused`), tiers (1–3), group permissions and ping templates
-- [ ] **No location field** (D35)
-- [ ] Unit tests for the schema edge cases
+- [x] `EventDraft` schema: title, category, start/end, recurrence (weekly, alternating, week numbers) or a specific date, and confidence
+- [x] Constants for statuses (`free`, `busy`, `dnd`, `away`, `no_schedule`, `paused`), tiers (1–3), group permissions and ping templates
+- [x] **No location field** (D35)
+- [x] Unit tests for the schema edge cases
 
 #### WF-022 · Parser eval harness
 - **Category:** `test` · **Area:** `parser` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
@@ -702,7 +707,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [ ] An optional, unique handle (`@kemar`), checked for allowed characters and reserved words
 
 #### WF-041 · Visibility tiers and server-side redaction
-- **Category:** `security` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `security` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-003, WF-021
 - **PRD:** FR-VIS-3, FR-VIS-5, NFR-SEC-2, D1, D20, D27
 
@@ -814,27 +819,29 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 ### Phase 3: Availability & Now
 
 #### WF-060 · Availability engine core
-- **Category:** `feature` · **Area:** `availability` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `availability` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-021
 - **PRD:** §6.6, FR-AVL-1, FR-AVL-3, FR-AVL-4, FR-AVL-9, NFR-OPS-2, D5, D18, D22
 
 `packages/availability` is pure TypeScript with **no I/O**.
 
+> Done: 134 tests, 100% coverage (enforced ≥ 90%), property tests for the interval maths. API: `statusAt`, `timeline`, `busyIntervals`, `freeIntervals`, `expandEvent`, `eventTimesFromDraft` (for WF-030), `parseRRule`. Recurrence and timezones are handled in-house (PRD §8.4).
+
 **Acceptance criteria**
-- [ ] Merges events from every source and combines overlapping busy blocks
-- [ ] Applies the precedence order: `paused` → manual override → `no_schedule` → busy events → available hours → `free`
-- [ ] `statusAt(now)` returns the status plus "until X"
-- [ ] Everything is computed in UTC, with timezone edge cases tested
-- [ ] **≥ 90% test coverage**, including property-based tests for the interval maths
+- [x] Merges events from every source and combines overlapping busy blocks
+- [x] Applies the precedence order: `paused` → manual override → `no_schedule` → busy events → available hours → `free`
+- [x] `statusAt(now)` returns the status plus "until X"
+- [x] Everything is computed in UTC, with timezone edge cases tested
+- [x] **≥ 90% test coverage**, including property-based tests for the interval maths
 
 #### WF-061 · Recurrence expansion and multi-user free intervals
-- **Category:** `feature` · **Area:** `availability` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `availability` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-060
 - **PRD:** FR-AVL-5, FR-AVL-6
 
 **Acceptance criteria**
-- [ ] Expands RRULE events within a time range, respecting the schedule's date range, week patterns and exceptions
-- [ ] `freeIntervals(users[], range)` for up to 20 users over 14 days runs in ≤ 1 s (NFR-PERF-5)
+- [x] Expands RRULE events within a time range, respecting the schedule's date range, week patterns and exceptions
+- [x] `freeIntervals(users[], range)` for up to 20 users over 14 days runs in ≤ 1 s (NFR-PERF-5). Measured at about 25–40 ms.
 
 #### WF-062 · Available hours (onboarding slider and settings)
 - **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
