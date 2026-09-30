@@ -189,7 +189,7 @@ Everything else at P0, which adds:
 | ID | Title | Category | Area | Pri | Phase | Milestone | Status | Depends on |
 |---|---|---|---|---|---|---|---|---|
 | WF-001 | Initialise repo and Turborepo monorepo | chore | repo | P0 | 0 | A | done | — |
-| WF-002 | Scaffold Next.js web app | infra | web | P0 | 0 | A | in-progress | 001 |
+| WF-002 | Scaffold Next.js web app | infra | web | P0 | 0 | A | blocked | 001 |
 | WF-003 | Set up Supabase backend package | infra | backend | P0 | 0 | A | blocked | 001 |
 | WF-004 | Clerk auth with Google + Supabase integration | feature | backend, web | P0 | 0 | A | in-progress | 002, 003 |
 | WF-005 | Age gate (date of birth at sign-up) | feature | web, backend | P0 | 0 | A | in-progress | 004 |
@@ -301,16 +301,18 @@ Initialise git and set up a pnpm workspace with Turborepo, following the layout 
 - [x] `pnpm lint` and `pnpm typecheck` run from the root
 
 #### WF-002 · Scaffold Next.js web app
-- **Category:** `infra` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
+- **Category:** `infra` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `blocked`
 - **Depends on:** WF-001
 - **PRD:** §8.2, §8.4
 
 Create `apps/web` (Next.js App Router, Tailwind, shadcn/ui) and `packages/ui`.
 
+> Merged: Next.js 16 app and `packages/ui` with every Milestone A screen on mock data (`apps/web/src/lib/data/*` and `lib/actions/*` are the wiring points, ~100 `TODO(WF-…)` markers). Loads the repo-root `.env`. **Blocked on the owner:** connecting the repo to Vercel.
+
 **Acceptance criteria**
-- [ ] `apps/web` runs locally with `pnpm dev`
-- [ ] Tailwind and shadcn/ui are configured, and shared components live in `packages/ui`
-- [ ] Light and dark themes follow the system setting (NFR-UX-3)
+- [x] `apps/web` runs locally with `pnpm dev`
+- [x] Tailwind and shadcn/ui are configured, and shared components live in `packages/ui`
+- [x] Light and dark themes follow the system setting (NFR-UX-3)
 - [ ] Deploys to Vercel from the repo
 
 #### WF-003 · Set up Supabase backend package
