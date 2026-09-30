@@ -152,3 +152,39 @@ export async function expectPgError(
 export async function expectNoExecute(promise: Promise<unknown>, fn: string): Promise<void> {
   await expect(promise).rejects.toThrow(new RegExp(`permission denied for function ${fn}\\b`));
 }
+
+// ---------------------------------------------------------------------------
+// Invites (WF-045)
+// ---------------------------------------------------------------------------
+
+export interface GroupInviteRow {
+  id: string;
+  code: string;
+  expires_at: Date | null;
+  max_uses: number | null;
+  uses: number;
+  created_at: Date;
+  created_by_me: boolean;
+}
+
+/** create_group_invite as `clerkId`. */
+export async function createInvite(
+  db: TestDb,
+  clerkId: string,
+  groupId: string,
+  opts: { expiresAt?: string | null; maxUses?: number | null } = {},
+): Promise<GroupInviteRow> {
+  const [row] = await db
+    .asUser(clerkId)
+    .query<GroupInviteRow & Record<string, unknown>>(
+      `select * from public.create_group_invite($1, $2, $3)`,
+      [groupId, opts.expiresAt ?? null, opts.maxUses ?? null],
+    );
+  if (row === undefined) throw new Error('create_group_invite returned no row');
+  return row;
+}
+
+/** join_group as `clerkId`; returns the group id. */
+export function join(db: TestDb, clerkId: string, code: string, tier: Tier = 1): Promise<string> {
+  return scalar<string>(db, clerkId, `select public.join_group($1, $2) as v`, [code, tier]);
+}

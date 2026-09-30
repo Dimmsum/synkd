@@ -239,6 +239,57 @@ export type Database = {
           },
         ];
       };
+      invites: {
+        Row: {
+          code: string;
+          created_at: string;
+          expires_at: string | null;
+          group_id: string | null;
+          id: string;
+          inviter_id: string;
+          max_uses: number | null;
+          revoked: boolean;
+          uses: number;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          expires_at?: string | null;
+          group_id?: string | null;
+          id?: string;
+          inviter_id: string;
+          max_uses?: number | null;
+          revoked?: boolean;
+          uses?: number;
+        };
+        Update: {
+          code?: string;
+          created_at?: string;
+          expires_at?: string | null;
+          group_id?: string | null;
+          id?: string;
+          inviter_id?: string;
+          max_uses?: number | null;
+          revoked?: boolean;
+          uses?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invites_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'invites_inviter_id_fkey';
+            columns: ['inviter_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       sources: {
         Row: {
           created_at: string;
@@ -369,6 +420,16 @@ export type Database = {
     };
     Functions: {
       create_group: { Args: { emoji?: string; name: string; tier?: number }; Returns: string };
+      create_group_invite: {
+        Args: { expires_at?: string; group_id: string; max_uses?: number };
+        Returns: Database['public']['CompositeTypes']['group_invite'];
+        SetofOptions: {
+          from: '*';
+          to: 'group_invite';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
       delete_group: { Args: { group_id: string }; Returns: undefined };
       events_for_viewer: {
@@ -399,6 +460,27 @@ export type Database = {
           user_id: string;
         }[];
       };
+      get_invite_summary: {
+        Args: { code: string };
+        Returns: {
+          group_emoji: string;
+          group_name: string;
+          inviter_name: string;
+          member_count: number;
+          status: string;
+        }[];
+      };
+      join_group: { Args: { code: string; tier?: number }; Returns: string };
+      list_group_invites: {
+        Args: { group_id: string };
+        Returns: Database['public']['CompositeTypes']['group_invite'][];
+        SetofOptions: {
+          from: '*';
+          to: 'group_invite';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
       list_my_groups: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -416,6 +498,17 @@ export type Database = {
           role: string;
         }[];
       };
+      regenerate_group_invite: {
+        Args: { invite_id: string };
+        Returns: Database['public']['CompositeTypes']['group_invite'];
+        SetofOptions: {
+          from: '*';
+          to: 'group_invite';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      revoke_group_invite: { Args: { invite_id: string }; Returns: undefined };
       transfer_group_admin: {
         Args: { group_id: string; new_admin_id: string };
         Returns: undefined;
@@ -426,7 +519,15 @@ export type Database = {
       [_ in never]: never;
     };
     CompositeTypes: {
-      [_ in never]: never;
+      group_invite: {
+        id: string | null;
+        code: string | null;
+        expires_at: string | null;
+        max_uses: number | null;
+        uses: number | null;
+        created_at: string | null;
+        created_by_me: boolean | null;
+      };
     };
   };
 };

@@ -44,6 +44,7 @@ describe('migrations', () => {
       'friendships',
       'group_members',
       'groups',
+      'invites',
       'sources',
       'users',
       'visibility_rules',
@@ -162,17 +163,23 @@ describe('table privileges (on top of Supabase’s grant-everything defaults)', 
 /** Signed-in entry points (WF-041, WF-043, WF-044, WF-045, WF-047). Each is a security definer. */
 const AUTHENTICATED_FUNCTIONS = [
   'create_group(text,text,integer)',
+  'create_group_invite(uuid,timestamp with time zone,integer)',
   'current_user_id()',
   'delete_group(uuid)',
   'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
   'get_group_members(uuid)',
+  'get_invite_summary(text)',
+  'join_group(text,integer)',
+  'list_group_invites(uuid)',
   'list_my_groups()',
+  'regenerate_group_invite(uuid)',
+  'revoke_group_invite(uuid)',
   'transfer_group_admin(uuid,uuid)',
   'update_group(uuid,text,text)',
 ];
 
-/** Functions callable without signing in. */
-const ANON_FUNCTIONS: string[] = [];
+/** The only function callable without signing in: the /i/[code] invite page (FR-WEB-3). */
+const ANON_FUNCTIONS = ['get_invite_summary(text)'];
 
 describe('functions', () => {
   it('every security definer function pins search_path to empty', async () => {
