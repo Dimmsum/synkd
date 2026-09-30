@@ -1,37 +1,23 @@
 import type { Metadata } from 'next';
 import { InfoPage } from '@/components/public/info-page';
+import { LegalDocument, LegalDraftNotice } from '@/components/public/legal-document';
+import { LEGAL_DOCUMENTS } from '@/lib/legal';
 
-export const metadata: Metadata = { title: 'Privacy policy' };
+export const metadata: Metadata = {
+  title: LEGAL_DOCUMENTS.privacy.title,
+  description:
+    "What Who's Free collects, why, who can see it, how long it's kept, and your rights. Includes Google's Limited Use disclosure.",
+};
 
-// TODO(WF-010): render docs/legal/privacy-policy.md (with its version number for WF-015)
-// once the draft passes legal review (WF-119). This page is a placeholder.
+// FR-WEB-4, NFR-COMP-4/5/8/9, WF-010. Rendered from docs/legal/privacy-policy.md at build time.
+// Public: readable without signing in. Placeholder values and the version live in lib/legal.ts.
+export const dynamic = 'force-static';
+
 export default function PrivacyPage() {
   return (
-    <InfoPage
-      title="Privacy policy"
-      intro="The full policy is being finalised. Here's the short version."
-    >
-      <section>
-        <h2>What we share</h2>
-        <p>
-          Only your availability, at the level you choose for each friend and group. Everyone starts
-          at Free/Busy with times.
-        </p>
-      </section>
-      <section>
-        <h2>What we never store</h2>
-        <p>
-          Locations, rooms and addresses. Your full date of birth (we keep only the year). Your
-          uploaded schedule file after you confirm it.
-        </p>
-      </section>
-      <section>
-        <h2>Google Calendar</h2>
-        <p>
-          We read your calendar only to work out when you&apos;re busy. Google data is never sold,
-          never used for ads and never sent to AI models.
-        </p>
-      </section>
+    <InfoPage title={LEGAL_DOCUMENTS.privacy.title}>
+      <LegalDraftNotice />
+      <LegalDocument id="privacy" />
     </InfoPage>
   );
 }
