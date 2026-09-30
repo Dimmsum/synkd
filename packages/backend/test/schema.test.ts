@@ -165,6 +165,7 @@ describe('functions', () => {
        where n.nspname in ('public', 'private') and p.prosecdef order by 1`,
     );
     expect(definers.map((d) => d.fn)).toEqual([
+      'accept_consent(text)',
       'confirm_age(integer)',
       'current_user_id()',
       'ensure_current_user(text,text,text)',
@@ -198,7 +199,10 @@ describe('functions', () => {
         callable:
           role === 'authenticated'
             ? [
+                'accept_consent(text)',
+                'account_status()',
                 'confirm_age(integer)',
+                'current_consent_version()',
                 'current_user_id()',
                 'ensure_current_user(text,text,text)',
                 'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',

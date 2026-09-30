@@ -368,7 +368,19 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_consent: { Args: { version: string }; Returns: string };
+      account_status: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          age_confirmed: boolean;
+          consent_required: boolean;
+          consent_version: string;
+          current_consent_version: string;
+          has_profile: boolean;
+        }[];
+      };
       confirm_age: { Args: { birth_year: number }; Returns: string };
+      current_consent_version: { Args: Record<PropertyKey, never>; Returns: string };
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
       ensure_current_user: {
         Args: { avatar_url?: string; name: string; timezone?: string };

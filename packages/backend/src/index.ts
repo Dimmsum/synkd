@@ -28,3 +28,13 @@ export type ViewerEvent = Omit<EventsForViewerRow, 'category' | 'title' | 'rrule
   title: string | null;
   rrule: string | null;
 };
+
+type AccountStatusRow = Database['public']['Functions']['account_status']['Returns'][number];
+
+/**
+ * The single row of `account_status()` (WF-004/005/015). The CLI types function results as
+ * non-null, but `consent_version` is null until the user first accepts.
+ */
+export type AccountStatus = Omit<AccountStatusRow, 'consent_version'> & {
+  consent_version: string | null;
+};
