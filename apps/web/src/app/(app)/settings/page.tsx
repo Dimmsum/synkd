@@ -1,5 +1,15 @@
-import { Placeholder } from '@/components/app/placeholder';
+import type { Metadata } from 'next';
+import { PageHeader } from '@/components/app/page-header';
+import { SettingsNav } from '@/components/settings/settings-nav';
 
-export default function Page() {
-  return <Placeholder title="Settings" issue="WF-040" />;
+export const metadata: Metadata = { title: 'Settings' };
+
+export default function SettingsPage() {
+  return (
+    <div className="mx-auto max-w-2xl">
+      <PageHeader title="Settings" />
+      <SettingsNav variant="list" />
+      {/* TODO(WF-004): sign out with Clerk. */}
+    </div>
+  );
 }
