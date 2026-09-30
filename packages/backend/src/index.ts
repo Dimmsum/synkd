@@ -196,3 +196,64 @@ export const GROUP_ERRORS = {
   approvalNotSupported: 'Joining groups that need approval is not supported yet',
   rateLimited: 'Too many attempts',
 } as const;
+
+/**
+ * One event in a `now_for_viewer` source (WF-064), already redacted to the viewer's tier:
+ * `category` from T2, `title` from T3, neither for private events. Instants are UTC epoch
+ * ms, so this is an `@whosfree/availability` `ScheduleEvent` as is.
+ */
+export interface NowEvent {
+  id: string;
+  start: number;
+  end: number;
+  rrule: string | null;
+  exdates: number[];
+  category: string | null;
+  title: string | null;
+}
+
+/** One schedule source in `now_for_viewer` (an engine `ScheduleSource`). No ids or labels. */
+export interface NowSource {
+  period: { start: string; end: string; exceptions: { start: string; end: string }[] } | null;
+  events: NowEvent[];
+}
+
+/**
+ * A manual status in `now_for_viewer` (an engine `StatusOverride`). `label` is null below T3,
+ * and `focused` comes back as `busy` below T2.
+ */
+export interface NowOverride {
+  id: string;
+  status: 'free' | 'busy' | 'dnd' | 'away' | 'focused';
+  label: string | null;
+  startsAt: number;
+  endsAt: number | null;
+}
+
+/**
+ * One row of `now_for_viewer` (WF-064): a connection of the caller (friend or group
+ * co-member, never blocked) with the tier-redacted input for `statusAt`:
+ * `{ timeZone: timezone, sharingPaused: paused, availableHours: available_hours, overrides,
+ * sources }`. When `paused`, every schedule field is empty. The jsonb columns arrive untyped,
+ * so validate them (e.g. `AvailableHours` from @whosfree/shared) before relying on this shape.
+ */
+export type NowConnection = Omit<
+  Fn['now_for_viewer']['Returns'][number],
+  | 'handle'
+  | 'avatar_url'
+  | 'relationship'
+  | 'tier'
+  | 'timezone'
+  | 'available_hours'
+  | 'overrides'
+  | 'sources'
+> & {
+  handle: string | null;
+  avatar_url: string | null;
+  relationship: Exclude<Relationship, 'self'>;
+  tier: 1 | 2 | 3;
+  timezone: string | null;
+  available_hours: { day: string; start: string; end: string }[] | null;
+  overrides: NowOverride[];
+  sources: NowSource[];
+};

@@ -19,8 +19,13 @@
 --     is granted to anon, authenticated and service_role. Postgres itself
 --     grants EXECUTE on every new function to PUBLIC.
 --
--- Not reproduced: the `authenticator` login role, PostgREST, Realtime,
--- Storage, the real `auth` schema tables, and `extensions`.
+--   * the parts of Realtime's `realtime` schema our migrations use (WF-064):
+--     `realtime.messages` with RLS on, `realtime.topic()` and a stub
+--     `realtime.send()` that records each Broadcast as a row, so tests can
+--     read what was sent. See the end of this file.
+--
+-- Not reproduced: the `authenticator` login role, PostgREST, the Realtime
+-- server, Storage, the real `auth` schema tables, and `extensions`.
 -- ============================================================================
 
 create role anon nologin noinherit;
@@ -67,3 +72,52 @@ alter default privileges for role postgres in schema public
   grant all on functions to anon, authenticated, service_role;
 alter default privileges for role postgres in schema public
   grant all on sequences to anon, authenticated, service_role;
+
+-- ---------------------------------------------------------------------------
+-- Realtime (WF-064). On Supabase, `realtime.messages` is a partitioned table
+-- the Realtime server reads Broadcast messages from; `realtime.send()` inserts
+-- one (and turns any error into a WARNING, so it never fails the caller's
+-- transaction); and `realtime.topic()` is the channel topic Realtime sets
+-- while it checks a client's RLS access to a private channel. Here messages
+-- is a plain table, so every send is recorded for tests to read. Clients get
+-- the same permissive grants as on Supabase: RLS policies decide.
+-- ---------------------------------------------------------------------------
+create schema realtime;
+grant usage on schema realtime to anon, authenticated, service_role;
+
+create table realtime.messages (
+  id bigint generated always as identity primary key,
+  topic text not null,
+  extension text not null,
+  payload jsonb,
+  event text,
+  private boolean default false,
+  inserted_at timestamptz not null default now()
+);
+alter table realtime.messages enable row level security;
+grant select, insert, update, delete on realtime.messages to anon, authenticated, service_role;
+
+create function realtime.topic() returns text
+language sql stable
+as $$
+  select nullif(current_setting('realtime.topic', true), '')::text
+$$;
+
+create function realtime.send(payload jsonb, event text, topic text, private boolean default true)
+returns void
+language plpgsql
+as $$
+begin
+  begin
+    perform set_config('realtime.topic', topic, true);
+    insert into realtime.messages (payload, event, topic, private, extension)
+    values (payload, event, topic, private, 'broadcast');
+  exception
+    when others then
+      raise warning 'ErrorSendingBroadcastMessage: %', sqlerrm;
+  end;
+end;
+$$;
+
+grant execute on function realtime.topic(), realtime.send(jsonb, text, text, boolean)
+  to anon, authenticated, service_role;

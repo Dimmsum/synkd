@@ -700,6 +700,24 @@ export type Database = {
           role: string;
         }[];
       };
+      now_for_viewer: {
+        Args: { range_end?: string; range_start?: string };
+        Returns: {
+          available_hours: Json;
+          avatar_url: string;
+          group_ids: string[];
+          handle: string;
+          has_schedule: boolean;
+          name: string;
+          overrides: Json;
+          paused: boolean;
+          relationship: string;
+          sources: Json;
+          tier: number;
+          timezone: string;
+          user_id: string;
+        }[];
+      };
       regenerate_group_invite: {
         Args: { invite_id: string };
         Returns: Database['public']['CompositeTypes']['group_invite'];
