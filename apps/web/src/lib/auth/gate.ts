@@ -30,10 +30,10 @@ export const STEP_PATH = {
 
 /**
  * How a path is treated.
- *   public   anyone, no account check (legal pages, help, invite links, the under-18 page,
- *            PWA files)
+ *   public   anyone, no account check: the landing page, legal pages, contact, help, invite
+ *            links, the under-18 page and the PWA files. The landing page stays static and
+ *            has no session check, so signed-in users can see it too.
  *   open     not gated here; route handlers check their own auth (cron secrets, webhooks)
- *   landing  `/`: signed-in users are sent on to the app
  *   auth     Clerk's sign-in/sign-up pages: signed-in users are sent on
  *   age      the age step, only while the age is unconfirmed (WF-005)
  *   consent  the terms step, only while consent is required (WF-015)
@@ -41,7 +41,7 @@ export const STEP_PATH = {
  * Unknown paths count as `app` (deny by default), so a new route is protected without a list
  * to update.
  */
-export type RouteKind = 'public' | 'open' | 'landing' | 'auth' | 'age' | 'consent' | 'app';
+export type RouteKind = 'public' | 'open' | 'auth' | 'age' | 'consent' | 'app';
 
 const PUBLIC_PREFIXES = [
   '/privacy',
@@ -63,7 +63,7 @@ const under = (pathname: string, prefix: string) =>
   pathname === prefix || pathname.startsWith(`${prefix}/`);
 
 export function routeKind(pathname: string): RouteKind {
-  if (pathname === '/') return 'landing';
+  if (pathname === '/') return 'public';
   if (under(pathname, '/api')) return 'open';
   if (PUBLIC_PREFIXES.some((p) => under(pathname, p))) return 'public';
   if (under(pathname, STEP_PATH.age)) return 'age';
@@ -91,7 +91,7 @@ export function gate(kind: RouteKind, step: AccountStep | null): GateDecision {
   if (kind === 'public' || kind === 'open') return allow;
 
   if (step === null) {
-    return kind === 'landing' || kind === 'auth' ? allow : { type: 'sign-in' };
+    return kind === 'auth' ? allow : { type: 'sign-in' };
   }
   if (step === 'profile') return { type: 'create-profile' };
 

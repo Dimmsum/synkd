@@ -27,7 +27,7 @@ describe('accountStep (WF-004/005/015)', () => {
 
 describe('routeKind (PRD §8.3)', () => {
   it.each<[string, RouteKind]>([
-    ['/', 'landing'],
+    ['/', 'public'],
     ['/privacy', 'public'],
     ['/terms', 'public'],
     ['/help', 'public'],
@@ -70,8 +70,8 @@ describe('routeKind (PRD §8.3)', () => {
 
 describe('gate', () => {
   describe('signed out', () => {
-    it('can see public pages, the landing page and the sign-in/up pages', () => {
-      for (const kind of ['public', 'open', 'landing', 'auth'] as const) {
+    it('can see public pages and the sign-in/up pages', () => {
+      for (const kind of ['public', 'open', 'auth'] as const) {
         expect(gate(kind, null)).toEqual({ type: 'allow' });
       }
     });
@@ -84,7 +84,7 @@ describe('gate', () => {
   });
 
   it('creates the users row on first sign-in, wherever they land', () => {
-    for (const kind of ['landing', 'auth', 'age', 'consent', 'app'] as const) {
+    for (const kind of ['auth', 'age', 'consent', 'app'] as const) {
       expect(gate(kind, 'profile')).toEqual({ type: 'create-profile' });
     }
   });
@@ -101,9 +101,8 @@ describe('gate', () => {
       expect(gate('consent', 'age')).toEqual({ type: 'redirect', to: '/sign-up/age' });
     });
 
-    it('sends sign-in, sign-up and the landing page to the age step', () => {
+    it('sends sign-in and sign-up to the age step', () => {
       expect(gate('auth', 'age')).toEqual({ type: 'redirect', to: '/sign-up/age' });
-      expect(gate('landing', 'age')).toEqual({ type: 'redirect', to: '/sign-up/age' });
     });
 
     it('shows the age step', () => {
@@ -127,8 +126,8 @@ describe('gate', () => {
       expect(gate('app', 'ready')).toEqual({ type: 'allow' });
     });
 
-    it('sends the landing, auth and finished step pages to Now', () => {
-      for (const kind of ['landing', 'auth', 'age', 'consent'] as const) {
+    it('sends the sign-in/up and finished step pages to Now', () => {
+      for (const kind of ['auth', 'age', 'consent'] as const) {
         expect(gate(kind, 'ready')).toEqual({ type: 'redirect', to: '/now' });
       }
     });

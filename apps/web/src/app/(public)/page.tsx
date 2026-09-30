@@ -20,7 +20,7 @@ import { SiteFooter, SiteHeader } from '@/components/public/site-chrome';
 
 // Landing page (FR-WEB-1, WF-009). Fully static with no client JavaScript, so it stays well
 // inside the LCP budget on Fast 3G (NFR-PERF-1).
-// proxy.ts sends signed-in users on to the app (lib/auth/gate.ts).
+// Public for everyone, signed in or not (lib/auth/gate.ts), so it stays static.
 export const dynamic = 'force-static';
 
 const STEPS = [
