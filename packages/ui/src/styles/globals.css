@@ -78,6 +78,19 @@
   --source-upload: oklch(0.52 0.2 280);
   --source-manual: oklch(0.5 0.11 60);
   --source-gcal: oklch(0.5 0.13 250);
+
+  /* Group overlap week view (the design's "overlap" style). */
+  --overlap-all: oklch(0.62 0.15 155);
+  --overlap-all-ink: #ffffff;
+  --overlap-most: oklch(0.9 0.07 155);
+  --overlap-most-border: oklch(0.82 0.1 155);
+  --overlap-most-ink: oklch(0.32 0.1 155);
+  --overlap-few: oklch(0.955 0.035 155);
+  --overlap-few-border: oklch(0.88 0.06 155);
+  --overlap-few-ink: oklch(0.4 0.11 155);
+  --overlap-none: oklch(0.97 0.02 155);
+  --today-column: oklch(0.985 0.01 280);
+  --grid-line: #f1eff5;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -134,6 +147,18 @@
     --source-upload: oklch(0.8 0.11 280);
     --source-manual: oklch(0.85 0.12 80);
     --source-gcal: oklch(0.8 0.09 250);
+
+    --overlap-all: oklch(0.6 0.14 155);
+    --overlap-all-ink: #ffffff;
+    --overlap-most: oklch(0.38 0.08 155);
+    --overlap-most-border: oklch(0.48 0.1 155);
+    --overlap-most-ink: oklch(0.9 0.08 155);
+    --overlap-few: oklch(0.27 0.045 155);
+    --overlap-few-border: oklch(0.36 0.06 155);
+    --overlap-few-ink: oklch(0.84 0.1 155);
+    --overlap-none: oklch(0.23 0.02 155);
+    --today-column: oklch(0.22 0.035 280);
+    --grid-line: oklch(0.26 0.022 285);
   }
 }
 
@@ -198,6 +223,18 @@
   --color-source-upload: var(--source-upload);
   --color-source-manual: var(--source-manual);
   --color-source-gcal: var(--source-gcal);
+
+  --color-overlap-all: var(--overlap-all);
+  --color-overlap-all-ink: var(--overlap-all-ink);
+  --color-overlap-most: var(--overlap-most);
+  --color-overlap-most-border: var(--overlap-most-border);
+  --color-overlap-most-ink: var(--overlap-most-ink);
+  --color-overlap-few: var(--overlap-few);
+  --color-overlap-few-border: var(--overlap-few-border);
+  --color-overlap-few-ink: var(--overlap-few-ink);
+  --color-overlap-none: var(--overlap-none);
+  --color-today-column: var(--today-column);
+  --color-grid-line: var(--grid-line);
 }
 
 @layer base {

@@ -148,6 +148,30 @@ export async function getGroupWeek(id: string, anyDateInWeek: string): Promise<O
   };
 }
 
+/**
+ * Ranked free slots for a group over the next `days` days, from now (powers "Next time
+ * everyone's free" and "Best times this week"). TODO(WF-098): server-side slot finder.
+ */
+export async function getGroupUpcomingSlots(id: string, days = 7) {
+  const g = GROUPS.find((x) => x.id === id && x.memberIds.includes(VIEWER.id));
+  if (!g) return [];
+  const { now, today, tz } = ctx();
+  const members = g.memberIds.map(findPerson).filter((p) => p !== undefined);
+  const byId = new Map(members.map((p) => [p.id, toPerson(p)]));
+  return rankSlots(busyDays(members, nextDates(today, days)), {
+    minDuration: 60,
+    window: [8 * 60, 22 * 60],
+    maxMissing: 1,
+    notBefore: { date: today, minute: minutesIntoDay(now, tz) },
+  }).map((s) => ({
+    date: s.date,
+    start: s.start,
+    end: s.end,
+    free: s.free.map((pid) => byId.get(pid)).filter((p) => p !== undefined),
+    missing: s.missing.map((pid) => byId.get(pid)).filter((p) => p !== undefined),
+  }));
+}
+
 /** Today's timeline for every member of a group (FR-VIEW-6), at each member's tier. */
 export async function getGroupDay(id: string, date: string) {
   const g = GROUPS.find((x) => x.id === id && x.memberIds.includes(VIEWER.id));
