@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Product | whosfree (working name, see D23) |
-| Document version | 0.7 |
+| Document version | 0.8 |
 | Status | Draft. All open questions resolved, ready for Phase 0 (see [§14](#14-open-questions)) |
 | Last updated | 2026-09-30 |
 | Owner | Dimetri Lee |
@@ -19,6 +19,7 @@
 | 0.5 | 2026-09-30 | **Data minimisation** (D35–D38): event locations are no longer stored. Google Calendar stores only what's needed, and titles only when someone has the Details tier. No IP addresses go to analytics or error tracking. **Raw files are deleted when the user confirms the schedule** (replaces D12 and D33). Added a **public-ready gate** (D39), and removed the incorrect "100 test users" note from Milestone A. Drafted the [privacy policy](docs/legal/privacy-policy.md) and [terms](docs/legal/terms.md). |
 | 0.6 | 2026-09-30 | **Backend moves from Convex to Supabase** (D40): Postgres with row-level security, Supabase Storage, Realtime and Cron. Clerk stays for sign-in, connected through Supabase's third-party auth. **Authorisation and tier redaction are enforced in Postgres**, and TypeScript server logic runs on the Next.js server (D41). Updated the architecture (§8), data model (§9), NFRs and risks to match. |
 | 0.7 | 2026-09-30 | Recorded decisions from building the availability engine (D42): recurrence and timezones are handled in-house instead of with `rrule` and `date-fns-tz`, `exdates` are occurrence start instants, and week numbers count from the Monday week containing the schedule's start date (FR-IMP-5). |
+| 0.8 | 2026-09-30 | Data model matches the first migrations (D43): blocks get their own directed `blocks` table instead of a `blocked` friendship status; `events` use `startsAt`/`endsAt`; group permissions are four boolean columns; a source's period is three columns. |
 
 > **How to read this document**
 > - Requirements have IDs (`FR-<AREA>-<n>`, `NFR-<AREA>-<n>`) so issues, PRs and tests can refer to them.
@@ -607,15 +608,16 @@ These are Postgres tables in Supabase. Every table has an `id` (uuid) primary ke
 | `users` | `clerkId`, `name`, `handle`, `avatarUrl`, `timezone`, `sharingPaused`, `birthYear`, `ageConfirmedAt`, `consentVersion`, `consentAt` | Indexes: `clerkId`, `handle`. The full date of birth is never stored (D29). |
 | `availabilityPrefs` | `userId`, `weekly: {day, start, end}[]` (local time, default 08:00–22:00 every day, D24), `minGapMinutes`, `countAllDayEvents` | One row per user |
 | `statusOverrides` | `userId`, `status` (`free`/`busy`/`dnd`/`away`/`focused`), `label?`, `startsAt`, `endsAt?` | Index: `userId, startsAt` |
-| `friendships` | `userA`, `userB` (sorted), `status` (`pending`/`accepted`/`blocked`), `requestedBy` | Indexes: `userA`, `userB` |
+| `friendships` | `userA`, `userB` (sorted), `status` (`pending`/`accepted`), `requestedBy` | Unique `userA, userB`; index `userB`. Blocks are in `blocks`, not here (D43). |
+| `blocks` | `blockerId`, `blockedId` | Unique `blockerId, blockedId`. Directed, and readable by the blocker only, so the blocked person is never told (FR-SOC-6). A block in either direction removes all visibility. |
 | `groups` | `name`, `emoji`, `adminId`, `maxMembers` (default 20), `joinMode` (`open`/`approval`) | |
-| `groupMembers` | `groupId`, `userId`, `role` (`admin`/`member`), `permissions: {invite, manageMembers, editGroup, groupPing}` (default `{true, false, false, true}`, D26), `joinedAt` | Indexes: `groupId`, `userId`. Exactly one `admin` per group. |
+| `groupMembers` | `groupId`, `userId`, `role` (`admin`/`member`), permissions as `canInvite`, `canManageMembers`, `canEditGroup`, `canGroupPing` (default `true, false, false, true`, D26), `joinedAt` | Unique `groupId, userId`; index `userId`. Exactly one `admin` per group. |
 | `invites` | `code`, `groupId?`, `inviterId`, `expiresAt?`, `maxUses?`, `uses`, `revoked` | Index: `code` |
 | `visibilityRules` | `ownerId`, `targetType` (`friend`/`group`), `targetId`, `tier` (1–3) | Index: `ownerId, targetType, targetId`. Created when a user joins a group or accepts a friend. |
-| `sources` | `userId`, `type` (`upload`/`manual`/`gcal`), `status` (`healthy`/`failed`/`needs_reconnect`), `lastSyncedAt`, `gcal?: {calendarIds, syncTokens, channels, encRefreshToken}`, `period?: {start, end, exceptions[]}` | Index: `userId`. `status`, `lastSyncedAt` and `period.end` drive the stale-data warning (FR-VIEW-8). |
+| `sources` | `userId`, `type` (`upload`/`manual`/`gcal`), `status` (`healthy`/`failed`/`needs_reconnect`), `lastSyncedAt`, `gcal?: {calendarIds, syncTokens, channels}`, `periodStart?`, `periodEnd?`, `periodExceptions` | Index: `userId`. `status`, `lastSyncedAt` and `periodEnd` drive the stale-data warning (FR-VIEW-8). Clients can read their own sources, so the encrypted Google refresh token goes in a separate table clients can't read (NFR-SEC-3). |
 | `scheduleFiles` | `userId`, `storageId`, `mimeType`, `sha256`, `pages`, `uploadedAt`, `deleteAt` (= uploadedAt + 7 days), `deletedAt?` | Indexes: `userId`, `deleteAt` (used by the expiry cron). The row is removed along with the file on confirm (D38). |
 | `parseJobs` | `userId`, `fileId`, `status` (`queued`/`processing`/`needs_review`/`committed`/`failed`), `draft?`, `confidence?`, `error?`, `parserVersion`, `model`, `attempts`, `costUsd?` | Indexes: `userId`, `status` |
-| `events` | `userId`, `sourceId`, `title`, `category` (`class`/`lab`/`tutorial`/`work`/`meeting`/`event`/`other`), `start`, `end`, `rrule?`, `exdates?` (start instants of cancelled occurrences), `isPrivate`, `externalId?`, `busy` | Indexes: `userId, start` and `sourceId, externalId`. Past events are purged after 90 days (D32). **No location field** (D35). For Google events, `title` is set only while a T3 grant exists (D36). |
+| `events` | `userId`, `sourceId`, `title`, `category` (`class`/`lab`/`tutorial`/`work`/`meeting`/`event`/`other`), `startsAt`, `endsAt`, `rrule?`, `exdates?` (start instants of cancelled occurrences), `isPrivate`, `externalId?`, `busy` | Indexes: `userId, startsAt` and `sourceId, externalId`. The RRULE must not run past its source's `periodEnd`. Past events are purged after 90 days (D32). **No location field** (D35). For Google events, `title` is set only while a T3 grant exists (D36). |
 | `pings` | `fromId`, `toId`, `groupId?`, `template?`, `text?` (≤ 140 chars, plain text), `reply?`, `replyText?`, `expiresAt`, `readAt?` | Index: `toId, createdAt`. Purged after 30 days (D32). |
 | `mutes` | `userId`, `targetType`, `targetId`, `until?` | |
 | `pushSubscriptions` | `userId`, `endpoint`, `keys`, `userAgent`, `lastUsedAt` | Index: `userId` |
@@ -831,6 +833,7 @@ The **[ASSUMPTION]** markers still in this document (for example the file-size a
 | D40 | 2026-09-30 | **The backend is Supabase instead of Convex**: Postgres with row-level security, Storage, Realtime and Cron. **Clerk stays** for sign-in, connected through Supabase third-party auth. Replaces the Convex part of D6. | Owner's preference. The data is relational, RLS enforces authorisation in the database, and Postgres is portable. |
 | D41 | 2026-09-30 | **Authorisation and tier redaction are enforced in Postgres** (RLS plus `security definer` functions). TypeScript server logic (availability engine, Google sync, push, worker calls) runs on the Next.js server on Vercel. Realtime sends only "something changed" signals, never other users' rows. | No client path can bypass redaction, and the shared TypeScript packages run unchanged in Node. |
 | D42 | 2026-09-30 | **Recurrence and timezones are handled in-house** in the availability engine, not with `rrule` or `date-fns-tz`. Occurrences keep the first occurrence's local wall-clock times. Week numbers count from the Monday week containing the schedule's start date. | We only need a small RRULE subset, and `rrule`'s timezone handling is a common source of DST bugs. Doing it ourselves keeps the rules explicit and fully tested. |
+| D43 | 2026-09-30 | **Blocks are a separate, directed table**, not a friendship status. | A shared friendship row would let the blocked person see the block. Two people can block each other independently, and blocks also apply between people who aren't friends. |
 
 ---
 
