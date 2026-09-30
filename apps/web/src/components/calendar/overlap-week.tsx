@@ -47,20 +47,26 @@ export function OverlapWeek({
   minFree,
   path,
   query = {},
+  dayPath,
 }: {
   week: OverlapWeekData;
   today: string;
   nowMinute: number;
   minFree: number;
-  /** Page this view lives on; day links open its day view, chips set `?min=`. */
+  /** Page this view lives on; day links open its day view, chips set `?free=`. */
   path: Route;
   query?: Record<string, string>;
+  /** Where day links go (defaults to `path`). */
+  dayPath?: Route;
 }) {
   const hrefFor = {
-    day: (date: string) => ({ pathname: path, query: { ...query, view: 'day', date } }),
+    day: (date: string) =>
+      dayPath
+        ? { pathname: dayPath, query: { view: 'day', date } }
+        : { pathname: path, query: { ...query, view: 'day', date } },
     minFree: (n: number) => ({
       pathname: path,
-      query: { ...query, view: 'week', date: week.weekStart, min: String(n) },
+      query: { ...query, view: 'week', date: week.weekStart, free: String(n) },
     }),
   };
   const total = week.people.length;

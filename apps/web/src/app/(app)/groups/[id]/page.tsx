@@ -55,7 +55,7 @@ export default async function GroupPage({ params, searchParams }: PageProps<'/gr
     group.members.map((m) => [m.id, describeStatus(m, now, timeZone)] as const),
   );
   const total = week?.people.length ?? 0;
-  const minRaw = Number(sp.min);
+  const minRaw = Number(sp.free);
   const minFree = minFreeChoices(total).includes(minRaw) ? minRaw : defaultMinFree(total);
   const nextAll = slots.find((s) => s.missing.length === 0);
   // Best slot per day (slots are already ranked), then the top three days.
