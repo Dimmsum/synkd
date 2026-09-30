@@ -471,6 +471,7 @@ export type Database = {
         }[];
       };
       join_group: { Args: { code: string; tier?: number }; Returns: string };
+      leave_group: { Args: { group_id: string }; Returns: undefined };
       list_group_invites: {
         Args: { group_id: string };
         Returns: Database['public']['CompositeTypes']['group_invite'][];

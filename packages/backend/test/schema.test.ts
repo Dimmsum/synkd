@@ -170,6 +170,7 @@ const AUTHENTICATED_FUNCTIONS = [
   'get_group_members(uuid)',
   'get_invite_summary(text)',
   'join_group(text,integer)',
+  'leave_group(uuid)',
   'list_group_invites(uuid)',
   'list_my_groups()',
   'regenerate_group_invite(uuid)',

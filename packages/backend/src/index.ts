@@ -112,6 +112,7 @@ export const GROUP_ERRORS = {
   invalidExpiry: 'Invite expiry must be in the future',
   invalidMaxUses: 'Invite max uses must be between 1 and 1000',
   transferToSelf: 'Choose another member to become admin',
+  mustTransferAdmin: 'Transfer the admin role before leaving the group',
   adminNotRemovable: "The admin can't be removed from the group",
   adminHasAllPermissions: 'The admin always holds every permission',
   useLeaveGroup: 'Use leave_group to leave a group',
