@@ -23,8 +23,8 @@ export default function ErrorPage({
       </div>
       <div className="flex w-full max-w-xs flex-col gap-2 sm:max-w-none sm:flex-row sm:justify-center">
         <Button onClick={reset}>Try again</Button>
-        <Link href="/" className={buttonVariants({ variant: 'outline' })}>
-          Go to the home page
+        <Link href="/now" className={buttonVariants({ variant: 'outline' })}>
+          Back to Now
         </Link>
       </div>
     </main>

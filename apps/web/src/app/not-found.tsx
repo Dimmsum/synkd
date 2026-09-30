@@ -15,7 +15,10 @@ export default function NotFound() {
         </p>
       </div>
       <div className="flex w-full max-w-xs flex-col gap-2 sm:max-w-none sm:flex-row sm:justify-center">
-        <Link href="/" className={buttonVariants()}>
+        <Link href="/now" className={buttonVariants()}>
+          See who&apos;s free
+        </Link>
+        <Link href="/" className={buttonVariants({ variant: 'outline' })}>
           Go to the home page
         </Link>
       </div>

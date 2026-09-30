@@ -97,11 +97,14 @@ export function StatusBadge({
   tone,
   children,
   variant = 'text',
+  truncate = false,
   className,
 }: {
   tone: StatusTone;
   children?: React.ReactNode;
   variant?: 'text' | 'pill';
+  /** Cut long labels with an ellipsis instead of wrapping. */
+  truncate?: boolean;
   className?: string;
 }) {
   const t = STATUS_TONES[tone];
@@ -109,14 +112,14 @@ export function StatusBadge({
     <span
       data-status={tone}
       className={cn(
-        'inline-flex min-w-0 items-center gap-1.5 text-[13px] font-semibold',
+        'inline-flex min-w-0 items-start gap-1.5 text-[13px] leading-5 font-semibold',
         t.ink,
-        variant === 'pill' && ['rounded-full px-2.5 py-1', t.soft],
+        variant === 'pill' && ['items-center rounded-full px-2.5 py-1', t.soft],
         className,
       )}
     >
-      <StatusIcon tone={tone} className="size-3.5" />
-      <span className="truncate">{children ?? t.word}</span>
+      <StatusIcon tone={tone} className="mt-[3px] size-3.5" />
+      <span className={cn(truncate && 'truncate')}>{children ?? t.word}</span>
     </span>
   );
 }
