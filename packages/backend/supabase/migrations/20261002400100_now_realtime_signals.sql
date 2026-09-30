@@ -20,7 +20,9 @@
 -- What signals whom (every trigger is statement-level and reads the changed
 -- rows from transition tables, so a bulk write sends one signal per viewer):
 --   events, sources, status_overrides, availability_prefs
---                     -> the owner's connections
+--                     -> the owner's connections (not for an offline
+--                        friend's sources and events, D44: nothing the
+--                        connections see changed)
 --   users (name, handle, avatar, timezone, sharing_paused)
 --                     -> the user's connections
 --   visibility_rules  -> the connections the rule covers (the friend, or the
@@ -102,7 +104,12 @@ revoke all on function private.signal_connections_of(uuid[]) from public;
 -- ---------------------------------------------------------------------------
 
 -- Rows with a user_id owner: events, sources, status_overrides,
--- availability_prefs.
+-- availability_prefs. Rows of an offline friend's schedule (sources and
+-- events with offline_friend_id set, D44) are skipped. status_overrides and
+-- availability_prefs have no such column, so it is read through to_jsonb
+-- (missing = null = the user's own row). OLD and NEW are checked separately:
+-- an event moved from an offline friend's source to the user's own still
+-- signals, through its NEW row.
 create function private.signal_owner_rows_changed() returns trigger
 language plpgsql
 security definer
@@ -112,10 +119,14 @@ declare
   owners uuid[] := '{}';
 begin
   if tg_op <> 'DELETE' then
-    owners := owners || array(select n.user_id from new_rows n);
+    owners := owners || array(
+      select n.user_id from new_rows n where to_jsonb(n) ->> 'offline_friend_id' is null
+    );
   end if;
   if tg_op <> 'INSERT' then
-    owners := owners || array(select o.user_id from old_rows o);
+    owners := owners || array(
+      select o.user_id from old_rows o where to_jsonb(o) ->> 'offline_friend_id' is null
+    );
   end if;
   perform private.signal_connections_of(owners);
   return null;

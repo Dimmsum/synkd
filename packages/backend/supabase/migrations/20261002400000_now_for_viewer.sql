@@ -14,6 +14,13 @@
 -- below, so the friend detail view (WF-065) and the "how others see me"
 -- preview (WF-049) can reuse them.
 --
+-- Offline friends (D44, FR-SOC-15, WF-127): sources and events with
+-- offline_friend_id set hold the schedule of someone who isn't on whosfree,
+-- added by the user. They are never the user's own schedule and never reach
+-- another viewer: private.redacted_events already skips their events
+-- (20261002300100_offline_friends_isolation.sql), and every direct read of
+-- sources below adds `offline_friend_id is null`.
+--
 -- Realtime "changed" signals for this screen are in the next migration.
 
 -- ---------------------------------------------------------------------------
@@ -132,8 +139,9 @@ revoke all on function private.visible_overrides(uuid, smallint, timestamptz, ti
 --                 "rrule": text | null, "exdates": [<epoch ms>],
 --                 "category": text | null, "title": text | null}]}]
 --
---   * Every source is listed, even one with no events in the range: the
---     engine counts any source as "has a schedule" (D22).
+--   * Every source of the owner's own is listed, even one with no events in
+--     the range: the engine counts any source as "has a schedule" (D22).
+--     Offline friends' sources are never listed (D44).
 --   * Events come only from private.redacted_events, the single redaction
 --     path (busy events only; category from T2, title from T3, neither for
 --     private events; no location exists, D35). events is joined back on id
@@ -222,6 +230,7 @@ as $$
   from public.sources s
   where visible_sources.tier between 1 and 3
     and s.user_id = visible_sources.owner
+    and s.offline_friend_id is null
 $$;
 
 revoke all on function private.visible_sources(uuid, smallint, timestamptz, timestamptz)
@@ -250,8 +259,9 @@ revoke all on function private.visible_sources(uuid, smallint, timestamptz, time
 --                    Then every schedule field below is empty: has_schedule
 --                    false, timezone and available_hours null, overrides and
 --                    sources [].
---   has_schedule     they have at least one schedule source (false = "Not
---                    sharing yet", no_schedule, D22).
+--   has_schedule     they have at least one schedule source of their own
+--                    (false = "Not sharing yet", no_schedule, D22); an
+--                    offline friend's schedule doesn't count (D44).
 --   group_ids        the groups both people are in, for the group filter
 --                    (FR-VIEW-2); empty for a friend with no shared group.
 --   timezone         their IANA timezone (AvailabilityInput.timeZone).
@@ -314,7 +324,7 @@ begin
       c.tier,
       u.sharing_paused,
       not u.sharing_paused and exists (
-        select 1 from public.sources s where s.user_id = u.id
+        select 1 from public.sources s where s.user_id = u.id and s.offline_friend_id is null
       ),
       array(
         select mine.group_id
