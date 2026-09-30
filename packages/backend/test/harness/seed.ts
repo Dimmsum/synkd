@@ -17,12 +17,19 @@ async function one<T>(db: TestDb, sql: string, params: unknown[]): Promise<T> {
 export async function addUser(
   db: TestDb,
   clerkId: string,
-  opts: { sharingPaused?: boolean } = {},
+  opts: { sharingPaused?: boolean; handle?: string; avatarUrl?: string } = {},
 ): Promise<string> {
   const row = await one<{ id: string }>(
     db,
-    `insert into public.users (clerk_id, name, sharing_paused) values ($1, $2, $3) returning id`,
-    [clerkId, `Name of ${clerkId}`, opts.sharingPaused ?? false],
+    `insert into public.users (clerk_id, name, sharing_paused, handle, avatar_url)
+     values ($1, $2, $3, $4, $5) returning id`,
+    [
+      clerkId,
+      `Name of ${clerkId}`,
+      opts.sharingPaused ?? false,
+      opts.handle ?? null,
+      opts.avatarUrl ?? null,
+    ],
   );
   return row.id;
 }

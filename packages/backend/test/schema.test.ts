@@ -43,6 +43,7 @@ describe('migrations', () => {
       'friendships',
       'group_members',
       'groups',
+      'rate_limits',
       'sources',
       'status_overrides',
       'users',
@@ -164,22 +165,87 @@ describe('table privileges (on top of Supabase’s grant-everything defaults)', 
   });
 });
 
+/**
+ * Client-callable functions that are security definer: they read or write rows the caller can't
+ * reach under RLS. Executable by `authenticated` only.
+ */
+const CLIENT_DEFINER_FUNCTIONS = [
+  'accept_consent(text)',
+  'accept_friend_request(uuid,integer)',
+  'block_user(uuid)',
+  'cancel_friend_request(uuid)',
+  'clear_status()',
+  'confirm_age(integer)',
+  'current_user_id()',
+  'decline_friend_request(uuid)',
+  'ensure_current_user(text,text,text)',
+  'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
+  'find_user_by_handle(text)',
+  'get_profile(uuid)',
+  'list_blocked_users()',
+  'list_friend_requests()',
+  'list_friends()',
+  'send_friend_request(uuid,integer)',
+  'send_friend_request_by_handle(text,integer)',
+  'set_handle(text)',
+  'set_status(text,text,timestamp with time zone)',
+  'unblock_user(uuid)',
+  'unfriend(uuid)',
+];
+
+/** Client-callable functions that run as the caller, so RLS applies. `authenticated` only. */
+const CLIENT_INVOKER_FUNCTIONS = [
+  'account_status()',
+  'current_consent_version()',
+  'set_day_hours(text,text,text)',
+];
+
+/** Every function clients can call. */
+const CLIENT_FUNCTIONS = [...CLIENT_DEFINER_FUNCTIONS, ...CLIENT_INVOKER_FUNCTIONS].sort();
+
+/** Internal helpers in `private`: not security definer, not callable by clients. */
+const PRIVATE_FUNCTIONS = [
+  'private.check_tier(integer)',
+  'private.close_active_status(uuid)',
+  'private.consume_rate_limit(uuid,text,integer,interval)',
+  'private.create_default_availability_prefs()',
+  'private.delete_friend_rules(uuid,uuid)',
+  'private.is_blocked(uuid,uuid)',
+  'private.lock_pair(uuid,uuid)',
+  'private.normalize_handle(text)',
+  'private.protect_age_confirmation()',
+  'private.purge_expired_rate_limits()',
+  'private.purge_expired_status_overrides(interval)',
+  'private.redacted_events(uuid,smallint,timestamp with time zone,timestamp with time zone)',
+  'private.relationship(uuid,uuid)',
+  'private.require_user()',
+  'private.resolve_tier(uuid,uuid)',
+  'private.send_friend_request(uuid,uuid,integer)',
+  'private.set_friend_rule(uuid,uuid,smallint)',
+  'private.try_consume_rate_limit(uuid,text,integer,interval)',
+  'private.validate_user_timezone()',
+  'private.validate_weekly_hours()',
+  'private.visible_profile(uuid,uuid)',
+];
+
 describe('functions', () => {
+  it('the private schema holds exactly the internal helpers, none security definer', async () => {
+    const fns = await rows<{ fn: string; definer: boolean }>(
+      `select p.oid::regprocedure::text as fn, p.prosecdef as definer
+       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'private' order by 1`,
+    );
+    expect(fns.map((f) => f.fn)).toEqual(PRIVATE_FUNCTIONS);
+    expect(fns.filter((f) => f.definer)).toEqual([]);
+  });
+
   it('every security definer function pins search_path to empty', async () => {
     const definers = await rows<{ fn: string; config: string[] | null }>(
       `select p.oid::regprocedure::text as fn, p.proconfig as config
        from pg_proc p join pg_namespace n on n.oid = p.pronamespace
        where n.nspname in ('public', 'private') and p.prosecdef order by 1`,
     );
-    expect(definers.map((d) => d.fn)).toEqual([
-      'accept_consent(text)',
-      'clear_status()',
-      'confirm_age(integer)',
-      'current_user_id()',
-      'ensure_current_user(text,text,text)',
-      'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
-      'set_status(text,text,timestamp with time zone)',
-    ]);
+    expect(definers.map((d) => d.fn)).toEqual(CLIENT_DEFINER_FUNCTIONS);
     for (const d of definers) expect(d.config).toEqual(['search_path=""']);
   });
 
@@ -192,7 +258,7 @@ describe('functions', () => {
     expect(loose).toEqual([]);
   });
 
-  it('clients can execute only these functions, and only when signed in', async () => {
+  it('clients can execute only CLIENT_FUNCTIONS, and only when signed in', async () => {
     for (const role of CLIENT_ROLES) {
       const callable = await rows<{ fn: string }>(
         `select p.oid::regprocedure::text as fn from pg_proc p
@@ -205,21 +271,7 @@ describe('functions', () => {
       );
       expect({ role, callable: callable.map((c) => c.fn) }).toEqual({
         role,
-        callable:
-          role === 'authenticated'
-            ? [
-                'accept_consent(text)',
-                'account_status()',
-                'clear_status()',
-                'confirm_age(integer)',
-                'current_consent_version()',
-                'current_user_id()',
-                'ensure_current_user(text,text,text)',
-                'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
-                'set_day_hours(text,text,text)',
-                'set_status(text,text,timestamp with time zone)',
-              ]
-            : [],
+        callable: role === 'authenticated' ? CLIENT_FUNCTIONS : [],
       });
     }
   });

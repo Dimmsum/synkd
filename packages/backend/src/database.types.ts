@@ -274,6 +274,41 @@ export type Database = {
           },
         ];
       };
+      rate_limits: {
+        Row: {
+          action: string;
+          count: number;
+          created_at: string;
+          user_id: string;
+          window_end: string;
+          window_start: string;
+        };
+        Insert: {
+          action: string;
+          count?: number;
+          created_at?: string;
+          user_id: string;
+          window_end: string;
+          window_start: string;
+        };
+        Update: {
+          action?: string;
+          count?: number;
+          created_at?: string;
+          user_id?: string;
+          window_end?: string;
+          window_start?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'rate_limits_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       sources: {
         Row: {
           created_at: string;
@@ -442,6 +477,7 @@ export type Database = {
     };
     Functions: {
       accept_consent: { Args: { version: string }; Returns: string };
+      accept_friend_request: { Args: { tier?: number; user_id: string }; Returns: undefined };
       account_status: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -452,10 +488,13 @@ export type Database = {
           has_profile: boolean;
         }[];
       };
+      block_user: { Args: { user_id: string }; Returns: undefined };
+      cancel_friend_request: { Args: { user_id: string }; Returns: undefined };
       clear_status: { Args: Record<PropertyKey, never>; Returns: undefined };
       confirm_age: { Args: { birth_year: number }; Returns: string };
       current_consent_version: { Args: Record<PropertyKey, never>; Returns: string };
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
+      decline_friend_request: { Args: { user_id: string }; Returns: undefined };
       ensure_current_user: {
         Args: { avatar_url?: string; name: string; timezone?: string };
         Returns: {
@@ -491,10 +530,65 @@ export type Database = {
           title: string;
         }[];
       };
+      find_user_by_handle: {
+        Args: { lookup: string };
+        Returns: {
+          avatar_url: string;
+          handle: string;
+          id: string;
+          name: string;
+          relationship: string;
+        }[];
+      };
+      get_profile: {
+        Args: { user_id: string };
+        Returns: {
+          avatar_url: string;
+          handle: string;
+          id: string;
+          name: string;
+          relationship: string;
+        }[];
+      };
+      list_blocked_users: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          avatar_url: string;
+          blocked_at: string;
+          handle: string;
+          name: string;
+          user_id: string;
+        }[];
+      };
+      list_friend_requests: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          avatar_url: string;
+          direction: string;
+          handle: string;
+          name: string;
+          requested_at: string;
+          tier: number;
+          user_id: string;
+        }[];
+      };
+      list_friends: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          avatar_url: string;
+          handle: string;
+          name: string;
+          tier: number;
+          user_id: string;
+        }[];
+      };
+      send_friend_request: { Args: { tier?: number; user_id: string }; Returns: string };
+      send_friend_request_by_handle: { Args: { handle: string; tier?: number }; Returns: string };
       set_day_hours: {
         Args: { day: string; end_time?: string; start_time?: string };
         Returns: Json;
       };
+      set_handle: { Args: { handle: string }; Returns: string };
       set_status: {
         Args: { ends_at?: string; label?: string; status: string };
         Returns: {
@@ -513,6 +607,8 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      unblock_user: { Args: { user_id: string }; Returns: undefined };
+      unfriend: { Args: { user_id: string }; Returns: undefined };
     };
     Enums: {
       [_ in never]: never;
