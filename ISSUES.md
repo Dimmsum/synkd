@@ -415,14 +415,16 @@ Google sign-in through Clerk, connected to Supabase through **third-party auth**
 
 The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy.md) and [docs/legal/terms.md](docs/legal/terms.md). What's left is filling in the placeholders and showing them as pages on the site. A lawyer reviews them in WF-119.
 
+> Merged: `/privacy` and `/terms` render `docs/legal/*.md` at build time (static), `/contact` has no form, and the drafts cover offline friends (D44). **Every open value is in `apps/web/src/lib/legal.ts` (`LEGAL_VALUES`)**: the entity name, registered address, domain, effective date, the privacy/support/security emails, DPO, OIC contact, four retention periods and the liability cap. Until they're filled in, they render highlighted and the pages show a draft banner. One version, `LEGAL_VERSION = '0.1-draft'`, matches `current_consent_version()`, and a test fails if they drift. A bump = new text + new `LEGAL_VERSION` + a migration replacing `current_consent_version()`. **Left (owner):** supply the values, mostly after WF-011 and WF-119.
+
 **Acceptance criteria**
 - [x] Draft privacy policy covers what we collect, what we *don't* collect, why, retention (files deleted on confirm, events 90 days, pings 30 days), the processors we use, sending data abroad, the **Google Limited Use** disclosure, and user rights
 - [x] Draft terms cover the 18+ rule, acceptable use, pings, groups and admins, parsing accuracy, and Jamaican law
 - [ ] Every `[PLACEHOLDER]` filled in (legal entity, contact email, domain, effective date)
-- [ ] Shown at `/privacy` and `/terms`
-- [ ] `/contact` is a contact page
-- [ ] Each document has a version number (used by WF-015)
-- [ ] The drafts cover offline friends (D44): the privacy policy explains we hold a nickname and schedule for people who aren't users, only for the user who added them; the terms require their permission
+- [x] Shown at `/privacy` and `/terms`
+- [x] `/contact` is a contact page
+- [x] Each document has a version number (used by WF-015)
+- [x] The drafts cover offline friends (D44): the privacy policy explains we hold a nickname and schedule for people who aren't users, only for the user who added them; the terms require their permission
 
 #### WF-011 · Decide final name and register domain
 - **Category:** `chore` · **Area:** `ops` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
