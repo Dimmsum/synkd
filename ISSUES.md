@@ -109,7 +109,7 @@ These have no unfinished dependencies:
 | [WF-070](#wf-070--short-gap-rule) | Short-gap rule (stretch) | `feature` |
 | [WF-050](#wf-050--pause-sharing) | Pause sharing (stretch; the column and redaction already exist) | `feature` |
 
-In progress: WF-002 (web scaffold and UI with mock data). **Waiting on the owner:** WF-003 (create the Supabase and Clerk projects) and WF-006 (branch-protection decision). Most backend issues depend on WF-003 being `done`, but the code they need is already merged.
+In progress: WF-002 (web scaffold and UI with mock data); backend side of WF-040, 042, 047 (friends), WF-043, 044, 045 (groups), and WF-004, 005, 015, 062, 063 (account and status). **Waiting on the owner:** WF-003 (create the Supabase and Clerk projects) and WF-006 (branch-protection decision). Most backend issues depend on WF-003 being `done`, but the code they need is already merged.
 
 > WF-020 (collecting samples) is the **highest-leverage thing you can do before any code**. Every parser decision depends on it.
 
@@ -191,8 +191,8 @@ Everything else at P0, which adds:
 | WF-001 | Initialise repo and Turborepo monorepo | chore | repo | P0 | 0 | A | done | — |
 | WF-002 | Scaffold Next.js web app | infra | web | P0 | 0 | A | in-progress | 001 |
 | WF-003 | Set up Supabase backend package | infra | backend | P0 | 0 | A | blocked | 001 |
-| WF-004 | Clerk auth with Google + Supabase integration | feature | backend, web | P0 | 0 | A | todo | 002, 003 |
-| WF-005 | Age gate (date of birth at sign-up) | feature | web, backend | P0 | 0 | A | todo | 004 |
+| WF-004 | Clerk auth with Google + Supabase integration | feature | backend, web | P0 | 0 | A | in-progress | 002, 003 |
+| WF-005 | Age gate (date of birth at sign-up) | feature | web, backend | P0 | 0 | A | in-progress | 004 |
 | WF-006 | CI pipeline (lint, typecheck, test) | infra | repo | P0 | 0 | A | in-review | 001 |
 | WF-007 | Environments and preview deploys | infra | ops | P0 | 0 | B | todo | 002, 003 |
 | WF-008 | Sentry and PostHog | infra | ops | P0 | 0 | B | todo | 002 |
@@ -202,7 +202,7 @@ Everything else at P0, which adds:
 | WF-012 | Google Cloud project and OAuth consent screen | chore | gcal | P0 | 0 | B | todo | 010, 011 |
 | WF-013 | Set up OpenRouter account and data policy | chore | parser | P0 | 0 | A | todo | — |
 | WF-014 | Signed-in app shell, navigation, 404/error pages | feature | web | P0 | 0 | A | todo | 004 |
-| WF-015 | Consent record (versioned terms/privacy acceptance) | compliance | backend | P0 | 0 | A | todo | 004, 010 |
+| WF-015 | Consent record (versioned terms/privacy acceptance) | compliance | backend | P0 | 0 | A | in-progress | 004, 010 |
 | WF-020 | Collect 20+ real schedule samples (eval set) | test | parser | P0 | 1 | A | todo | — |
 | WF-021 | Shared schemas package (event draft, statuses, tiers) | feature | repo | P0 | 1 | A | done | 001 |
 | WF-022 | Parser eval harness | test | parser | P0 | 1 | A | todo | 013, 020, 021 |
@@ -223,21 +223,21 @@ Everything else at P0, which adds:
 | WF-037 | Retention jobs (files, events, pings) | compliance | backend | P0 | 1 | B | todo | 026, 030 |
 | WF-038 | Camera capture on upload | feature | web | P1 | 1 | stretch | todo | 026 |
 | WF-039 | Run parser evals in CI | test | parser | P0 | 1 | B | todo | 006, 022 |
-| WF-040 | Profiles and handles | feature | social | P0 | 2 | A | todo | 004 |
+| WF-040 | Profiles and handles | feature | social | P0 | 2 | A | in-progress | 004 |
 | WF-041 | Visibility tiers and server-side redaction | security | backend | P0 | 2 | A | done | 003, 021 |
-| WF-042 | Friend requests with tier choice | feature | social | P0 | 2 | A | todo | 040, 041 |
-| WF-043 | Groups: create, edit, admin role, 20-member cap | feature | social | P0 | 2 | A | todo | 040 |
-| WF-044 | Group member permissions | feature | social | P0 | 2 | Gate | todo | 043 |
-| WF-045 | Invite links, invite page and join flow | feature | social, web | P0 | 2 | A | todo | 041, 043 |
+| WF-042 | Friend requests with tier choice | feature | social | P0 | 2 | A | in-progress | 040, 041 |
+| WF-043 | Groups: create, edit, admin role, 20-member cap | feature | social | P0 | 2 | A | in-progress | 040 |
+| WF-044 | Group member permissions | feature | social | P0 | 2 | Gate | in-progress | 043 |
+| WF-045 | Invite links, invite page and join flow | feature | social, web | P0 | 2 | A | in-progress | 041, 043 |
 | WF-046 | WhatsApp share and link previews | feature | web | P1 | 2 | stretch | todo | 045 |
-| WF-047 | Block, remove friend, leave group | feature | social | P0 | 2 | A | todo | 042, 043 |
+| WF-047 | Block, remove friend, leave group | feature | social | P0 | 2 | A | in-progress | 042, 043 |
 | WF-048 | "Who can see me" page and overlap hint | feature | web | P0 | 2 | B | todo | 041, 042, 043 |
 | WF-049 | "How others see me" preview | feature | web | P1 | 2 | stretch | todo | 048, 061 |
 | WF-050 | Pause sharing | feature | backend, web | P1 | 2 | stretch | todo | 041 |
 | WF-060 | Availability engine core | feature | availability | P0 | 3 | A | done | 021 |
 | WF-061 | Recurrence expansion and multi-user free intervals | feature | availability | P0 | 3 | A | done | 060 |
-| WF-062 | Available hours (onboarding slider and settings) | feature | web, backend | P0 | 3 | A | todo | 014, 060 |
-| WF-063 | Manual status override | feature | web, backend | P0 | 3 | A | todo | 060 |
+| WF-062 | Available hours (onboarding slider and settings) | feature | web, backend | P0 | 3 | A | in-progress | 014, 060 |
+| WF-063 | Manual status override | feature | web, backend | P0 | 3 | A | in-progress | 060 |
 | WF-064 | Now screen (real-time, redacted) | feature | web, backend | P0 | 3 | A | todo | 041, 042, 043, 061 |
 | WF-065 | Friend detail and My schedule views | feature | web | P0 | 3 | B | todo | 064 |
 | WF-066 | Group timeline view | feature | web | P1 | 3 | stretch | todo | 064 |
@@ -330,7 +330,7 @@ Create `packages/backend` holding the Supabase project (`supabase/` with `config
 - [ ] A Supabase dev project is created and linked, and Clerk is added as a third-party auth provider (**blocked on the owner**: create the Supabase and Clerk projects, then enable `[auth.third_party.clerk]` in `supabase/config.toml` and in the dashboard)
 
 #### WF-004 · Clerk auth with Google + Supabase integration
-- **Category:** `feature` · **Area:** `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-002, WF-003
 - **PRD:** FR-AUTH-1, FR-AUTH-3, FR-AUTH-5, FR-WEB-2, D19
 
@@ -345,7 +345,7 @@ Google sign-in through Clerk, connected to Supabase through **third-party auth**
 - [ ] The session survives closing and reopening the app
 
 #### WF-005 · Age gate (date of birth at sign-up)
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-004
 - **PRD:** FR-AUTH-6, NFR-COMP-7, D13, D29
 
@@ -457,7 +457,7 @@ The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy
 - [ ] Tap targets are at least 44×44 px
 
 #### WF-015 · Consent record (versioned terms/privacy acceptance)
-- **Category:** `compliance` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `compliance` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-004, WF-010
 - **PRD:** FR-SET-5
 
@@ -703,7 +703,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 ### Phase 2: Social & visibility
 
 #### WF-040 · Profiles and handles
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-004
 - **PRD:** FR-AUTH-2
 
@@ -732,7 +732,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [x] Tests prove a viewer never receives fields above their tier
 
 #### WF-042 · Friend requests with tier choice
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-040, WF-041
 - **PRD:** FR-SOC-1, FR-VIS-1
 
@@ -742,7 +742,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [ ] Friend requests are rate-limited (NFR-SEC-9)
 
 #### WF-043 · Groups: create, edit, admin role, 20-member cap
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-040
 - **PRD:** FR-SOC-2, FR-SOC-5, FR-SOC-7, FR-SOC-9, FR-SOC-10, FR-SOC-11, D17
 
@@ -756,7 +756,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [ ] Joining a group doesn't create a friendship
 
 #### WF-044 · Group member permissions
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** Gate · **Status:** `todo`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** Gate · **Status:** `in-progress`
 - **Depends on:** WF-043
 - **PRD:** FR-SOC-8, D26
 
@@ -767,7 +767,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [ ] Every related mutation checks permissions on the server
 
 #### WF-045 · Invite links, invite page and join flow
-- **Category:** `feature` · **Area:** `social`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `social`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-041, WF-043
 - **PRD:** FR-SOC-3, FR-WEB-3, FR-VIS-1, §8.5 (joining a group)
 
@@ -789,7 +789,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [ ] Open Graph tags make WhatsApp preview the link as "Join *{group}* on whosfree"
 
 #### WF-047 · Block, remove friend, leave group
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-042, WF-043
 - **PRD:** FR-SOC-6
 
@@ -857,7 +857,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [x] `freeIntervals(users[], range)` for up to 20 users over 14 days runs in ≤ 1 s (NFR-PERF-5). Measured at about 25–40 ms.
 
 #### WF-062 · Available hours (onboarding slider and settings)
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-014, WF-060
 - **PRD:** FR-AVL-2, D24
 
@@ -867,7 +867,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [ ] Times outside these hours show as `away`
 
 #### WF-063 · Manual status override
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-060
 - **PRD:** FR-AVL-3, J5
 
