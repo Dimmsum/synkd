@@ -50,6 +50,10 @@ describe('routeKind (PRD §8.3)', () => {
     ['/inbox', 'app'],
     ['/import/job_1/review', 'app'],
     ['/groups/g1/settings', 'app'],
+    // Joining from an invite and friend links need a finished sign-up (WF-045, WF-042).
+    ['/join/AbCdEfGhIjKlMnOpQr_-12', 'app'],
+    ['/add/11111111-1111-4111-8111-111111111111', 'app'],
+    ['/interesting', 'app'],
     ['/settings/privacy', 'app'],
     ['/onboarding/hours', 'app'],
     ['/admin', 'app'],

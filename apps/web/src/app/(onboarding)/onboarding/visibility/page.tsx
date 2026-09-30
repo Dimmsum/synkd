@@ -7,18 +7,20 @@ import { GroupEmoji } from '@whosfree/ui/components/person-avatar';
 import { TIER_DETAILS } from '@whosfree/ui/lib/tiers';
 import { JoinGroupForm } from '@/components/onboarding/join-group';
 import { OnboardingShell } from '@/components/onboarding/shell';
-import { getInvite } from '@/lib/data/invites';
+import { getInvite, getRememberedInviteCode } from '@/lib/data/invites';
 import { nextStepHref } from '@/lib/onboarding';
 
 export const metadata: Metadata = { title: 'Who sees what' };
 
 // J1.7 (FR-VIS-1). With an invite, pick the group's tier and join; without one, explain
-// the default. TODO(WF-045): read the remembered invite from its cookie instead of ?invite=.
+// the default. The invite is the one remembered from /i/<code> (WF-045); `?invite=` still
+// works for links made before the cookie existed. Joining clears it.
 export default async function OnboardingVisibilityPage({
   searchParams,
 }: PageProps<'/onboarding/visibility'>) {
-  const { invite: code } = await searchParams;
-  const invite = typeof code === 'string' ? await getInvite(code) : null;
+  const { invite: param } = await searchParams;
+  const code = (await getRememberedInviteCode()) ?? (typeof param === 'string' ? param : null);
+  const invite = code ? await getInvite(code) : null;
   const next = nextStepHref('sharing');
 
   if (invite && invite.state === 'ok') {

@@ -8,7 +8,10 @@ import { Button } from '@whosfree/ui/components/button';
 import { TierPicker } from '@whosfree/ui/components/tier-picker';
 import { joinGroup } from '@/lib/actions/social';
 
-/** Choose what the group sees, then join (FR-VIS-1: T1 preselected, J1.7). */
+/**
+ * Choose what the group sees, then join (FR-VIS-1: T1 preselected, J1.7). Afterwards goes to
+ * `next` (onboarding's next step) or, without one, to the group.
+ */
 export function JoinGroupForm({
   code,
   groupName,
@@ -16,7 +19,7 @@ export function JoinGroupForm({
 }: {
   code: string;
   groupName: string;
-  next: Route;
+  next?: Route;
 }) {
   const router = useRouter();
   const [tier, setTier] = useState<Tier>(DEFAULT_TIER);
@@ -38,7 +41,7 @@ export function JoinGroupForm({
         onClick={() =>
           start(async () => {
             const res = await joinGroup({ code, tier });
-            if (res.ok) router.push(next);
+            if (res.ok) router.push(next ?? (`/groups/${res.data.groupId}` as Route));
             else setError(res.error);
           })
         }

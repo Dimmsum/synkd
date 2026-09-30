@@ -67,6 +67,7 @@ export async function acceptTerms(_prev: FormState, formData: FormData): Promise
     console.error('accept_consent failed', error.code);
     return { error: TRY_AGAIN };
   }
-  // TODO(WF-045): if an invite code was remembered through sign-up, carry it into onboarding.
+  // A remembered invite (WF-045) rides along in its cookie: onboarding's sharing step reads it
+  // and offers the tier picker before joining (lib/social/invite-cookie.ts).
   redirect(formData.get('renewal') === '1' ? '/now' : '/onboarding');
 }
