@@ -164,23 +164,35 @@ describe('table privileges (on top of Supabase’s grant-everything defaults)', 
  * `authenticated` only.
  */
 const CLIENT_FUNCTIONS = [
+  'accept_friend_request(uuid,integer)',
+  'cancel_friend_request(uuid)',
   'current_user_id()',
+  'decline_friend_request(uuid)',
   'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
   'find_user_by_handle(text)',
   'get_profile(uuid)',
+  'list_friend_requests()',
+  'list_friends()',
+  'send_friend_request(uuid,integer)',
+  'send_friend_request_by_handle(text,integer)',
   'set_handle(text)',
 ];
 
 /** Internal helpers in `private`: not security definer, not callable by clients. */
 const PRIVATE_FUNCTIONS = [
+  'private.check_tier(integer)',
   'private.consume_rate_limit(uuid,text,integer,interval)',
+  'private.delete_friend_rules(uuid,uuid)',
   'private.is_blocked(uuid,uuid)',
+  'private.lock_pair(uuid,uuid)',
   'private.normalize_handle(text)',
   'private.purge_expired_rate_limits()',
   'private.redacted_events(uuid,smallint,timestamp with time zone,timestamp with time zone)',
   'private.relationship(uuid,uuid)',
   'private.require_user()',
   'private.resolve_tier(uuid,uuid)',
+  'private.send_friend_request(uuid,uuid,integer)',
+  'private.set_friend_rule(uuid,uuid,smallint)',
   'private.try_consume_rate_limit(uuid,text,integer,interval)',
   'private.validate_user_timezone()',
   'private.visible_profile(uuid,uuid)',

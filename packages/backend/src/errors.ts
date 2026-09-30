@@ -13,6 +13,21 @@ export const DB_ERROR = {
   /** Handle is already someone else's (ignoring case). */
   handleTaken: 'WF103',
   /**
+   * No such user. Also returned when either person has blocked the other, so a
+   * blocked user can't tell (FR-SOC-6). Show "We couldn't find that person".
+   */
+  userNotFound: 'WF201',
+  /** You tried to friend yourself. */
+  cannotTargetSelf: 'WF202',
+  /** You're already friends. */
+  alreadyFriends: 'WF203',
+  /** You've already sent this person a request that is still pending. */
+  requestAlreadySent: 'WF204',
+  /** There is no pending request from this person to accept (withdrawn, or already handled). */
+  requestNotFound: 'WF205',
+  /** You have blocked this person; unblock them first. Only ever sent to the blocker. */
+  blockedByYou: 'WF206',
+  /**
    * Rate limited (NFR-SEC-9): "Slow down". PostgREST returns HTTP 429. The error
    * `details` is JSON: `{ action, limit, retry_at }`.
    */

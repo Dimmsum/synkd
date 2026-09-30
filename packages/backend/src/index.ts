@@ -47,5 +47,38 @@ export type PublicProfile = Omit<ProfileRow, 'handle' | 'avatar_url' | 'relation
   relationship: Relationship;
 };
 
+type FriendRequestRow = Database['public']['Functions']['list_friend_requests']['Returns'][number];
+
+/**
+ * One row of `list_friend_requests` (WF-042). `tier` is the tier the caller
+ * chose for an outgoing request, and null for an incoming one.
+ */
+export type FriendRequest = Omit<
+  FriendRequestRow,
+  'handle' | 'avatar_url' | 'direction' | 'tier'
+> & {
+  handle: string | null;
+  avatar_url: string | null;
+  direction: 'incoming' | 'outgoing';
+  tier: 1 | 2 | 3 | null;
+};
+
+type FriendRow = Database['public']['Functions']['list_friends']['Returns'][number];
+
+/**
+ * One row of `list_friends` (WF-042): a friend and the tier the caller grants
+ * them. Friendships made through accept_friend_request always have a tier;
+ * null would mean no individual rule (resolve_tier then falls back to shared
+ * groups, else T1).
+ */
+export type Friend = Omit<FriendRow, 'handle' | 'avatar_url' | 'tier'> & {
+  handle: string | null;
+  avatar_url: string | null;
+  tier: 1 | 2 | 3 | null;
+};
+
+/** What `send_friend_request*` returns: a new request, or a friendship if they had already asked. */
+export type SendFriendRequestResult = 'pending' | 'accepted';
+
 export { DB_ERROR } from './errors';
 export type { DbErrorCode } from './errors';

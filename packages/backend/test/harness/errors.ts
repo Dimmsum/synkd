@@ -14,6 +14,20 @@ export async function codeOf(promise: Promise<unknown>): Promise<string> {
   }
 }
 
+/** Resolves to the `{ code, message }` that `promise` fails with (throws if it succeeds). */
+export async function errorOf(
+  promise: Promise<unknown>,
+): Promise<{ code: string; message: string }> {
+  try {
+    await promise;
+  } catch (error) {
+    const { code, message } = error as { code?: unknown; message?: unknown };
+    if (typeof code !== 'string' || typeof message !== 'string') throw error;
+    return { code, message };
+  }
+  throw new Error('expected the query to fail');
+}
+
 /**
  * Like `codeOf` for a statement inside a larger transaction: runs it under a
  * savepoint and rolls back to it on failure, so the transaction can go on.

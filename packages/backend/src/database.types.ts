@@ -403,7 +403,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_friend_request: { Args: { tier?: number; user_id: string }; Returns: undefined };
+      cancel_friend_request: { Args: { user_id: string }; Returns: undefined };
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
+      decline_friend_request: { Args: { user_id: string }; Returns: undefined };
       events_for_viewer: {
         Args: { owner_id: string; range_end: string; range_start: string };
         Returns: {
@@ -436,6 +439,30 @@ export type Database = {
           relationship: string;
         }[];
       };
+      list_friend_requests: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          avatar_url: string;
+          direction: string;
+          handle: string;
+          name: string;
+          requested_at: string;
+          tier: number;
+          user_id: string;
+        }[];
+      };
+      list_friends: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          avatar_url: string;
+          handle: string;
+          name: string;
+          tier: number;
+          user_id: string;
+        }[];
+      };
+      send_friend_request: { Args: { tier?: number; user_id: string }; Returns: string };
+      send_friend_request_by_handle: { Args: { handle: string; tier?: number }; Returns: string };
       set_handle: { Args: { handle: string }; Returns: string };
     };
     Enums: {
