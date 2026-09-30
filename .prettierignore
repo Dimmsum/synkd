@@ -1,3 +1,6 @@
 pnpm-lock.yaml
 **/*.md
 **/database.types.ts
+
+# design exports (not source)
+Who's Free scheduling UI/

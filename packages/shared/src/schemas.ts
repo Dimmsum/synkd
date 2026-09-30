@@ -1,0 +1,120 @@
+import { z } from 'zod';
+import {
+  DAYS_OF_WEEK,
+  EVENT_CATEGORIES,
+  MANUAL_STATUSES,
+  PING_TEXT_MAX_LENGTH,
+  TIERS,
+} from './constants';
+
+/** A wall-clock time in the owner's timezone, `HH:MM` (24-hour). */
+export const LocalTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Expected HH:MM (24-hour)');
+export type LocalTime = z.infer<typeof LocalTime>;
+
+/** A calendar date, `YYYY-MM-DD`. Checked to be a real date (no 2026-02-30). */
+export const LocalDate = z.iso.date();
+export type LocalDate = z.infer<typeof LocalDate>;
+
+export const Tier = z.literal(TIERS);
+export type Tier = z.infer<typeof Tier>;
+export const DayOfWeek = z.enum(DAYS_OF_WEEK);
+export type DayOfWeek = z.infer<typeof DayOfWeek>;
+export const EventCategory = z.enum(EVENT_CATEGORIES);
+export type EventCategory = z.infer<typeof EventCategory>;
+export const ManualStatus = z.enum(MANUAL_STATUSES);
+export type ManualStatus = z.infer<typeof ManualStatus>;
+
+/**
+ * Which weeks a weekly event happens in (FR-IMP-5). Week numbers count from the
+ * schedule period's start week (week 1). "Week A / Week B" maps to odd / even.
+ */
+export const WeekPattern = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('every') }),
+  z.object({ type: z.literal('alternating'), parity: z.enum(['odd', 'even']) }),
+  z.object({
+    type: z.literal('weeks'),
+    weeks: z
+      .array(z.int().min(1).max(60))
+      .min(1)
+      .refine((w) => new Set(w).size === w.length, 'Week numbers must be unique'),
+  }),
+]);
+export type WeekPattern = z.infer<typeof WeekPattern>;
+
+/** When an event happens: on certain weekdays (recurring), or on one specific date (FR-IMP-6). */
+export const EventWhen = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('weekly'),
+    days: z
+      .array(DayOfWeek)
+      .min(1)
+      .refine((d) => new Set(d).size === d.length, 'Days must be unique'),
+    pattern: WeekPattern,
+  }),
+  z.object({ kind: z.literal('date'), date: LocalDate }),
+]);
+export type EventWhen = z.infer<typeof EventWhen>;
+
+/**
+ * An event as produced by the parser or the event editor, before it's committed.
+ *
+ * Times are wall-clock times in the owner's timezone. If `end` is earlier than
+ * `start`, the event runs past midnight into the next day (overnight shifts).
+ *
+ * There is deliberately **no location field** (D35). Unknown keys such as
+ * `location` or `room` are stripped when parsing, so they can't be stored.
+ */
+export const EventDraft = z
+  .object({
+    title: z.string().trim().min(1).max(120),
+    category: EventCategory,
+    start: LocalTime,
+    end: LocalTime,
+    when: EventWhen,
+    /** The parser's confidence, 0–1. Manual entries use 1. */
+    confidence: z.number().min(0).max(1),
+  })
+  .refine((e) => e.start !== e.end, { message: 'An event must have a duration', path: ['end'] });
+export type EventDraft = z.infer<typeof EventDraft>;
+
+/** A date span, inclusive of both ends. */
+export const DateRange = z
+  .object({ start: LocalDate, end: LocalDate, label: z.string().trim().max(60).optional() })
+  .refine((r) => r.start <= r.end, { message: 'Start must be on or before end', path: ['end'] });
+export type DateRange = z.infer<typeof DateRange>;
+
+/** The dates a schedule covers, plus exceptions such as breaks and holidays (FR-IMP-7, FR-IMP-8). */
+export const SchedulePeriod = z
+  .object({
+    start: LocalDate,
+    end: LocalDate,
+    exceptions: z.array(DateRange).default([]),
+  })
+  .refine((p) => p.start <= p.end, { message: 'Start must be on or before end', path: ['end'] });
+export type SchedulePeriod = z.infer<typeof SchedulePeriod>;
+
+/** The parser's output for one file (PRD §8.5, NFR-SEC-7). */
+export const ParseDraft = z.object({
+  events: z.array(EventDraft).max(200),
+  /** A date range found in the file, if any (FR-IMP-7). The user confirms it. */
+  suggestedPeriod: SchedulePeriod.optional(),
+});
+export type ParseDraft = z.infer<typeof ParseDraft>;
+
+/** One day's available hours in local time (FR-AVL-2). `end` must be after `start`. */
+export const AvailableHours = z
+  .object({ day: DayOfWeek, start: LocalTime, end: LocalTime })
+  .refine((h) => h.start < h.end, { message: 'End must be after start', path: ['end'] });
+export type AvailableHours = z.infer<typeof AvailableHours>;
+
+/**
+ * Free-text ping (D31): trimmed, 1–140 characters, plain text. Length counts
+ * Unicode code points, so an emoji counts as one character.
+ */
+export const PingText = z
+  .string()
+  .trim()
+  .min(1)
+  .refine((t) => [...t].length <= PING_TEXT_MAX_LENGTH, {
+    message: `At most ${PING_TEXT_MAX_LENGTH} characters`,
+  });
