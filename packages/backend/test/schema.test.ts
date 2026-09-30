@@ -2,6 +2,7 @@
 // make every privilege and security definer function a deliberate, reviewed
 // choice: adding a table, grant or function changes a snapshot below.
 
+import { readFile } from 'node:fs/promises';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   DEFAULT_GROUP_MAX_MEMBERS,
@@ -11,6 +12,7 @@ import {
   SOURCE_TYPES,
   TIERS,
 } from '@whosfree/shared';
+import { GROUP_ERRORS } from '../src/index';
 import { createTestDb, migrationFiles } from './harness/db';
 import type { TestDb } from './harness/db';
 import { addSource, addUser } from './harness/seed';
@@ -157,6 +159,21 @@ describe('table privileges (on top of Supabase’s grant-everything defaults)', 
   });
 });
 
+/** Signed-in entry points (WF-041, WF-043, WF-044, WF-045, WF-047). Each is a security definer. */
+const AUTHENTICATED_FUNCTIONS = [
+  'create_group(text,text,integer)',
+  'current_user_id()',
+  'delete_group(uuid)',
+  'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
+  'get_group_members(uuid)',
+  'list_my_groups()',
+  'transfer_group_admin(uuid,uuid)',
+  'update_group(uuid,text,text)',
+];
+
+/** Functions callable without signing in. */
+const ANON_FUNCTIONS: string[] = [];
+
 describe('functions', () => {
   it('every security definer function pins search_path to empty', async () => {
     const definers = await rows<{ fn: string; config: string[] | null }>(
@@ -164,10 +181,7 @@ describe('functions', () => {
        from pg_proc p join pg_namespace n on n.oid = p.pronamespace
        where n.nspname in ('public', 'private') and p.prosecdef order by 1`,
     );
-    expect(definers.map((d) => d.fn)).toEqual([
-      'current_user_id()',
-      'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
-    ]);
+    expect(definers.map((d) => d.fn)).toEqual(AUTHENTICATED_FUNCTIONS);
     for (const d of definers) expect(d.config).toEqual(['search_path=""']);
   });
 
@@ -180,7 +194,16 @@ describe('functions', () => {
     expect(loose).toEqual([]);
   });
 
-  it('clients can execute only current_user_id and events_for_viewer, and only when signed in', async () => {
+  it('no private helper is security definer (they run inside the definer entry points)', async () => {
+    const definers = await rows(
+      `select p.oid::regprocedure::text from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'private' and p.prosecdef`,
+    );
+    expect(definers).toEqual([]);
+  });
+
+  it('clients can execute only the entry points above (anon: ANON_FUNCTIONS only)', async () => {
     for (const role of CLIENT_ROLES) {
       const callable = await rows<{ fn: string }>(
         `select p.oid::regprocedure::text as fn from pg_proc p
@@ -191,15 +214,10 @@ describe('functions', () => {
          order by 1`,
         [role],
       );
+      const expected = { authenticated: AUTHENTICATED_FUNCTIONS, anon: ANON_FUNCTIONS };
       expect({ role, callable: callable.map((c) => c.fn) }).toEqual({
         role,
-        callable:
-          role === 'authenticated'
-            ? [
-                'current_user_id()',
-                'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
-              ]
-            : [],
+        callable: role === 'service_role' ? [] : expected[role],
       });
     }
   });
@@ -212,6 +230,37 @@ describe('functions', () => {
       );
       expect({ role, usage: row?.usage }).toEqual({ role, usage: false });
     }
+  });
+});
+
+describe('GROUP_ERRORS (src/index.ts) matches what the migrations raise', () => {
+  it('every message is raised somewhere, verbatim', async () => {
+    const sql = (await Promise.all((await migrationFiles()).map((f) => readFile(f, 'utf8')))).join(
+      '\n',
+    );
+    for (const message of Object.values(GROUP_ERRORS))
+      expect({ message, raised: sql.includes(`'${message.replaceAll("'", "''")}'`) }).toEqual({
+        message,
+        raised: true,
+      });
+  });
+});
+
+describe('triggers', () => {
+  it('are exactly these (the admin-sync ones are deferred constraint triggers)', async () => {
+    const triggers = await rows<{ t: string; deferred: boolean }>(
+      `select c.relname || '.' || t.tgname as t, t.tginitdeferred as deferred
+       from pg_trigger t join pg_class c on c.oid = t.tgrelid
+       join pg_namespace n on n.oid = c.relnamespace
+       where n.nspname = 'public' and not t.tgisinternal order by 1`,
+    );
+    expect(triggers).toEqual([
+      { t: 'group_members.group_members_admin_in_sync_delete', deferred: true },
+      { t: 'group_members.group_members_admin_in_sync_insert', deferred: true },
+      { t: 'group_members.group_members_admin_in_sync_update', deferred: true },
+      { t: 'groups.groups_admin_in_sync', deferred: true },
+      { t: 'users.users_validate_timezone', deferred: false },
+    ]);
   });
 });
 
@@ -266,21 +315,29 @@ describe('database constraints match @whosfree/shared', () => {
 
   it('groups.max_members and member permissions default as in shared (D17, D26)', async () => {
     const admin = await addUser(db, `user_grp_${Date.now()}`);
-    const {
-      rows: [g],
-    } = await db.admin.query<{ id: string; max_members: number }>(
-      `insert into public.groups (name, admin_id) values ('G', $1) returning id, max_members`,
-      [admin],
-    );
+    const member = await addUser(db, `user_grp_member_${Date.now()}`);
+    const { g, m } = await db.admin.transaction(async (tx) => {
+      const {
+        rows: [g],
+      } = await tx.query<{ id: string; max_members: number }>(
+        `insert into public.groups (name, admin_id) values ('G', $1) returning id, max_members`,
+        [admin],
+      );
+      await tx.query(
+        `insert into public.group_members (group_id, user_id, role) values ($1, $2, 'admin')`,
+        [g?.id, admin],
+      );
+      const {
+        rows: [m],
+      } = await tx.query(
+        `insert into public.group_members (group_id, user_id) values ($1, $2)
+         returning can_invite as invite, can_manage_members as "manageMembers",
+                   can_edit_group as "editGroup", can_group_ping as "groupPing", role`,
+        [g?.id, member],
+      );
+      return { g, m };
+    });
     expect(g?.max_members).toBe(DEFAULT_GROUP_MAX_MEMBERS);
-    const {
-      rows: [m],
-    } = await db.admin.query(
-      `insert into public.group_members (group_id, user_id) values ($1, $2)
-       returning can_invite as invite, can_manage_members as "manageMembers",
-                 can_edit_group as "editGroup", can_group_ping as "groupPing", role`,
-      [g?.id, admin],
-    );
     expect(m).toEqual({ ...DEFAULT_MEMBER_PERMISSIONS, role: 'member' });
   });
 });

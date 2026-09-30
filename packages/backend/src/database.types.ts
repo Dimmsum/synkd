@@ -368,7 +368,9 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      create_group: { Args: { emoji?: string; name: string; tier?: number }; Returns: string };
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
+      delete_group: { Args: { group_id: string }; Returns: undefined };
       events_for_viewer: {
         Args: { owner_id: string; range_end: string; range_start: string };
         Returns: {
@@ -381,6 +383,44 @@ export type Database = {
           title: string;
         }[];
       };
+      get_group_members: {
+        Args: { group_id: string };
+        Returns: {
+          avatar_url: string;
+          can_edit_group: boolean;
+          can_group_ping: boolean;
+          can_invite: boolean;
+          can_manage_members: boolean;
+          handle: string;
+          is_me: boolean;
+          joined_at: string;
+          name: string;
+          role: string;
+          user_id: string;
+        }[];
+      };
+      list_my_groups: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          can_edit_group: boolean;
+          can_group_ping: boolean;
+          can_invite: boolean;
+          can_manage_members: boolean;
+          emoji: string;
+          id: string;
+          joined_at: string;
+          max_members: number;
+          member_count: number;
+          my_tier: number;
+          name: string;
+          role: string;
+        }[];
+      };
+      transfer_group_admin: {
+        Args: { group_id: string; new_admin_id: string };
+        Returns: undefined;
+      };
+      update_group: { Args: { emoji: string; group_id: string; name: string }; Returns: undefined };
     };
     Enums: {
       [_ in never]: never;

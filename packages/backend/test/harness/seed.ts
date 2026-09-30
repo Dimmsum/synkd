@@ -48,22 +48,32 @@ export async function block(db: TestDb, blocker: string, blocked: string): Promi
   ]);
 }
 
-/** Creates a group administered by `admin` (who becomes a member with role admin) plus `members`. */
+/**
+ * Creates a group administered by `admin` (who becomes a member with role admin) plus `members`.
+ * The group and its admin row go in one transaction: a deferred trigger checks at commit that
+ * `groups.admin_id` matches the single admin row (WF-043).
+ */
 export async function addGroup(
   db: TestDb,
   admin: string,
   members: string[] = [],
   name = 'Netball',
 ): Promise<string> {
-  const { id } = await one<{ id: string }>(
-    db,
-    `insert into public.groups (name, emoji, admin_id) values ($1, '🏐', $2) returning id`,
-    [name, admin],
-  );
-  await db.admin.query(
-    `insert into public.group_members (group_id, user_id, role) values ($1, $2, 'admin')`,
-    [id, admin],
-  );
+  const id = await db.admin.transaction(async (tx) => {
+    const { rows } = await tx.query<{ id: string }>(
+      `insert into public.groups (name, emoji, admin_id) values ($1, '🏐', $2) returning id`,
+      [name, admin],
+    );
+    const groupId = rows[0]?.id;
+    if (groupId === undefined) throw new Error('Expected a group id');
+    await tx.query(
+      `insert into public.group_members (group_id, user_id, role, can_invite, can_manage_members,
+         can_edit_group, can_group_ping)
+       values ($1, $2, 'admin', true, true, true, true)`,
+      [groupId, admin],
+    );
+    return groupId;
+  });
   for (const m of members) await joinGroup(db, id, m);
   return id;
 }
