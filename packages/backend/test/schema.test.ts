@@ -37,12 +37,14 @@ describe('migrations', () => {
       `select tablename from pg_tables where schemaname = 'public' order by 1`,
     );
     expect(tables.map((t) => t.tablename)).toEqual([
+      'availability_prefs',
       'blocks',
       'events',
       'friendships',
       'group_members',
       'groups',
       'sources',
+      'status_overrides',
       'users',
       'visibility_rules',
     ]);
@@ -78,6 +80,8 @@ describe('row-level security', () => {
     );
     for (const p of policies) expect(p.roles).toEqual(['authenticated']);
     expect(policies.map((p) => `${p.tablename}.${p.policyname} (${p.cmd})`)).toEqual([
+      'availability_prefs.availability_prefs_select_own (SELECT)',
+      'availability_prefs.availability_prefs_update_own (UPDATE)',
       'blocks.blocks_select_blocker (SELECT)',
       'events.events_delete_own (DELETE)',
       'events.events_insert_own (INSERT)',
@@ -90,6 +94,7 @@ describe('row-level security', () => {
       'sources.sources_insert_own (INSERT)',
       'sources.sources_select_own (SELECT)',
       'sources.sources_update_own (UPDATE)',
+      'status_overrides.status_overrides_select_own (SELECT)',
       'users.users_select_own (SELECT)',
       'users.users_update_own (UPDATE)',
       'visibility_rules.visibility_rules_select_own (SELECT)',
@@ -153,6 +158,8 @@ describe('table privileges (on top of Supabase’s grant-everything defaults)', 
       visibility_rules: ['SELECT', 'UPDATE(tier)'],
       sources: ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
       events: ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
+      availability_prefs: ['SELECT', 'UPDATE(weekly, min_gap_minutes, count_all_day_events)'],
+      status_overrides: ['SELECT'],
     });
   });
 });
@@ -165,8 +172,13 @@ describe('functions', () => {
        where n.nspname in ('public', 'private') and p.prosecdef order by 1`,
     );
     expect(definers.map((d) => d.fn)).toEqual([
+      'accept_consent(text)',
+      'clear_status()',
+      'confirm_age(integer)',
       'current_user_id()',
+      'ensure_current_user(text,text,text)',
       'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
+      'set_status(text,text,timestamp with time zone)',
     ]);
     for (const d of definers) expect(d.config).toEqual(['search_path=""']);
   });
@@ -180,7 +192,7 @@ describe('functions', () => {
     expect(loose).toEqual([]);
   });
 
-  it('clients can execute only current_user_id and events_for_viewer, and only when signed in', async () => {
+  it('clients can execute only these functions, and only when signed in', async () => {
     for (const role of CLIENT_ROLES) {
       const callable = await rows<{ fn: string }>(
         `select p.oid::regprocedure::text as fn from pg_proc p
@@ -196,8 +208,16 @@ describe('functions', () => {
         callable:
           role === 'authenticated'
             ? [
+                'accept_consent(text)',
+                'account_status()',
+                'clear_status()',
+                'confirm_age(integer)',
+                'current_consent_version()',
                 'current_user_id()',
+                'ensure_current_user(text,text,text)',
                 'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
+                'set_day_hours(text,text,text)',
+                'set_status(text,text,timestamp with time zone)',
               ]
             : [],
       });

@@ -6,6 +6,41 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      availability_prefs: {
+        Row: {
+          count_all_day_events: boolean;
+          created_at: string;
+          id: string;
+          min_gap_minutes: number;
+          user_id: string;
+          weekly: NonNullable<Json>;
+        };
+        Insert: {
+          count_all_day_events?: boolean;
+          created_at?: string;
+          id?: string;
+          min_gap_minutes?: number;
+          user_id: string;
+          weekly?: NonNullable<Json>;
+        };
+        Update: {
+          count_all_day_events?: boolean;
+          created_at?: string;
+          id?: string;
+          min_gap_minutes?: number;
+          user_id?: string;
+          weekly?: NonNullable<Json>;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'availability_prefs_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: true;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       blocks: {
         Row: {
           blocked_id: string;
@@ -283,6 +318,44 @@ export type Database = {
           },
         ];
       };
+      status_overrides: {
+        Row: {
+          created_at: string;
+          ends_at: string | null;
+          id: string;
+          label: string | null;
+          starts_at: string;
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          ends_at?: string | null;
+          id?: string;
+          label?: string | null;
+          starts_at?: string;
+          status: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          ends_at?: string | null;
+          id?: string;
+          label?: string | null;
+          starts_at?: string;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'status_overrides_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       users: {
         Row: {
           age_confirmed_at: string | null;
@@ -368,7 +441,44 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_consent: { Args: { version: string }; Returns: string };
+      account_status: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          age_confirmed: boolean;
+          consent_required: boolean;
+          consent_version: string;
+          current_consent_version: string;
+          has_profile: boolean;
+        }[];
+      };
+      clear_status: { Args: Record<PropertyKey, never>; Returns: undefined };
+      confirm_age: { Args: { birth_year: number }; Returns: string };
+      current_consent_version: { Args: Record<PropertyKey, never>; Returns: string };
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
+      ensure_current_user: {
+        Args: { avatar_url?: string; name: string; timezone?: string };
+        Returns: {
+          age_confirmed_at: string | null;
+          avatar_url: string | null;
+          birth_year: number | null;
+          clerk_id: string;
+          consent_at: string | null;
+          consent_version: string | null;
+          created_at: string;
+          handle: string | null;
+          id: string;
+          name: string;
+          sharing_paused: boolean;
+          timezone: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'users';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       events_for_viewer: {
         Args: { owner_id: string; range_end: string; range_start: string };
         Returns: {
@@ -380,6 +490,28 @@ export type Database = {
           starts_at: string;
           title: string;
         }[];
+      };
+      set_day_hours: {
+        Args: { day: string; end_time?: string; start_time?: string };
+        Returns: Json;
+      };
+      set_status: {
+        Args: { ends_at?: string; label?: string; status: string };
+        Returns: {
+          created_at: string;
+          ends_at: string | null;
+          id: string;
+          label: string | null;
+          starts_at: string;
+          status: string;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'status_overrides';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
     };
     Enums: {
