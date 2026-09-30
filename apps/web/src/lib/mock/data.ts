@@ -355,20 +355,6 @@ export const GROUPS: MockGroup[] = [
   },
 ];
 
-/** Invite codes that don't belong to one of the viewer's groups (for /i/[code]). */
-export const OTHER_INVITES: Record<
-  string,
-  { inviterName: string; groupName: string; emoji: string; memberCount: number; maxMembers: number }
-> = {
-  full20: {
-    inviterName: 'Shanice Walker',
-    groupName: 'Hall Dominoes',
-    emoji: '🎲',
-    memberCount: 20,
-    maxMembers: 20,
-  },
-};
-
 export interface MockPing {
   id: string;
   fromId: string;
@@ -429,26 +415,5 @@ export const PINGS: MockPing[] = [
       { fromId: 'aaliyah', reply: "Can't right now", minutesAgo: 38 },
     ],
     read: true,
-  },
-];
-
-export const FRIEND_REQUESTS = [
-  {
-    id: 'fr1',
-    person: { id: 'kevaughn', name: 'Kevaughn Palmer', handle: 'kev', hue: 220 },
-    direction: 'incoming' as const,
-    minutesAgo: 90,
-  },
-  {
-    id: 'fr2',
-    person: { id: 'alicia', name: 'Alicia Brown', handle: 'aliciab', hue: 340 },
-    direction: 'incoming' as const,
-    minutesAgo: 60 * 26,
-  },
-  {
-    id: 'fr3',
-    person: { id: 'sashakay', name: 'Sasha-Kay Dixon', handle: 'sashakay', hue: 30 },
-    direction: 'outgoing' as const,
-    minutesAgo: 60 * 50,
   },
 ];

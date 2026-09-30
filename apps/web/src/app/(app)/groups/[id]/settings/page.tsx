@@ -2,21 +2,23 @@ import type { Metadata, Route } from 'next';
 import { notFound } from 'next/navigation';
 import { PageHeader, Panel } from '@/components/app/page-header';
 import {
+  CreateInviteForm,
   GroupDetailsForm,
   GroupTierForm,
   InviteLink,
   LeaveOrDelete,
   MembersManager,
 } from '@/components/groups/group-settings';
-import { getGroup } from '@/lib/data/people';
+import { getGroup, getNow } from '@/lib/data/people';
 
 export const metadata: Metadata = { title: 'Group settings' };
 
 // Group settings (WF-043/044/045): tier, invite link, details, members and permissions.
-// Every mutation is re-checked on the server (TODO in lib/actions/social.ts).
+// Controls follow the viewer's permissions, and every mutation is re-checked by the database
+// (lib/actions/social.ts).
 export default async function GroupSettingsPage({ params }: PageProps<'/groups/[id]/settings'>) {
   const { id } = await params;
-  const group = await getGroup(id);
+  const [group, { timeZone }] = await Promise.all([getGroup(id), getNow()]);
   if (!group) notFound();
   const isAdmin = group.viewerRole === 'admin';
   const perms = group.viewerPermissions;
@@ -33,15 +35,21 @@ export default async function GroupSettingsPage({ params }: PageProps<'/groups/[
           <Panel id="tier" title="What this group sees of you">
             <GroupTierForm groupId={id} groupName={group.name} initial={group.viewerTier} />
           </Panel>
-          {perms.invite && group.invite ? (
+          {perms.invite ? (
             <Panel id="invite" title="Invite link">
-              <InviteLink
-                groupId={id}
-                groupName={group.name}
-                invite={group.invite}
-                canManage={isAdmin}
-                full={group.memberCount >= group.maxMembers}
-              />
+              {group.invite ? (
+                <InviteLink
+                  groupId={id}
+                  groupName={group.name}
+                  invite={group.invite}
+                  // FR-SOC-9: the admin manages every link; members manage the ones they made.
+                  canManage={isAdmin || group.invite.createdByMe}
+                  full={group.memberCount >= group.maxMembers}
+                  timeZone={timeZone}
+                />
+              ) : (
+                <CreateInviteForm groupId={id} />
+              )}
             </Panel>
           ) : null}
           {perms.editGroup ? (

@@ -6,9 +6,11 @@
 
 import { clerkClient, clerkMiddleware } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { accountStep, gate, routeKind } from '@/lib/auth/gate';
 import type { AccountStep } from '@/lib/auth/gate';
 import { newProfile, TIMEZONE_COOKIE } from '@/lib/auth/profile';
+import { INVITE_COOKIE, inviteCodeFromPath, inviteCookieOptions } from '@/lib/social/invite-cookie';
 import { supabaseWithToken } from '@/lib/supabase/server';
 import type { ServerSupabase } from '@/lib/supabase/server';
 
@@ -19,10 +21,22 @@ async function readStep(supabase: ServerSupabase): Promise<AccountStep> {
   return accountStep(data);
 }
 
+/**
+ * On an invite page (/i/<code>), remembers the code so it survives sign-up and onboarding
+ * (FR-WEB-3, WF-045). Only a well-formed code is stored.
+ */
+function rememberInvite(req: NextRequest): NextResponse | undefined {
+  const code = inviteCodeFromPath(req.nextUrl.pathname);
+  if (!code) return undefined;
+  const res = NextResponse.next();
+  res.cookies.set(INVITE_COOKIE, code, inviteCookieOptions(req.nextUrl.protocol === 'https:'));
+  return res;
+}
+
 export default clerkMiddleware(async (auth, req) => {
   const kind = routeKind(req.nextUrl.pathname);
   // Public pages skip the session and database round trips entirely.
-  if (kind === 'public' || kind === 'open') return;
+  if (kind === 'public' || kind === 'open') return rememberInvite(req);
 
   const { userId, getToken, redirectToSignIn } = await auth();
   const supabase = userId ? supabaseWithToken(() => getToken()) : null;

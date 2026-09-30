@@ -1,6 +1,7 @@
 'use server';
 
-// Pings (WF-092) and replies (WF-093). Stubs: validate, then pretend it worked.
+// Pings (WF-092) and replies (WF-093). Stubs: validate, then pretend it worked. Blocking is
+// real (WF-047).
 
 import {
   PING_REPLIES,
@@ -9,6 +10,9 @@ import {
   type PingReply,
   type PingTemplate,
 } from '@whosfree/shared';
+import { createServerSupabase } from '@/lib/supabase/server';
+import { isUuid } from '@/lib/social/mappers';
+import { failFrom, refreshSocial } from '@/lib/social/server';
 import { fail, mockDelay, ok, type ActionResult } from './result';
 
 export async function sendPing(input: {
@@ -48,9 +52,17 @@ export async function reportPing(_pingId: string): Promise<ActionResult> {
   return ok;
 }
 
-export async function blockPerson(_personId: string): Promise<ActionResult> {
-  // TODO(WF-047): block silently; they aren't told (FR-SOC-6).
-  await mockDelay();
+/**
+ * Blocks the sender silently (FR-SOC-6, WF-047): they aren't told, any friendship or request
+ * ends, and they can no longer find, ping or invite the viewer. Stays on the current page.
+ */
+export async function blockPerson(personId: string): Promise<ActionResult> {
+  // TODO(WF-092): ping senders are mock people until pings are real, so their ids fail here.
+  if (!isUuid(personId)) return fail('We couldn’t find that person.');
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.rpc('block_user', { user_id: personId });
+  if (error) return failFrom('block_user', error);
+  refreshSocial();
   return ok;
 }
 

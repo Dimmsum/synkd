@@ -1,10 +1,12 @@
 'use client';
 
 import { ActionButton } from '@/components/app/action-buttons';
-import { blockPerson } from '@/lib/actions/pings';
-import { removeFriend } from '@/lib/actions/social';
+import { blockFriend, removeFriend } from '@/lib/actions/social';
 
-/** Remove or block (FR-SOC-6, WF-047). Blocked people aren't told. */
+/**
+ * Remove or block (FR-SOC-6, WF-047). Blocked people aren't told. Both end the friendship at
+ * once and go back to Friends.
+ */
 export function FriendDangerZone({
   personId,
   firstName,
@@ -29,7 +31,7 @@ export function FriendDangerZone({
           Remove friend
         </ActionButton>
         <ActionButton
-          action={() => blockPerson(personId)}
+          action={() => blockFriend(personId)}
           doneLabel="Blocked"
           variant="outline"
           icon={icons.block}
