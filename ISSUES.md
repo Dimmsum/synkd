@@ -281,7 +281,7 @@ Everything else at P0, which adds:
 | WF-124 | Schedule-expiry reminder | feature | backend | P1 | 6 | stretch | todo | 030, 091 |
 | WF-125 | Google event titles only while a T3 grant exists | security | gcal | P0 | 4 | B | todo | 041, 081 |
 | WF-126 | Manual export/deletion request process | compliance | legal | P0 | 6 | Gate | todo | 010 |
-| WF-127 | Offline friends: add someone not on whosfree and import their timetable | feature | social, backend, web | P0 | 2 | A | todo | 030, 031 |
+| WF-127 | Offline friends: add someone not on whosfree and import their timetable | feature | social, backend, web | P0 | 2 | A | in-progress | 030, 031 |
 | WF-128 | Show offline friends on Now, detail page and Find a time | feature | web, availability | P0 | 3 | A | todo | 064, 127 |
 
 ---
@@ -861,17 +861,19 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [ ] Resuming restores the previous tiers
 
 #### WF-127 · Offline friends: add someone not on whosfree and import their timetable
-- **Category:** `feature` · **Area:** `social`, `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `social`, `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-030, WF-031
 - **PRD:** FR-SOC-14, FR-SOC-15, FR-SOC-16, FR-SOC-18, FR-SOC-19, NFR-COMP-9, R14, D44, J8
 
 Makes the app useful before someone's friends join (R2): they can upload or type in a friend's timetable and see when that friend is free. The table, RLS and tests can be built before the import pipeline; the upload part reuses WF-026 to WF-031.
 
+> Backend done (merged, migrations `20261002300000`/`20261002300100`): `offline_friends` (owner-only RLS, writes through functions), `create_offline_friend(nickname, emoji, permission_confirmed)` (20 per user under a lock, 20/day), `update_offline_friend`, `delete_offline_friend` (cascades the schedule), `list_offline_friends()` (with `has_schedule`). `sources`/`events.offline_friend_id` has a composite FK so it can only point at the row owner's offline friend. `private.redacted_events` skips these rows. **Any other read of a user's own `events`/`sources` (own status in the web app, `now_for_viewer`, WF-049) must filter `offline_friend_id is null`**, because RLS can't tell them apart. Left: `scheduleFiles`/parse jobs must carry the target offline friend (WF-026–031), the web UI, and FR-SOC-19 (UI only: offer `delete_offline_friend`).
+
 **Acceptance criteria**
-- [ ] `offline_friends` table (nickname 1–40 characters, optional emoji, `permission_confirmed_at`), owner-only under RLS; `sources` and `events` gain `offline_friend_id`
-- [ ] Adding one requires ticking "I have their permission to add their schedule", and the time is recorded
+- [x] `offline_friends` table (nickname 1–40 characters, optional emoji, `permission_confirmed_at`), owner-only under RLS; `sources` and `events` gain `offline_friend_id`
+- [x] Adding one requires ticking "I have their permission to add their schedule", and the time is recorded
 - [ ] Their schedule comes from the same upload → parse → review → confirm flow (file deleted on confirm, D38) or from manual entry. Their parses count towards the owner's parse limit (WF-035).
-- [ ] **Nobody but the owner** can read an offline friend or their events, through any table or function, including `events_for_viewer`, friend lists and group views. Tests prove it.
+- [x] **Nobody but the owner** can read an offline friend or their events, through any table or function, including `events_for_viewer`, friend lists and group views. Tests prove it.
 - [ ] Offline friends' events never affect the owner's own status, free time or what others see of the owner
 - [ ] The owner can edit the nickname, re-upload and delete (deleting removes the schedule straight away). At most 20 per user, as a config value.
 - [ ] If the same person later becomes a real friend, the owner is offered to delete the offline copy. The two are never merged automatically. (FR-SOC-19, Should)
