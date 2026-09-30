@@ -183,58 +183,71 @@ async function seedGraph(g: Graph): Promise<string[]> {
   return Array.from({ length: USERS }, (_, i) => userId(i));
 }
 
+// Each run seeds a whole graph (every migration's triggers included), so these take tens of
+// seconds, and several minutes on a machine running other test suites. Keep the run counts: they
+// are what makes this a strong check of the privacy rules.
+const PROPERTY_TIMEOUT_MS = 300_000;
+
 describe('resolve_tier matches the reference model', () => {
-  it('for every viewer/owner pair of random graphs', async () => {
-    await fc.assert(
-      fc.asyncProperty(graphArb, async (g) => {
-        const ids = await seedGraph(g);
-        const { rows } = await db.admin.query<{ v: number; o: number; tier: number | null }>(
-          `select v.i - 1 as v, o.i - 1 as o, private.resolve_tier(v.id, o.id) as tier
+  it(
+    'for every viewer/owner pair of random graphs',
+    async () => {
+      await fc.assert(
+        fc.asyncProperty(graphArb, async (g) => {
+          const ids = await seedGraph(g);
+          const { rows } = await db.admin.query<{ v: number; o: number; tier: number | null }>(
+            `select v.i - 1 as v, o.i - 1 as o, private.resolve_tier(v.id, o.id) as tier
            from unnest($1::uuid[]) with ordinality as v(id, i)
            cross join unnest($1::uuid[]) with ordinality as o(id, i)`,
-          [ids],
-        );
-        expect(rows).toHaveLength(USERS * USERS);
-        for (const r of rows) {
-          expect({ v: r.v, o: r.o, tier: r.tier }).toEqual({
-            v: r.v,
-            o: r.o,
-            tier: modelTier(g, r.v, r.o),
-          });
-        }
-      }),
-      { numRuns: 150 },
-    );
-  });
+            [ids],
+          );
+          expect(rows).toHaveLength(USERS * USERS);
+          for (const r of rows) {
+            expect({ v: r.v, o: r.o, tier: r.tier }).toEqual({
+              v: r.v,
+              o: r.o,
+              tier: modelTier(g, r.v, r.o),
+            });
+          }
+        }),
+        { numRuns: 150 },
+      );
+    },
+    PROPERTY_TIMEOUT_MS,
+  );
 });
 
 describe('events_for_viewer never returns more than the model allows', () => {
-  it('for every viewer/owner pair of random graphs', async () => {
-    await fc.assert(
-      fc.asyncProperty(graphArb, async (g) => {
-        const ids = await seedGraph(g);
-        for (let v = 0; v < USERS; v++) {
-          for (let o = 0; o < USERS; o++) {
-            const rows = await db
-              .asUser(clerk(v))
-              .query<{ category: string | null; title: string | null }>(
-                `select category, title from public.events_for_viewer($1, $2, $3)`,
-                [ids[o], '2026-10-05T00:00:00Z', '2026-10-06T00:00:00Z'],
+  it(
+    'for every viewer/owner pair of random graphs',
+    async () => {
+      await fc.assert(
+        fc.asyncProperty(graphArb, async (g) => {
+          const ids = await seedGraph(g);
+          for (let v = 0; v < USERS; v++) {
+            for (let o = 0; o < USERS; o++) {
+              const rows = await db
+                .asUser(clerk(v))
+                .query<{ category: string | null; title: string | null }>(
+                  `select category, title from public.events_for_viewer($1, $2, $3)`,
+                  [ids[o], '2026-10-05T00:00:00Z', '2026-10-06T00:00:00Z'],
+                );
+              const t = modelTier(g, v, o);
+              const hidden = t === null || (v !== o && g.paused[o]);
+              expect(rows).toEqual(
+                hidden
+                  ? []
+                  : [
+                      { category: t >= 2 ? 'lab' : null, title: t >= 3 ? `title-${o}` : null },
+                      { category: null, title: null },
+                    ],
               );
-            const t = modelTier(g, v, o);
-            const hidden = t === null || (v !== o && g.paused[o]);
-            expect(rows).toEqual(
-              hidden
-                ? []
-                : [
-                    { category: t >= 2 ? 'lab' : null, title: t >= 3 ? `title-${o}` : null },
-                    { category: null, title: null },
-                  ],
-            );
+            }
           }
-        }
-      }),
-      { numRuns: 60 },
-    );
-  });
+        }),
+        { numRuns: 60 },
+      );
+    },
+    PROPERTY_TIMEOUT_MS,
+  );
 });
