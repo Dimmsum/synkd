@@ -9,6 +9,12 @@ export {
   type CurrentStatus,
   type StatusAtOptions,
 } from './engine';
+export {
+  freeIntervals,
+  userFreeIntervals,
+  type GroupSegment,
+  type UserAvailability,
+} from './group';
 export { availableHoursIntervals, defaultAvailableHours } from './hours';
 export {
   complementIntervals,
@@ -18,6 +24,13 @@ export {
   unionIntervals,
   type Interval,
 } from './interval';
+export {
+  eventTimesFromDraft,
+  expandEvent,
+  type Occurrence,
+  type StoredEventTimes,
+} from './recurrence';
+export { parseRRule, type RecurrenceRule } from './rrule';
 export type {
   AvailabilityInput,
   ScheduleEvent,

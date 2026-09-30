@@ -3,7 +3,8 @@
 
 import { DEFAULT_TIMEZONE, MANUAL_STATUS_TO_STATUS, type Status } from '@whosfree/shared';
 import { availableHoursIntervals, defaultAvailableHours } from './hours';
-import { intersectIntervals, mergeIntervals, overlaps, type Interval } from './interval';
+import { intersectIntervals, mergeIntervals, type Interval } from './interval';
+import { expandEvent, type Occurrence } from './recurrence';
 import { DAY_MS } from './time';
 import type {
   AvailabilityInput,
@@ -22,18 +23,20 @@ import type {
  */
 export const DEFAULT_UNTIL_HORIZON_MS = 7 * DAY_MS;
 
-/** A busy span produced by one event (one occurrence, for a recurring event). */
-interface Occurrence extends Interval {
-  readonly eventId: string;
-}
-
-/** Busy occurrences from every source that overlap `range`, sorted by start. */
-function busyOccurrences(sources: readonly ScheduleSource[], range: Interval): Occurrence[] {
+/**
+ * Busy occurrences from every source that overlap `range`, sorted by start. Recurring events
+ * are expanded in the user's timezone within their source's period (FR-AVL-6).
+ */
+function busyOccurrences(
+  sources: readonly ScheduleSource[],
+  range: Interval,
+  timeZone: string,
+): Occurrence[] {
   const occurrences: Occurrence[] = [];
   for (const source of sources) {
     for (const event of source.events) {
-      if (event.busy === false || !overlaps(event, range)) continue;
-      occurrences.push({ eventId: event.id, start: event.start, end: event.end });
+      if (event.busy === false) continue;
+      occurrences.push(...expandEvent(event, range, timeZone, source.period));
     }
   }
   return occurrences.sort((a, b) => a.start - b.start);
@@ -47,12 +50,14 @@ function busyOccurrences(sources: readonly ScheduleSource[], range: Interval): O
  * {@link timeline} for what viewers see.
  */
 export function busyIntervals(input: AvailabilityInput, range: Interval): Interval[] {
-  return intersectIntervals(mergeIntervals(busyOccurrences(input.sources, range)), [range]);
+  const timeZone = input.timeZone ?? DEFAULT_TIMEZONE;
+  return intersectIntervals(mergeIntervals(busyOccurrences(input.sources, range, timeZone)), [
+    range,
+  ]);
 }
 
 interface ActiveOverride {
   readonly override: StatusOverride;
-  readonly index: number;
   readonly end: number;
 }
 
@@ -102,9 +107,9 @@ export function timeline(input: AvailabilityInput, range: Interval): StatusSegme
   const hasSchedule = input.sources.length > 0;
 
   const overrides: ActiveOverride[] = (input.overrides ?? [])
-    .map((override, index) => ({ override, index, end: override.endsAt ?? Infinity }))
+    .map((override) => ({ override, end: override.endsAt ?? Infinity }))
     .filter(({ override, end }) => override.startsAt < range.end && end > range.start);
-  const occurrences = hasSchedule ? busyOccurrences(input.sources, range) : [];
+  const occurrences = hasSchedule ? busyOccurrences(input.sources, range, timeZone) : [];
   const hours = hasSchedule
     ? availableHoursIntervals(input.availableHours ?? defaultAvailableHours(), range, timeZone)
     : [];

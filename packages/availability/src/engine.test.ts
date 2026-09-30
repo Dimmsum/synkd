@@ -399,6 +399,58 @@ describe('timeline', () => {
   });
 });
 
+describe('recurring events (FR-AVL-6)', () => {
+  // Mon/Wed 09:00–10:00 and 10:00–11:00, back to back, for a semester with a reading week.
+  const semester = {
+    start: '2026-09-07',
+    end: '2026-12-11',
+    exceptions: [{ start: '2026-10-12', end: '2026-10-16' }],
+  };
+  const input: AvailabilityInput = {
+    sources: [
+      {
+        id: 'upload',
+        period: semester,
+        events: [
+          {
+            ...event('maths', '2026-09-07T09:00', '2026-09-07T10:00'),
+            rrule: 'FREQ=WEEKLY;BYDAY=MO,WE',
+          },
+          {
+            ...event('physics', '2026-09-07T10:00', '2026-09-07T11:00'),
+            rrule: 'FREQ=WEEKLY;BYDAY=MO,WE',
+          },
+        ],
+      },
+      { id: 'gcal', events: [event('dentist', '2026-10-14T09:30', '2026-10-14T10:30')] },
+    ],
+  };
+
+  it('expands classes and runs back-to-back ones together', () => {
+    expect(statusAt(input, jm('2026-09-30T09:30'))).toEqual({
+      status: 'busy',
+      cause: { type: 'events', eventIds: ['maths'] },
+      until: jm('2026-09-30T11:00'),
+      nextStatus: 'free',
+    });
+  });
+
+  it('skips classes in the period’s exceptions and after it ends, but not one-off events', () => {
+    expect(statusAt(input, jm('2026-10-12T09:30')).status).toBe('free');
+    expect(statusAt(input, jm('2026-10-14T09:45'))).toMatchObject({
+      cause: { type: 'events', eventIds: ['dentist'] },
+      until: jm('2026-10-14T10:30'),
+    });
+    expect(statusAt(input, jm('2026-12-14T09:30')).status).toBe('free');
+    expect(
+      busyIntervals(input, { start: jm('2026-12-07T00:00'), end: jm('2026-12-21T00:00') }),
+    ).toEqual([
+      { start: jm('2026-12-07T09:00'), end: jm('2026-12-07T11:00') },
+      { start: jm('2026-12-09T09:00'), end: jm('2026-12-09T11:00') },
+    ]);
+  });
+});
+
 describe('timezones and DST (FR-AVL-9)', () => {
   const NY = 'America/New_York';
   const ny = (iso: string) => Date.parse(iso);

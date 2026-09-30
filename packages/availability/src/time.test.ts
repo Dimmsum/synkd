@@ -7,6 +7,7 @@ import {
   dayFromDate,
   localDayOf,
   localToUtc,
+  MAX_CACHED_CONVERSIONS,
   msFromLocalTime,
   offsetAt,
   toLocalMs,
@@ -44,6 +45,18 @@ describe('offsetAt', () => {
 });
 
 describe('localToUtc', () => {
+  it('gives the same answers from its cache, including after the cache fills up', () => {
+    const zone = 'Europe/Paris';
+    const summer = dayFromDate('2026-07-01');
+    expect(localToUtc(summer, 9 * HOUR_MS, zone)).toBe(at('2026-07-01T09:00+02:00'));
+    expect(localToUtc(summer, 9 * HOUR_MS, zone)).toBe(at('2026-07-01T09:00+02:00'));
+    // Fill the cache past its limit with distinct wall times; answers stay right throughout.
+    const first = dayFromDate('2000-01-01');
+    for (let i = 0; i <= MAX_CACHED_CONVERSIONS; i++) localToUtc(first + i, 0, zone);
+    expect(localToUtc(first, 0, zone)).toBe(at('2000-01-01T00:00+01:00'));
+    expect(localToUtc(summer, 9 * HOUR_MS, zone)).toBe(at('2026-07-01T09:00+02:00'));
+  });
+
   it('converts ordinary wall times', () => {
     expect(local('2026-09-30', '09:00', JM)).toBe(at('2026-09-30T09:00-05:00'));
     expect(local('2026-07-01', '09:00', NY)).toBe(at('2026-07-01T09:00-04:00'));

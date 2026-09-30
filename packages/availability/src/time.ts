@@ -68,6 +68,28 @@ export function localDayOf(t: number, timeZone: string): number {
  */
 export function localToUtc(day: number, msOfDay: number, timeZone: string): number {
   const local = day * DAY_MS + msOfDay;
+  // Intl is slow (~10 µs a call) and the same wall times come up again and again (everyone's
+  // 08:00 and 22:00, classes on the hour), so remember answers. This is plain memoisation of
+  // a pure function; the cache is emptied when it fills so it can't grow without limit.
+  let cache = utcCache.get(timeZone);
+  if (!cache) {
+    cache = new Map();
+    utcCache.set(timeZone, cache);
+  }
+  let t = cache.get(local);
+  if (t === undefined) {
+    t = resolveLocal(local, timeZone);
+    if (cache.size >= MAX_CACHED_CONVERSIONS) cache.clear();
+    cache.set(local, t);
+  }
+  return t;
+}
+
+/** Most wall times remembered per timezone by `localToUtc`. */
+export const MAX_CACHED_CONVERSIONS = 10_000;
+const utcCache = new Map<string, Map<number, number>>();
+
+function resolveLocal(local: number, timeZone: string): number {
   // At most one transition can happen near `local`, so the offsets a day either side are the
   // only candidates. Almost always they're the same and there's nothing to resolve.
   const before = offsetAt(local - DAY_MS, timeZone);

@@ -1,20 +1,28 @@
-import type { AvailableHours, ManualStatus, Status } from '@whosfree/shared';
+import type { AvailableHours, ManualStatus, SchedulePeriod, Status } from '@whosfree/shared';
 
 /**
- * A calendar event as the engine sees it: an id and a busy span. The engine never needs a
- * title or category, so callers can pass tier-redacted events (PRD §6.7).
+ * A calendar event as the engine sees it (PRD §9 `events`): an id, when it happens and whether
+ * it repeats. The engine never needs a title or category, so callers can pass tier-redacted
+ * events (PRD §6.7).
  */
 export interface ScheduleEvent {
   /** The `events` row id. Returned in {@link StatusCause} so callers can look up details. */
   readonly id: string;
-  /** Start, UTC epoch ms. */
+  /** Start (of the first occurrence, for a recurring event), UTC epoch ms. */
   readonly start: number;
-  /** End, UTC epoch ms (exclusive). */
+  /** End (of the first occurrence, for a recurring event), UTC epoch ms, exclusive. */
   readonly end: number;
   /**
-   * Whether the event makes the user busy (PRD §9 `events.busy`). Defaults to `true`. Google
-   * events marked free/transparent, declined or all-day are stored with `busy: false`
-   * (FR-GCAL-6) and are ignored here.
+   * RFC 5545 RRULE for a recurring event (see `parseRRule` for the supported subset), or
+   * missing/`null` for a one-off event. Expanded in the user's timezone and source's period.
+   */
+  readonly rrule?: string | null;
+  /** Start instants (UTC epoch ms) of occurrences that are cancelled (EXDATE). */
+  readonly exdates?: readonly number[] | null;
+  /**
+   * Whether the event makes the user busy (PRD §9 `events.busy`). Defaults to `true`. Events
+   * with `busy: false` are ignored: Google events marked free/transparent or declined, and
+   * all-day events unless the user counts them (FR-GCAL-6, `countAllDayEvents`).
    */
   readonly busy?: boolean;
 }
@@ -23,6 +31,12 @@ export interface ScheduleEvent {
 export interface ScheduleSource {
   /** The `sources` row id. Optional; the engine doesn't use it. */
   readonly id?: string;
+  /**
+   * The local dates the schedule covers, inclusive, with exceptions such as breaks
+   * (FR-IMP-7, FR-IMP-8). Limits the source's recurring events only; one-off events are
+   * taken as they are. Missing for sources without one, such as Google Calendar.
+   */
+  readonly period?: SchedulePeriod | null;
   readonly events: readonly ScheduleEvent[];
 }
 
