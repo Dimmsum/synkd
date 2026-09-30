@@ -1,0 +1,18 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      // The legal pages are rendered from docs/legal/*.md at build time (WF-010).
+      "inputs": ["$TURBO_EXTENDS$", "$TURBO_ROOT$/docs/legal/**"]
+    },
+    "test": {
+      // legal.test.ts reads docs/legal and checks the version against the consent migration.
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/docs/legal/**",
+        "$TURBO_ROOT$/packages/backend/supabase/migrations/**"
+      ]
+    }
+  }
+}
