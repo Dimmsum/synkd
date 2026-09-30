@@ -17,8 +17,9 @@ coverage/
 **/supabase/.temp/
 **/supabase/.branches/
 
-# eval samples may contain personal data (WF-020)
+# eval samples may contain personal data (WF-020), and so may eval results (WF-022)
 evals/schedules/
+packages/parser/eval/results/
 
 # misc
 .DS_Store

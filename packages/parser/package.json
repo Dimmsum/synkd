@@ -1,0 +1,30 @@
+{
+  "name": "@whosfree/parser",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./eval": "./src/eval/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc",
+    "test": "vitest run",
+    "eval": "tsx src/eval/cli.ts run",
+    "eval:check": "tsx src/eval/cli.ts check",
+    "eval:compare": "tsx src/eval/cli.ts compare"
+  },
+  "dependencies": {
+    "@whosfree/shared": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@whosfree/config": "workspace:*",
+    "eslint": "^10.11.0",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
+  }
+}
