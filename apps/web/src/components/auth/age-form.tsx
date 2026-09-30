@@ -27,10 +27,10 @@ const selectClass =
 
 /**
  * Date of birth for the 18+ age gate (FR-AUTH-6, WF-005). Separate day/month/year fields
- * are quicker than a calendar picker for birth dates. Only the birth year is kept.
+ * are quicker than a calendar picker for birth dates. The date goes only to the server action,
+ * which checks it and stores just the birth year.
  */
 export function AgeForm() {
-  // TODO(WF-004): swap the server action for the Clerk-backed one once auth exists.
   const [state, formAction, pending] = useActionState(confirmAge, undefined);
   const [day, setDay] = useState('');
   const [month, setMonth] = useState('');

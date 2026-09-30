@@ -6,20 +6,18 @@ import { Button } from '@whosfree/ui/components/button';
 import { Checkbox } from '@whosfree/ui/components/checkbox';
 import { acceptTerms } from '@/lib/actions/auth';
 
-/** Accept the terms and privacy notice (FR-SET-5, WF-015). Never pre-ticked. */
-export function TermsForm({
-  termsVersion,
-  privacyVersion,
-}: {
-  termsVersion: string;
-  privacyVersion: string;
-}) {
-  // TODO(WF-015): the server action records the accepted versions and time.
+/**
+ * Accept the terms and privacy notice (FR-SET-5, WF-015). Never pre-ticked. `version` is the
+ * one this page shows (both documents share it); the server refuses it if it's out of date.
+ */
+export function TermsForm({ version, renewal }: { version: string; renewal: boolean }) {
   const [state, formAction, pending] = useActionState(acceptTerms, undefined);
   const [checked, setChecked] = useState(false);
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
+      <input type="hidden" name="version" value={version} />
+      {renewal ? <input type="hidden" name="renewal" value="1" /> : null}
       <label
         htmlFor="accept"
         className="flex cursor-pointer items-start gap-3 rounded-xl border p-4 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary-soft/50"
@@ -48,8 +46,7 @@ export function TermsForm({
         </span>
       </label>
       <p className="text-xs text-muted-foreground">
-        Versions: terms {termsVersion}, privacy {privacyVersion}. If these change, we&apos;ll ask
-        you again.
+        Version {version}. If the terms or privacy notice change, we&apos;ll ask you again.
       </p>
       <p role="alert" aria-live="polite" className="min-h-5 text-sm font-medium text-destructive">
         {state?.error}

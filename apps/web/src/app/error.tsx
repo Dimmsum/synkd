@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { Button, buttonVariants } from '@whosfree/ui/components/button';
 import { Logo } from '@whosfree/ui/components/misc';
 
-// FR-WEB-8. TODO(WF-008): report `error` to Sentry (without PII, NFR-SEC-12).
+// FR-WEB-8. `retry` re-fetches the segment, so a passing server error can recover.
+// TODO(WF-008): report `error` to Sentry (without PII, NFR-SEC-12).
 export default function ErrorPage({
-  reset,
+  retry,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  retry: () => void;
 }) {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-4 text-center">
@@ -22,7 +23,7 @@ export default function ErrorPage({
         </p>
       </div>
       <div className="flex w-full max-w-xs flex-col gap-2 sm:max-w-none sm:flex-row sm:justify-center">
-        <Button onClick={reset}>Try again</Button>
+        <Button onClick={retry}>Try again</Button>
         <Link href="/now" className={buttonVariants({ variant: 'outline' })}>
           Back to Now
         </Link>

@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono, Onest } from 'next/font/google';
+import { ClerkProvider } from '@clerk/nextjs';
+import { clerkAppearance } from '@/lib/auth/clerk-appearance';
 import { SerwistProvider } from '@serwist/turbopack/react';
 import { SW_URL, pwaMetadata } from '@/lib/pwa';
 import './globals.css';
@@ -43,17 +45,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-JM" className={`${onest.variable} ${jetbrainsMono.variable}`}>
       <body>
-        {/* Registers the service worker in production only (WF-090). Navigations are never cached
-            (cacheOnNavigation off) and the page isn't force-reloaded when back online. */}
-        <SerwistProvider
-          swUrl={SW_URL}
-          disable={process.env.NODE_ENV !== 'production'}
-          cacheOnNavigation={false}
-          reloadOnOnline={false}
-          options={{ scope: '/', type: 'classic' }}
-        >
-          {children}
-        </SerwistProvider>
+        {/* Clerk (D19, WF-004). Since Clerk Core 3 the provider goes inside <body>. */}
+        <ClerkProvider appearance={clerkAppearance} afterSignOutUrl="/">
+          {/* Registers the service worker in production only (WF-090). Navigations are never
+              cached (cacheOnNavigation off) and the page isn't force-reloaded when back online. */}
+          <SerwistProvider
+            swUrl={SW_URL}
+            disable={process.env.NODE_ENV !== 'production'}
+            cacheOnNavigation={false}
+            reloadOnOnline={false}
+            options={{ scope: '/', type: 'classic' }}
+          >
+            {children}
+          </SerwistProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

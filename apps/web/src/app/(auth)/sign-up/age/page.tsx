@@ -4,8 +4,8 @@ import { SignUpSteps } from '@/components/auth/sign-up-steps';
 
 export const metadata: Metadata = { title: 'Confirm your age' };
 
-// TODO(WF-004/WF-005): only reachable while signed in with an unconfirmed age; app routes
-// must redirect here until the age is confirmed (proxy.ts once Clerk is wired).
+// Age gate (FR-AUTH-6, WF-005). proxy.ts shows this page only while the signed-in user's age
+// is unconfirmed, and sends every app route here until it is.
 export default function AgePage() {
   return (
     <div className="flex flex-col">

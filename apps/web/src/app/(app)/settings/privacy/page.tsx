@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Download, LogOut, Trash } from 'lucide-react';
-import { buttonVariants } from '@whosfree/ui/components/button';
+import { SignOutButton } from '@clerk/nextjs';
+import { Button, buttonVariants } from '@whosfree/ui/components/button';
 import { Panel } from '@/components/app/page-header';
 import { SettingsPage } from '@/components/settings/settings-page';
 import { getConsentRecord } from '@/lib/data/settings';
@@ -68,11 +69,12 @@ export default async function PrivacyPage() {
         </div>
       </Panel>
       <Panel>
-        {/* TODO(WF-004): sign out through Clerk. */}
-        <Link href="/" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
-          <LogOut aria-hidden="true" />
-          Sign out
-        </Link>
+        <SignOutButton redirectUrl="/">
+          <Button variant="ghost" size="sm">
+            <LogOut aria-hidden="true" />
+            Sign out
+          </Button>
+        </SignOutButton>
       </Panel>
     </SettingsPage>
   );
