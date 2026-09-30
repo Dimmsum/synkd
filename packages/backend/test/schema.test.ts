@@ -37,6 +37,7 @@ describe('migrations', () => {
       `select tablename from pg_tables where schemaname = 'public' order by 1`,
     );
     expect(tables.map((t) => t.tablename)).toEqual([
+      'availability_prefs',
       'blocks',
       'events',
       'friendships',
@@ -78,6 +79,8 @@ describe('row-level security', () => {
     );
     for (const p of policies) expect(p.roles).toEqual(['authenticated']);
     expect(policies.map((p) => `${p.tablename}.${p.policyname} (${p.cmd})`)).toEqual([
+      'availability_prefs.availability_prefs_select_own (SELECT)',
+      'availability_prefs.availability_prefs_update_own (UPDATE)',
       'blocks.blocks_select_blocker (SELECT)',
       'events.events_delete_own (DELETE)',
       'events.events_insert_own (INSERT)',
@@ -153,6 +156,7 @@ describe('table privileges (on top of Supabase’s grant-everything defaults)', 
       visibility_rules: ['SELECT', 'UPDATE(tier)'],
       sources: ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
       events: ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
+      availability_prefs: ['SELECT', 'UPDATE(weekly, min_gap_minutes, count_all_day_events)'],
     });
   });
 });
@@ -206,6 +210,7 @@ describe('functions', () => {
                 'current_user_id()',
                 'ensure_current_user(text,text,text)',
                 'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
+                'set_day_hours(text,text,text)',
               ]
             : [],
       });

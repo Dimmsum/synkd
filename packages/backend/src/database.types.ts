@@ -6,6 +6,41 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      availability_prefs: {
+        Row: {
+          count_all_day_events: boolean;
+          created_at: string;
+          id: string;
+          min_gap_minutes: number;
+          user_id: string;
+          weekly: NonNullable<Json>;
+        };
+        Insert: {
+          count_all_day_events?: boolean;
+          created_at?: string;
+          id?: string;
+          min_gap_minutes?: number;
+          user_id: string;
+          weekly?: NonNullable<Json>;
+        };
+        Update: {
+          count_all_day_events?: boolean;
+          created_at?: string;
+          id?: string;
+          min_gap_minutes?: number;
+          user_id?: string;
+          weekly?: NonNullable<Json>;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'availability_prefs_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: true;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       blocks: {
         Row: {
           blocked_id: string;
@@ -416,6 +451,10 @@ export type Database = {
           starts_at: string;
           title: string;
         }[];
+      };
+      set_day_hours: {
+        Args: { day: string; end_time?: string; start_time?: string };
+        Returns: Json;
       };
     };
     Enums: {
