@@ -13,6 +13,7 @@ import {
   expectPgError,
   groupWithMembers,
   locksGroupRow,
+  setRateCount,
   tierSeen,
 } from './harness/groups';
 import { addUser, block, setRule } from './harness/seed';
@@ -115,7 +116,7 @@ describe('create_group', () => {
       '22023',
     );
     for (const tier of [null, 0, 4])
-      await expectPgError(call('Ok', null, tier), 'Tier must be 1, 2 or 3', '22023');
+      await expectPgError(call('Ok', null, tier), 'tier must be 1, 2 or 3', '22023');
     const { rows } = await db.admin.query(`select 1 from public.groups`);
     expect(rows).toEqual([]);
   });
@@ -124,8 +125,8 @@ describe('create_group', () => {
     await expectNoExecute(db.asAnon().query(`select public.create_group('X')`), 'create_group');
     await expectPgError(
       db.asUser('user_nobody').query(`select public.create_group('X')`),
-      'Not signed in',
-      '42501',
+      'No account for this sign-in',
+      'WF001',
     );
   });
 
@@ -134,6 +135,20 @@ describe('create_group', () => {
     await expect(
       db.asUser('user_admin').query(`select public.create_group('X', null, 1, $1)`, [other]),
     ).rejects.toThrow(/function public.create_group\(.*\) does not exist/);
+  });
+});
+
+describe('create_group rate limit (NFR-SEC-9: 10 a day)', () => {
+  it('allows the 10th group of the day, refuses the 11th with PT429; others are unaffected', async () => {
+    await setRateCount(db, admin, 'create_group', 9);
+    await createGroup(db, 'user_admin');
+    const error = await createGroup(db, 'user_admin').catch((e: unknown) => e);
+    expect(error).toMatchObject({ code: 'PT429', message: 'Too many attempts' });
+    await createGroup(db, 'user_member');
+    const { rows } = await db.admin.query(`select 1 from public.groups where admin_id = $1`, [
+      admin,
+    ]);
+    expect(rows).toHaveLength(1);
   });
 });
 
@@ -374,15 +389,15 @@ describe('list_my_groups', () => {
     expect(await count('user_admin')).toBe(3);
   });
 
-  it('anon cannot call it; a token without a users row is "Not signed in"', async () => {
+  it('anon cannot call it; a token without a users row gets WF001', async () => {
     await expectNoExecute(
       db.asAnon().query(`select * from public.list_my_groups()`),
       'list_my_groups',
     );
     await expectPgError(
       db.asUser('user_nobody').query(`select * from public.list_my_groups()`),
-      'Not signed in',
-      '42501',
+      'No account for this sign-in',
+      'WF001',
     );
   });
 });

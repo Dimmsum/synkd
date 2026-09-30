@@ -60,6 +60,9 @@ importers:
       '@types/node':
         specifier: ^20.19.43
         version: 20.19.43
+      '@whosfree/availability':
+        specifier: workspace:*
+        version: link:../availability
       '@whosfree/config':
         specifier: workspace:*
         version: link:../config

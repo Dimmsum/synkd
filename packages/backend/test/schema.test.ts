@@ -39,13 +39,16 @@ describe('migrations', () => {
       `select tablename from pg_tables where schemaname = 'public' order by 1`,
     );
     expect(tables.map((t) => t.tablename)).toEqual([
+      'availability_prefs',
       'blocks',
       'events',
       'friendships',
       'group_members',
       'groups',
       'invites',
+      'rate_limits',
       'sources',
+      'status_overrides',
       'users',
       'visibility_rules',
     ]);
@@ -81,6 +84,8 @@ describe('row-level security', () => {
     );
     for (const p of policies) expect(p.roles).toEqual(['authenticated']);
     expect(policies.map((p) => `${p.tablename}.${p.policyname} (${p.cmd})`)).toEqual([
+      'availability_prefs.availability_prefs_select_own (SELECT)',
+      'availability_prefs.availability_prefs_update_own (UPDATE)',
       'blocks.blocks_select_blocker (SELECT)',
       'events.events_delete_own (DELETE)',
       'events.events_insert_own (INSERT)',
@@ -93,6 +98,7 @@ describe('row-level security', () => {
       'sources.sources_insert_own (INSERT)',
       'sources.sources_select_own (SELECT)',
       'sources.sources_update_own (UPDATE)',
+      'status_overrides.status_overrides_select_own (SELECT)',
       'users.users_select_own (SELECT)',
       'users.users_update_own (UPDATE)',
       'visibility_rules.visibility_rules_select_own (SELECT)',
@@ -156,42 +162,124 @@ describe('table privileges (on top of Supabase’s grant-everything defaults)', 
       visibility_rules: ['SELECT', 'UPDATE(tier)'],
       sources: ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
       events: ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
+      availability_prefs: ['SELECT', 'UPDATE(weekly, min_gap_minutes, count_all_day_events)'],
+      status_overrides: ['SELECT'],
     });
   });
 });
 
-/** Signed-in entry points (WF-041, WF-043, WF-044, WF-045, WF-047). Each is a security definer. */
-const AUTHENTICATED_FUNCTIONS = [
+/**
+ * Client-callable functions that are security definer: they read or write rows the caller can't
+ * reach under RLS. Executable by `authenticated` only.
+ */
+const CLIENT_DEFINER_FUNCTIONS = [
+  'accept_consent(text)',
+  'accept_friend_request(uuid,integer)',
+  'block_user(uuid)',
+  'cancel_friend_request(uuid)',
+  'clear_status()',
+  'confirm_age(integer)',
   'create_group(text,text,integer)',
   'create_group_invite(uuid,timestamp with time zone,integer)',
   'current_user_id()',
+  'decline_friend_request(uuid)',
   'delete_group(uuid)',
+  'ensure_current_user(text,text,text)',
   'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
+  'find_user_by_handle(text)',
   'get_group_members(uuid)',
   'get_invite_summary(text)',
+  'get_profile(uuid)',
   'join_group(text,integer)',
   'leave_group(uuid)',
+  'list_blocked_users()',
+  'list_friend_requests()',
+  'list_friends()',
   'list_group_invites(uuid)',
   'list_my_groups()',
   'regenerate_group_invite(uuid)',
   'remove_group_member(uuid,uuid)',
   'revoke_group_invite(uuid)',
+  'send_friend_request(uuid,integer)',
+  'send_friend_request_by_handle(text,integer)',
   'set_group_member_permissions(uuid,uuid,boolean,boolean,boolean,boolean)',
+  'set_handle(text)',
+  'set_status(text,text,timestamp with time zone)',
   'transfer_group_admin(uuid,uuid)',
+  'unblock_user(uuid)',
+  'unfriend(uuid)',
   'update_group(uuid,text,text)',
+];
+
+/** Client-callable functions that run as the caller, so RLS applies. `authenticated` only. */
+const CLIENT_INVOKER_FUNCTIONS = [
+  'account_status()',
+  'current_consent_version()',
+  'set_day_hours(text,text,text)',
 ];
 
 /** The only function callable without signing in: the /i/[code] invite page (FR-WEB-3). */
 const ANON_FUNCTIONS = ['get_invite_summary(text)'];
 
+/** Every function signed-in clients can call. */
+const CLIENT_FUNCTIONS = [...CLIENT_DEFINER_FUNCTIONS, ...CLIENT_INVOKER_FUNCTIONS].sort();
+
+/** Internal helpers in `private`: not security definer, not callable by clients. */
+const PRIVATE_FUNCTIONS = [
+  'private.assert_group_admin_in_sync(uuid)',
+  'private.authorize_group(uuid,uuid,text)',
+  'private.authorize_invite_change(invites,uuid)',
+  'private.check_tier(integer)',
+  'private.clean_group_emoji(text)',
+  'private.clean_group_name(text)',
+  'private.close_active_status(uuid)',
+  'private.consume_rate_limit(uuid,text,integer,interval)',
+  'private.create_default_availability_prefs()',
+  'private.delete_friend_rules(uuid,uuid)',
+  'private.drop_membership(uuid,uuid)',
+  'private.group_admin_in_sync_trigger()',
+  'private.insert_group_invite(uuid,uuid,timestamp with time zone,integer)',
+  'private.invite_status(invites)',
+  'private.is_blocked(uuid,uuid)',
+  'private.lock_group(uuid)',
+  'private.lock_invite_for_member(uuid,uuid)',
+  'private.lock_pair(uuid,uuid)',
+  'private.new_invite_code()',
+  'private.normalize_handle(text)',
+  'private.protect_age_confirmation()',
+  'private.purge_expired_rate_limits()',
+  'private.purge_expired_status_overrides(interval)',
+  'private.redacted_events(uuid,smallint,timestamp with time zone,timestamp with time zone)',
+  'private.relationship(uuid,uuid)',
+  'private.require_user()',
+  'private.resolve_tier(uuid,uuid)',
+  'private.send_friend_request(uuid,uuid,integer)',
+  'private.set_friend_rule(uuid,uuid,smallint)',
+  'private.to_group_invite(invites,uuid)',
+  'private.try_consume_rate_limit(uuid,text,integer,interval)',
+  'private.validate_user_timezone()',
+  'private.validate_weekly_hours()',
+  'private.visible_profile(uuid,uuid)',
+];
+
 describe('functions', () => {
+  it('the private schema holds exactly the internal helpers, none security definer', async () => {
+    const fns = await rows<{ fn: string; definer: boolean }>(
+      `select p.oid::regprocedure::text as fn, p.prosecdef as definer
+       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'private' order by 1`,
+    );
+    expect(fns.map((f) => f.fn)).toEqual(PRIVATE_FUNCTIONS);
+    expect(fns.filter((f) => f.definer)).toEqual([]);
+  });
+
   it('every security definer function pins search_path to empty', async () => {
     const definers = await rows<{ fn: string; config: string[] | null }>(
       `select p.oid::regprocedure::text as fn, p.proconfig as config
        from pg_proc p join pg_namespace n on n.oid = p.pronamespace
        where n.nspname in ('public', 'private') and p.prosecdef order by 1`,
     );
-    expect(definers.map((d) => d.fn)).toEqual(AUTHENTICATED_FUNCTIONS);
+    expect(definers.map((d) => d.fn)).toEqual(CLIENT_DEFINER_FUNCTIONS);
     for (const d of definers) expect(d.config).toEqual(['search_path=""']);
   });
 
@@ -204,16 +292,7 @@ describe('functions', () => {
     expect(loose).toEqual([]);
   });
 
-  it('no private helper is security definer (they run inside the definer entry points)', async () => {
-    const definers = await rows(
-      `select p.oid::regprocedure::text from pg_proc p
-       join pg_namespace n on n.oid = p.pronamespace
-       where n.nspname = 'private' and p.prosecdef`,
-    );
-    expect(definers).toEqual([]);
-  });
-
-  it('clients can execute only the entry points above (anon: ANON_FUNCTIONS only)', async () => {
+  it('clients can execute only CLIENT_FUNCTIONS, anon only ANON_FUNCTIONS', async () => {
     for (const role of CLIENT_ROLES) {
       const callable = await rows<{ fn: string }>(
         `select p.oid::regprocedure::text as fn from pg_proc p
@@ -224,10 +303,10 @@ describe('functions', () => {
          order by 1`,
         [role],
       );
-      const expected = { authenticated: AUTHENTICATED_FUNCTIONS, anon: ANON_FUNCTIONS };
       expect({ role, callable: callable.map((c) => c.fn) }).toEqual({
         role,
-        callable: role === 'service_role' ? [] : expected[role],
+        callable:
+          role === 'authenticated' ? CLIENT_FUNCTIONS : role === 'anon' ? ANON_FUNCTIONS : [],
       });
     }
   });
@@ -265,10 +344,13 @@ describe('triggers', () => {
        where n.nspname = 'public' and not t.tgisinternal order by 1`,
     );
     expect(triggers).toEqual([
+      { t: 'availability_prefs.availability_prefs_validate_weekly', deferred: false },
       { t: 'group_members.group_members_admin_in_sync_delete', deferred: true },
       { t: 'group_members.group_members_admin_in_sync_insert', deferred: true },
       { t: 'group_members.group_members_admin_in_sync_update', deferred: true },
       { t: 'groups.groups_admin_in_sync', deferred: true },
+      { t: 'users.users_create_default_availability_prefs', deferred: false },
+      { t: 'users.users_protect_age_confirmation', deferred: false },
       { t: 'users.users_validate_timezone', deferred: false },
     ]);
   });

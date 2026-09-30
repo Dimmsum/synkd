@@ -6,6 +6,41 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      availability_prefs: {
+        Row: {
+          count_all_day_events: boolean;
+          created_at: string;
+          id: string;
+          min_gap_minutes: number;
+          user_id: string;
+          weekly: NonNullable<Json>;
+        };
+        Insert: {
+          count_all_day_events?: boolean;
+          created_at?: string;
+          id?: string;
+          min_gap_minutes?: number;
+          user_id: string;
+          weekly?: NonNullable<Json>;
+        };
+        Update: {
+          count_all_day_events?: boolean;
+          created_at?: string;
+          id?: string;
+          min_gap_minutes?: number;
+          user_id?: string;
+          weekly?: NonNullable<Json>;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'availability_prefs_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: true;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       blocks: {
         Row: {
           blocked_id: string;
@@ -290,6 +325,41 @@ export type Database = {
           },
         ];
       };
+      rate_limits: {
+        Row: {
+          action: string;
+          count: number;
+          created_at: string;
+          user_id: string;
+          window_end: string;
+          window_start: string;
+        };
+        Insert: {
+          action: string;
+          count?: number;
+          created_at?: string;
+          user_id: string;
+          window_end: string;
+          window_start: string;
+        };
+        Update: {
+          action?: string;
+          count?: number;
+          created_at?: string;
+          user_id?: string;
+          window_end?: string;
+          window_start?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'rate_limits_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       sources: {
         Row: {
           created_at: string;
@@ -327,6 +397,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'sources_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      status_overrides: {
+        Row: {
+          created_at: string;
+          ends_at: string | null;
+          id: string;
+          label: string | null;
+          starts_at: string;
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          ends_at?: string | null;
+          id?: string;
+          label?: string | null;
+          starts_at?: string;
+          status: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          ends_at?: string | null;
+          id?: string;
+          label?: string | null;
+          starts_at?: string;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'status_overrides_user_id_fkey';
             columns: ['user_id'];
             isOneToOne: false;
             referencedRelation: 'users';
@@ -419,6 +527,22 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_consent: { Args: { version: string }; Returns: string };
+      accept_friend_request: { Args: { tier?: number; user_id: string }; Returns: undefined };
+      account_status: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          age_confirmed: boolean;
+          consent_required: boolean;
+          consent_version: string;
+          current_consent_version: string;
+          has_profile: boolean;
+        }[];
+      };
+      block_user: { Args: { user_id: string }; Returns: undefined };
+      cancel_friend_request: { Args: { user_id: string }; Returns: undefined };
+      clear_status: { Args: Record<PropertyKey, never>; Returns: undefined };
+      confirm_age: { Args: { birth_year: number }; Returns: string };
       create_group: { Args: { emoji?: string; name: string; tier?: number }; Returns: string };
       create_group_invite: {
         Args: { expires_at?: string; group_id: string; max_uses?: number };
@@ -430,8 +554,33 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      current_consent_version: { Args: Record<PropertyKey, never>; Returns: string };
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
+      decline_friend_request: { Args: { user_id: string }; Returns: undefined };
       delete_group: { Args: { group_id: string }; Returns: undefined };
+      ensure_current_user: {
+        Args: { avatar_url?: string; name: string; timezone?: string };
+        Returns: {
+          age_confirmed_at: string | null;
+          avatar_url: string | null;
+          birth_year: number | null;
+          clerk_id: string;
+          consent_at: string | null;
+          consent_version: string | null;
+          created_at: string;
+          handle: string | null;
+          id: string;
+          name: string;
+          sharing_paused: boolean;
+          timezone: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'users';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       events_for_viewer: {
         Args: { owner_id: string; range_end: string; range_start: string };
         Returns: {
@@ -442,6 +591,16 @@ export type Database = {
           rrule: string;
           starts_at: string;
           title: string;
+        }[];
+      };
+      find_user_by_handle: {
+        Args: { lookup: string };
+        Returns: {
+          avatar_url: string;
+          handle: string;
+          id: string;
+          name: string;
+          relationship: string;
         }[];
       };
       get_group_members: {
@@ -470,8 +629,50 @@ export type Database = {
           status: string;
         }[];
       };
+      get_profile: {
+        Args: { user_id: string };
+        Returns: {
+          avatar_url: string;
+          handle: string;
+          id: string;
+          name: string;
+          relationship: string;
+        }[];
+      };
       join_group: { Args: { code: string; tier?: number }; Returns: string };
       leave_group: { Args: { group_id: string }; Returns: undefined };
+      list_blocked_users: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          avatar_url: string;
+          blocked_at: string;
+          handle: string;
+          name: string;
+          user_id: string;
+        }[];
+      };
+      list_friend_requests: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          avatar_url: string;
+          direction: string;
+          handle: string;
+          name: string;
+          requested_at: string;
+          tier: number;
+          user_id: string;
+        }[];
+      };
+      list_friends: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          avatar_url: string;
+          handle: string;
+          name: string;
+          tier: number;
+          user_id: string;
+        }[];
+      };
       list_group_invites: {
         Args: { group_id: string };
         Returns: Database['public']['CompositeTypes']['group_invite'][];
@@ -511,6 +712,12 @@ export type Database = {
       };
       remove_group_member: { Args: { group_id: string; user_id: string }; Returns: undefined };
       revoke_group_invite: { Args: { invite_id: string }; Returns: undefined };
+      send_friend_request: { Args: { tier?: number; user_id: string }; Returns: string };
+      send_friend_request_by_handle: { Args: { handle: string; tier?: number }; Returns: string };
+      set_day_hours: {
+        Args: { day: string; end_time?: string; start_time?: string };
+        Returns: Json;
+      };
       set_group_member_permissions: {
         Args: {
           can_edit_group?: boolean;
@@ -522,10 +729,31 @@ export type Database = {
         };
         Returns: undefined;
       };
+      set_handle: { Args: { handle: string }; Returns: string };
+      set_status: {
+        Args: { ends_at?: string; label?: string; status: string };
+        Returns: {
+          created_at: string;
+          ends_at: string | null;
+          id: string;
+          label: string | null;
+          starts_at: string;
+          status: string;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'status_overrides';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       transfer_group_admin: {
         Args: { group_id: string; new_admin_id: string };
         Returns: undefined;
       };
+      unblock_user: { Args: { user_id: string }; Returns: undefined };
+      unfriend: { Args: { user_id: string }; Returns: undefined };
       update_group: { Args: { emoji: string; group_id: string; name: string }; Returns: undefined };
     };
     Enums: {

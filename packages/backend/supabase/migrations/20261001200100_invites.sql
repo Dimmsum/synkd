@@ -286,7 +286,10 @@ begin
   perform private.lock_group(create_group_invite.group_id);
   perform private.authorize_group(create_group_invite.group_id, actor, 'invite');
 
-  -- TODO(NFR-SEC-9): rate-limit via private.consume_rate_limit (invite creation).
+  -- NFR-SEC-9: at most 30 new invite links per user per day, shared with
+  -- regenerate_group_invite (same action). A group needs a handful of links;
+  -- this stops a member minting codes in bulk.
+  perform private.consume_rate_limit(actor, 'group_invite', 30, interval '1 day');
 
   created := private.insert_group_invite(
     create_group_invite.group_id,
@@ -357,7 +360,9 @@ declare
 begin
   perform private.authorize_invite_change(previous, actor);
 
-  -- TODO(NFR-SEC-9): rate-limit via private.consume_rate_limit (invite creation).
+  -- NFR-SEC-9: counts towards the same 30-a-day invite allowance as
+  -- create_group_invite.
+  perform private.consume_rate_limit(actor, 'group_invite', 30, interval '1 day');
 
   update public.invites i
   set revoked = true
@@ -433,9 +438,9 @@ grant execute on function public.list_group_invites(uuid) to authenticated;
 -- member_count is the true count (it decides "full"), not filtered by blocks:
 -- there may be no viewer, and the page shows the same thing to everyone.
 --
--- TODO(NFR-SEC-9): callable by anon, so it can't be limited per user; limit
--- it per IP at the edge (the /i/[code] route) if abuse shows up. Guessing
--- codes is not a practical attack (2^128 codes).
+-- TODO(NFR-SEC-9): callable by anon, so there is no user id to limit on;
+-- limit it per IP on the web route (/i/[code]). Guessing codes is not a
+-- practical attack (2^128 codes).
 -- ---------------------------------------------------------------------------
 create function public.get_invite_summary(code text)
 returns table (
@@ -505,6 +510,7 @@ grant execute on function public.get_invite_summary(text) to anon, authenticated
 --   4. join_mode 'approval' (FR-SOC-13, a Could) -> "not supported yet"; no
 --      member row is created. Nothing can set this mode yet;
 --   5. the cap: members >= groups.max_members -> "This group is full";
+--   5a. the rate limit (20 joins a day, PT429);
 --   6. insert the member row with the D26 default permissions, and the
 --      caller's visibility rule for the group with the chosen tier (FR-VIS-1,
 --      D20: T1 by default);
@@ -538,8 +544,6 @@ declare
   invite public.invites;
   invite_state text;
 begin
-  -- TODO(NFR-SEC-9): rate-limit via private.consume_rate_limit (joins, including failed ones).
-
   if code is not null and code ~ '^[A-Za-z0-9_-]{22}$' then
     select i.group_id into invite_group
     from public.invites i
@@ -586,6 +590,12 @@ begin
   if (select count(*) from public.group_members m where m.group_id = grp.id) >= grp.max_members then
     raise exception 'This group is full' using errcode = 'P0001';
   end if;
+
+  -- NFR-SEC-9: at most 20 group joins per user per day. Only successful joins
+  -- count (a failed call rolls the counter back), so this limits how fast one
+  -- account can spread into groups, not how many codes it can try; codes are
+  -- unguessable anyway.
+  perform private.consume_rate_limit(actor, 'join_group', 20, interval '1 day');
 
   -- Role and permissions take the column defaults: member, D26.
   insert into public.group_members (group_id, user_id)

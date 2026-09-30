@@ -13,8 +13,9 @@
 --     permission (FR-SOC-9), whatever the member row's columns say.
 --
 -- Errors are raised with a stable message (the client may match on it) and
--- a SQLSTATE: 42501 not signed in / not allowed, P0002 not found, 22023 bad
--- argument, P0001 a rule of the group was broken (e.g. "This group is full").
+-- a SQLSTATE: WF001 no account for this sign-in (private.require_user),
+-- 42501 not allowed, P0002 not found, 22023 bad argument, P0001 a rule of the
+-- group was broken (e.g. "This group is full"), PT429 rate limited.
 -- Non-members get "Group not found" whether or not the group exists.
 --
 -- Being admin grants management rights only, never extra visibility
@@ -114,39 +115,10 @@ create constraint trigger group_members_admin_in_sync_delete
 -- Internal helpers (private schema: clients can't call them).
 -- ---------------------------------------------------------------------------
 
--- The signed-in user's users.id, or an error.
-create function private.require_user() returns uuid
-language plpgsql
-stable
-set search_path = ''
-as $$
-declare
-  actor uuid := public.current_user_id();
-begin
-  if actor is null then
-    raise exception 'Not signed in' using errcode = '42501';
-  end if;
-  return actor;
-end;
-$$;
-
-revoke all on function private.require_user() from public;
-
--- Validates a tier chosen by the user (D20: 1–3, T1 is the minimum).
-create function private.check_tier(tier integer) returns smallint
-language plpgsql
-immutable
-set search_path = ''
-as $$
-begin
-  if tier is null or tier not between 1 and 3 then
-    raise exception 'Tier must be 1, 2 or 3' using errcode = '22023';
-  end if;
-  return tier::smallint;
-end;
-$$;
-
-revoke all on function private.check_tier(integer) from public;
+-- Reused from earlier migrations (WF-040/042): private.require_user() (the
+-- caller's users.id, or WF001 "No account for this sign-in"),
+-- private.check_tier(integer) (22023 "tier must be 1, 2 or 3") and
+-- private.is_blocked(a, b) (a block in either direction, D43).
 
 -- A group name without surrounding spaces, 1–60 characters.
 create function private.clean_group_name(name text) returns text
@@ -184,23 +156,6 @@ end;
 $$;
 
 revoke all on function private.clean_group_emoji(text) from public;
-
--- True when either user has blocked the other (D43). Never true for a user
--- and themself (blocks_not_self).
-create function private.blocked_either_way(a uuid, b uuid) returns boolean
-language sql
-stable
-set search_path = ''
-as $$
-  select exists (
-    select 1
-    from public.blocks bl
-    where (bl.blocker_id = a and bl.blocked_id = b)
-       or (bl.blocker_id = b and bl.blocked_id = a)
-  )
-$$;
-
-revoke all on function private.blocked_either_way(uuid, uuid) from public;
 
 -- Locks the group row (FOR UPDATE) and returns it. Every function that changes
 -- a group's membership, permissions or invites calls this first, before
@@ -295,7 +250,11 @@ declare
   chosen_tier smallint := private.check_tier(create_group.tier);
   new_group uuid;
 begin
-  -- TODO(NFR-SEC-9): rate-limit via private.consume_rate_limit (group creation).
+  -- NFR-SEC-9: at most 10 new groups per user per day. Plenty for real use
+  -- (clubs, flats, study groups), and it stops scripted group spam. The unit
+  -- is only used if the group is actually created (the counter rolls back
+  -- with a failed call).
+  perform private.consume_rate_limit(actor, 'create_group', 10, interval '1 day');
 
   insert into public.groups (name, emoji, admin_id)
   values (clean_name, clean_emoji, actor)
@@ -494,7 +453,7 @@ begin
         select count(*)::integer
         from public.group_members o
         where o.group_id = g.id
-          and not private.blocked_either_way(viewer, o.user_id)
+          and not private.is_blocked(viewer, o.user_id)
       ),
       g.max_members,
       coalesce(r.tier, 1::smallint),
@@ -571,7 +530,7 @@ begin
     from public.group_members m
     join public.users u on u.id = m.user_id
     where m.group_id = get_group_members.group_id
-      and not private.blocked_either_way(viewer, m.user_id)
+      and not private.is_blocked(viewer, m.user_id)
     order by m.role = 'admin' desc, m.joined_at, m.user_id;
 end;
 $$;

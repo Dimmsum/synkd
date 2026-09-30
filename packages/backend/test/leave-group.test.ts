@@ -149,6 +149,6 @@ describe('leave_group', () => {
     await leave('user_member');
     await expectPgError(leave('user_member'), 'Group not found', 'P0002');
     await expectNoExecute(db.asAnon().query(`select public.leave_group($1)`, [g]), 'leave_group');
-    await expectPgError(leave('user_nobody'), 'Not signed in', '42501');
+    await expectPgError(leave('user_nobody'), 'No account for this sign-in', 'WF001');
   });
 });

@@ -29,6 +29,78 @@ export type ViewerEvent = Omit<EventsForViewerRow, 'category' | 'title' | 'rrule
   rrule: string | null;
 };
 
+type AccountStatusRow = Database['public']['Functions']['account_status']['Returns'][number];
+
+/**
+ * The single row of `account_status()` (WF-004/005/015). The CLI types function results as
+ * non-null, but `consent_version` is null until the user first accepts.
+ */
+export type AccountStatus = Omit<AccountStatusRow, 'consent_version'> & {
+  consent_version: string | null;
+};
+
+/** How another user relates to the caller (`get_profile`, `find_user_by_handle`). */
+export type Relationship = 'self' | 'friend' | 'request_sent' | 'request_received' | 'none';
+
+type ProfileRow = Database['public']['Functions']['get_profile']['Returns'][number];
+
+/**
+ * Another user's public profile (WF-040), from `get_profile` or
+ * `find_user_by_handle`. Nothing is returned for a user who has blocked the
+ * caller or whom the caller blocked. `handle` and `avatar_url` are optional.
+ * (Clear your own handle with `set_handle({ handle: null })`; the generated
+ * Args type says `string`, but null is accepted.)
+ */
+export type PublicProfile = Omit<ProfileRow, 'handle' | 'avatar_url' | 'relationship'> & {
+  handle: string | null;
+  avatar_url: string | null;
+  relationship: Relationship;
+};
+
+type FriendRequestRow = Database['public']['Functions']['list_friend_requests']['Returns'][number];
+
+/**
+ * One row of `list_friend_requests` (WF-042). `tier` is the tier the caller
+ * chose for an outgoing request, and null for an incoming one.
+ */
+export type FriendRequest = Omit<
+  FriendRequestRow,
+  'handle' | 'avatar_url' | 'direction' | 'tier'
+> & {
+  handle: string | null;
+  avatar_url: string | null;
+  direction: 'incoming' | 'outgoing';
+  tier: 1 | 2 | 3 | null;
+};
+
+type FriendRow = Database['public']['Functions']['list_friends']['Returns'][number];
+
+/**
+ * One row of `list_friends` (WF-042): a friend and the tier the caller grants
+ * them. Friendships made through accept_friend_request always have a tier;
+ * null would mean no individual rule (resolve_tier then falls back to shared
+ * groups, else T1).
+ */
+export type Friend = Omit<FriendRow, 'handle' | 'avatar_url' | 'tier'> & {
+  handle: string | null;
+  avatar_url: string | null;
+  tier: 1 | 2 | 3 | null;
+};
+
+/** What `send_friend_request*` returns: a new request, or a friendship if they had already asked. */
+export type SendFriendRequestResult = 'pending' | 'accepted';
+
+type BlockedUserRow = Database['public']['Functions']['list_blocked_users']['Returns'][number];
+
+/** One row of `list_blocked_users` (WF-047): someone the caller has blocked. */
+export type BlockedUser = Omit<BlockedUserRow, 'handle' | 'avatar_url'> & {
+  handle: string | null;
+  avatar_url: string | null;
+};
+
+export { DB_ERROR } from './errors';
+export type { DbErrorCode } from './errors';
+
 type Fn = Database['public']['Functions'];
 
 /**
@@ -96,19 +168,19 @@ export type InviteSummary =
 /**
  * The messages the group and invite functions raise (WF-043/044/045/047), so clients can
  * tell errors apart (e.g. show "This group is full"). Match on `error.message`.
- * SQLSTATEs: 42501 not signed in / not allowed, P0002 not found, 22023 bad argument,
- * P0001 a group rule, 0A000 not supported. For "already a member", `error.details` is the
- * group id.
+ * SQLSTATEs: WF001 no account for this sign-in and PT429 rate limited (see `DB_ERROR`),
+ * 42501 not allowed, P0002 not found, 22023 bad argument, P0001 a group rule, 0A000 not
+ * supported. For "already a member", `error.details` is the group id.
  */
 export const GROUP_ERRORS = {
-  notSignedIn: 'Not signed in',
+  noAccount: 'No account for this sign-in',
   notAllowed: 'Not allowed',
   groupNotFound: 'Group not found',
   memberNotFound: 'Member not found',
   inviteNotFound: 'Invite not found',
   invalidName: 'Group name must be 1 to 60 characters',
   invalidEmoji: 'Emoji must be at most 16 characters',
-  invalidTier: 'Tier must be 1, 2 or 3',
+  invalidTier: 'tier must be 1, 2 or 3',
   invalidExpiry: 'Invite expiry must be in the future',
   invalidMaxUses: 'Invite max uses must be between 1 and 1000',
   transferToSelf: 'Choose another member to become admin',
@@ -122,4 +194,5 @@ export const GROUP_ERRORS = {
   inviteUsedUp: 'This invite has reached its maximum number of uses',
   groupFull: 'This group is full',
   approvalNotSupported: 'Joining groups that need approval is not supported yet',
+  rateLimited: 'Too many attempts',
 } as const;

@@ -10,12 +10,15 @@
     "lint": "eslint .",
     "typecheck": "tsc",
     "test": "vitest run",
-    "db:types": "tsx scripts/gen-types.ts"
+    "db:types": "tsx scripts/gen-types.ts",
+    "db:init": "tsx scripts/gen-init-sql.ts",
+    "db:generate": "pnpm db:types && pnpm db:init"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
     "@electric-sql/pglite-socket": "^0.2.11",
     "@types/node": "^20.19.43",
+    "@whosfree/availability": "workspace:*",
     "@whosfree/config": "workspace:*",
     "@whosfree/shared": "workspace:*",
     "eslint": "^10.11.0",

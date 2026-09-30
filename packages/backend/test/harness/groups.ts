@@ -132,6 +132,25 @@ export function locksGroupRow(
   });
 }
 
+/**
+ * Sets `userId`'s counter for `action` in the current window to `count`, as if
+ * they had already made that many calls today (NFR-SEC-9 daily limits).
+ */
+export async function setRateCount(
+  db: TestDb,
+  userId: string,
+  action: string,
+  count: number,
+): Promise<void> {
+  await db.admin.query(
+    `insert into public.rate_limits (user_id, action, window_start, window_end, count)
+     select $1, $2, w, w + interval '1 day', $3
+     from (select date_bin(interval '1 day', now(), timestamptz '2000-01-01 00:00:00+00') as w) t
+     on conflict (user_id, action, window_start) do update set count = excluded.count`,
+    [userId, action, count],
+  );
+}
+
 /** Asserts that `promise` fails with a Postgres error with this message (exactly) and SQLSTATE. */
 export async function expectPgError(
   promise: Promise<unknown>,

@@ -14,6 +14,7 @@ import {
   expectPgError,
   join,
   locksGroupRow,
+  setRateCount,
   tierSeen,
 } from './harness/groups';
 import type { GroupInviteRow } from './harness/groups';
@@ -446,7 +447,7 @@ describe('join_group', () => {
     for (const tier of [0, 4, null])
       await expectPgError(
         db.asUser('user_late').query(`select public.join_group($1, $2)`, [inv.code, tier]),
-        'Tier must be 1, 2 or 3',
+        'tier must be 1, 2 or 3',
         '22023',
       );
   });
@@ -464,7 +465,7 @@ describe('join_group', () => {
       db.asAnon().query(`select public.join_group($1)`, [inv.code]),
       'join_group',
     );
-    await expectPgError(join(db, 'user_nobody', inv.code), 'Not signed in', '42501');
+    await expectPgError(join(db, 'user_nobody', inv.code), 'No account for this sign-in', 'WF001');
   });
 
   it('rejects someone who is already a member, giving the group id in the detail', async () => {
@@ -658,5 +659,47 @@ describe('delete_group', () => {
     expect(rows).toEqual([]);
     expect(await summary(inv.code)).toEqual([]);
     await expectPgError(join(db, 'user_joiner', inv.code), 'Invite not found', 'P0002');
+  });
+});
+
+describe('rate limits (NFR-SEC-9)', () => {
+  it('invite links: 30 a day, shared by create_group_invite and regenerate_group_invite', async () => {
+    await setRateCount(db, admin, 'group_invite', 28);
+    const a = await createInvite(db, 'user_admin', g);
+    await db.asUser('user_admin').query(`select * from public.regenerate_group_invite($1)`, [a.id]);
+    await expectPgError(createInvite(db, 'user_admin', g), 'Too many attempts', 'PT429');
+    await expectPgError(
+      db.asUser('user_admin').query(`select * from public.regenerate_group_invite($1)`, [a.id]),
+      'Too many attempts',
+      'PT429',
+    );
+    // The refused regenerate changed nothing, and other members keep their own allowance.
+    const { rows } = await db.admin.query(`select revoked from public.invites where id = $1`, [
+      a.id,
+    ]);
+    expect(rows).toEqual([{ revoked: true }]); // revoked by the earlier, successful regenerate
+    await createInvite(db, 'user_member', g);
+  });
+
+  it('joins: 20 a day; only successful joins count', async () => {
+    const other = await createGroup(db, 'user_admin', { name: 'Other' });
+    const third = await createGroup(db, 'user_admin', { name: 'Third' });
+    const otherCode = (await createInvite(db, 'user_admin', other)).code;
+    const thirdCode = (await createInvite(db, 'user_admin', third)).code;
+    await setRateCount(db, member, 'join_group', 19);
+    // A failed join (already a member) doesn't use up the last unit.
+    await expectPgError(
+      join(db, 'user_member', (await createInvite(db, 'user_admin', g)).code),
+      'You are already a member of this group',
+    );
+    await join(db, 'user_member', otherCode);
+    await expectPgError(join(db, 'user_member', thirdCode), 'Too many attempts', 'PT429');
+    const { rows } = await db.admin.query(
+      `select 1 from public.group_members where group_id = $1 and user_id = $2`,
+      [third, member],
+    );
+    expect(rows).toEqual([]);
+    // Someone else can still join.
+    await join(db, 'user_joiner', thirdCode);
   });
 });
