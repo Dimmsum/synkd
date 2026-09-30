@@ -483,7 +483,7 @@ The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy
 
 > Backend done (merged): `current_consent_version()`, `accept_consent(version)`, `account_status().consent_required`. **Bumping the version is a migration** that ships with the new legal text. Left: web wiring.
 
-> Web merged: `/sign-up/terms` sends the version from `account_status().current_consent_version` (not a web constant) to `accept_consent`. The proxy sends anyone with `consent_required` back to it ("We've updated our terms"). The displayed version is `LEGAL_VERSION` in `apps/web/src/lib/legal.ts` (WF-010), and a test keeps it equal to the DB. Left: `getConsentRecord()` in `lib/data/settings.ts` is still mock data. Needs the live check with WF-004.
+> Web merged: `/sign-up/terms` sends the version from `account_status().current_consent_version` (not a web constant) to `accept_consent`. The proxy sends anyone with `consent_required` back to it ("We've updated our terms"). The displayed version is `LEGAL_VERSION` in `apps/web/src/lib/legal.ts` (WF-010), and a test keeps it equal to the DB. Settings shows the consent record from the users row. Needs the live check with WF-004.
 
 **Acceptance criteria**
 - [x] Sign-up records `consentVersion` and `consentAt`
@@ -743,9 +743,11 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 
 > Backend done (merged): handle rules in `@whosfree/shared` (`Handle`, reserved words) and SQL; `set_handle` (10/day), `get_profile`, `find_user_by_handle` (exact match, 100/hour); blocks hidden both ways. Left: web wiring.
 
+> Web merged: edit name, timezone and handle (`set_handle`, friendly WF101–103/PT429 messages); finding people by exact handle and by friend link `/add/<id>` (with QR). **Avatar replacement is blocked:** there's no avatars Storage bucket yet (needs a migration and upload UI).
+
 **Acceptance criteria**
 - [ ] Users can edit their display name and avatar (the Google avatar can be replaced)
-- [ ] An optional, unique handle (`@kemar`), checked for allowed characters and reserved words
+- [x] An optional, unique handle (`@kemar`), checked for allowed characters and reserved words
 
 #### WF-041 · Visibility tiers and server-side redaction
 - **Category:** `security` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
@@ -941,9 +943,11 @@ The Find a time part waits for WF-098. The invite action uses friend invite link
 
 > Backend done (merged): `availability_prefs` (default 08:00–22:00, one window per day, no overnight windows), `set_day_hours(day, start, end)`. Left: onboarding slider and settings UI.
 
+> Web merged: `saveAvailableHours` replaces `availability_prefs.weekly` in one update (days switched off are left out = away all day); `getAvailableHours` reads it under RLS. Left: "away" outside hours shows once WF-064 runs the engine.
+
 **Acceptance criteria**
-- [ ] Onboarding asks "When are you usually up and about?" with a slider pre-set to **08:00–22:00 every day**
-- [ ] In settings, hours can be edited separately for each day
+- [x] Onboarding asks "When are you usually up and about?" with a slider pre-set to **08:00–22:00 every day**
+- [x] In settings, hours can be edited separately for each day
 - [ ] Times outside these hours show as `away`
 
 #### WF-063 · Manual status override
@@ -953,9 +957,11 @@ The Find a time part waits for WF-098. The invite action uses friend invite link
 
 > Backend done (merged): `set_status(status, label, ends_at)` (closes the previous status; `ends_at` ≤ 7 days; label ≤ 40 chars) and `clear_status()`. Left: the status chip, and WF-064 exposing it to viewers.
 
+> Web merged: the status chip in the shell calls `set_status`/`clear_status` (`lib/actions/status.ts`), with presets, "until a time" and an optional 40-character note. The viewer's own chip reads its active override (`lib/data/status.ts`). Left: other viewers see it once WF-064 is wired. `set_status` still has no rate limit (TODO in SQL).
+
 **Acceptance criteria**
-- [ ] A status chip is reachable from anywhere in the app. Options: Free, Busy, Do not disturb, Away, Studying/Focused.
-- [ ] An override can have an end time ("until 4 PM") or last "until I change it"
+- [x] A status chip is reachable from anywhere in the app. Options: Free, Busy, Do not disturb, Away, Studying/Focused.
+- [x] An override can have an end time ("until 4 PM") or last "until I change it"
 - [ ] It overrides calendar-based status everywhere
 
 #### WF-064 · Now screen (real-time, redacted)
