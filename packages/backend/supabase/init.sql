@@ -10,7 +10,7 @@
 --   * Existing project: do NOT rerun this file. Apply only the migration files newer than
 --     the last one you applied, in filename order, from supabase/migrations.
 --
--- Includes 17 migrations (latest last):
+-- Includes 19 migrations (latest last):
 --   20260930201536_users_and_current_user_id.sql
 --   20260930201538_visibility_tiers_and_redaction.sql
 --   20261001100000_rate_limits.sql
@@ -28,6 +28,8 @@
 --   20261001300400_status_overrides.sql
 --   20261002300000_offline_friends.sql
 --   20261002300100_offline_friends_isolation.sql
+--   20261002400000_now_for_viewer.sql
+--   20261002400100_now_realtime_signals.sql
 
 begin;
 
@@ -4476,5 +4478,780 @@ as $$
 $$;
 
 revoke all on function private.redacted_events(uuid, smallint, timestamptz, timestamptz) from public;
+
+-- ============================================================================================
+-- 20261002400000_now_for_viewer.sql
+-- ============================================================================================
+
+-- WF-064: the Now screen's data (PRD §8.5 "Now screen", FR-VIEW-1, FR-VIEW-2,
+-- FR-VIS-3, FR-VIS-4, FR-VIS-5, FR-VIS-6, FR-AVL-2, FR-AVL-3, D18, D22, D35,
+-- D41, D44).
+--
+-- public.now_for_viewer(range_start, range_end) returns one row per
+-- connection of the signed-in viewer, with everything the availability engine
+-- (@whosfree/availability `AvailabilityInput`) needs to work out their status
+-- and "until X", already redacted to the viewer's tier. It returns data, not a
+-- status: the Next.js server runs `statusAt(now)` over it (PRD §8.5).
+--
+-- Redaction reuses the existing single paths: private.resolve_tier (the tier),
+-- private.redacted_events (the events) and private.visible_profile (the
+-- profile). Overrides and schedule sources get their own private helpers
+-- below, so the friend detail view (WF-065) and the "how others see me"
+-- preview (WF-049) can reuse them.
+--
+-- Offline friends (D44, FR-SOC-15, WF-127): sources and events with
+-- offline_friend_id set hold the schedule of someone who isn't on whosfree,
+-- added by the user. They are never the user's own schedule and never reach
+-- another viewer: private.redacted_events already skips their events
+-- (20261002300100_offline_friends_isolation.sql), and every direct read of
+-- sources below adds `offline_friend_id is null`.
+--
+-- Realtime "changed" signals for this screen are in the next migration.
+
+-- ---------------------------------------------------------------------------
+-- private.connections(me): everyone whose schedule `me` can see on the Now
+-- screen, once each: accepted friends plus co-members of `me`'s groups,
+-- leaving out `me` and anyone blocked in either direction (FR-SOC-6, D43).
+-- Pending requests and friends of friends are not connections.
+--
+-- Symmetric: b is in connections(a) exactly when a is in connections(b), so
+-- the same set is "whose data a viewer sees" and "which viewers a change to
+-- someone's data affects" (the Realtime triggers use it that way).
+--
+-- Offline friends (D44) are never connections: they aren't users, and only
+-- rows of public.users are returned here.
+-- ---------------------------------------------------------------------------
+create function private.connections(me uuid)
+returns table (user_id uuid)
+language sql
+stable
+set search_path = ''
+as $$
+  select c.other
+  from (
+    select case when f.user_a = connections.me then f.user_b else f.user_a end as other
+    from public.friendships f
+    where connections.me in (f.user_a, f.user_b)
+      and f.status = 'accepted'
+    union
+    select theirs.user_id
+    from public.group_members mine
+    join public.group_members theirs on theirs.group_id = mine.group_id
+    where mine.user_id = connections.me
+      and theirs.user_id <> connections.me
+  ) c
+  where connections.me is not null
+    and not private.is_blocked(connections.me, c.other)
+$$;
+
+revoke all on function private.connections(uuid) from public;
+
+-- ---------------------------------------------------------------------------
+-- private.epoch_ms(ts): UTC epoch milliseconds (null stays null), the unit of
+-- every instant in @whosfree/availability.
+-- ---------------------------------------------------------------------------
+create function private.epoch_ms(ts timestamptz) returns bigint
+language sql
+stable
+set search_path = ''
+as $$
+  select pg_catalog.floor(extract(epoch from ts) * 1000)::bigint
+$$;
+
+revoke all on function private.epoch_ms(timestamptz) from public;
+
+-- ---------------------------------------------------------------------------
+-- private.visible_overrides(owner, tier, range_start, range_end): the owner's
+-- manual statuses (WF-063) overlapping [range_start, range_end), as a viewer
+-- at `tier` may see them, as a jsonb array of the engine's `StatusOverride`
+-- plus a label, ordered by start:
+--
+--   [{"id": uuid, "status": "busy", "label": null,
+--     "startsAt": <epoch ms>, "endsAt": <epoch ms> | null}]
+--
+--   * `label` (free text the owner typed) only at T3, like event titles;
+--   * `focused` ("Studying/Focused") is a reason, like an event's category,
+--     so below T2 it is returned as plain `busy`, which is how it's displayed
+--     anyway (MANUAL_STATUS_TO_STATUS).
+--
+-- A null or out-of-range tier returns [].
+-- ---------------------------------------------------------------------------
+create function private.visible_overrides(
+  owner uuid,
+  tier smallint,
+  range_start timestamptz,
+  range_end timestamptz
+)
+returns jsonb
+language sql
+stable
+set search_path = ''
+as $$
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'id', o.id,
+        'status', case
+          when visible_overrides.tier < 2 and o.status = 'focused' then 'busy'
+          else o.status
+        end,
+        'label', case when visible_overrides.tier >= 3 then o.label end,
+        'startsAt', private.epoch_ms(o.starts_at),
+        'endsAt', private.epoch_ms(o.ends_at)
+      )
+      order by o.starts_at, o.id
+    ),
+    '[]'::jsonb
+  )
+  from public.status_overrides o
+  where visible_overrides.tier between 1 and 3
+    and o.user_id = visible_overrides.owner
+    and o.starts_at < visible_overrides.range_end
+    and (o.ends_at is null or o.ends_at > visible_overrides.range_start)
+$$;
+
+revoke all on function private.visible_overrides(uuid, smallint, timestamptz, timestamptz)
+  from public;
+
+-- ---------------------------------------------------------------------------
+-- private.visible_sources(owner, tier, range_start, range_end): the owner's
+-- schedule sources with their events in the range, as a viewer at `tier` may
+-- see them, as a jsonb array in the shape of the engine's `ScheduleSource[]`:
+--
+--   [{"period": {"start": "2026-09-01", "end": "2026-12-18",
+--                "exceptions": [{"start": "...", "end": "..."}]} | null,
+--     "events": [{"id": uuid, "start": <epoch ms>, "end": <epoch ms>,
+--                 "rrule": text | null, "exdates": [<epoch ms>],
+--                 "category": text | null, "title": text | null}]}]
+--
+--   * Every source of the owner's own is listed, even one with no events in
+--     the range: the engine counts any source as "has a schedule" (D22).
+--     Offline friends' sources are never listed (D44).
+--   * Events come only from private.redacted_events, the single redaction
+--     path (busy events only; category from T2, title from T3, neither for
+--     private events; no location exists, D35). events is joined back on id
+--     only to group them by source; nothing else is read from it.
+--   * The period is needed to expand recurring events correctly (breaks,
+--     FR-IMP-7, FR-IMP-8). Its dates only shape busy times, which every tier
+--     sees; the exceptions' free-text labels are dropped at every tier.
+--     period_exceptions is written by the owner under RLS with no shape
+--     check, so only entries with YYYY-MM-DD start and end are passed on:
+--     one malformed entry must not break the engine for every viewer.
+--     (Dropping one can only make the owner look busier, never freer.)
+--   * No source ids, types or sync state are returned.
+--
+-- A null or out-of-range tier returns [].
+-- ---------------------------------------------------------------------------
+create function private.visible_sources(
+  owner uuid,
+  tier smallint,
+  range_start timestamptz,
+  range_end timestamptz
+)
+returns jsonb
+language sql
+stable
+set search_path = ''
+as $$
+  with visible_events as (
+    select e.source_id, r.id, r.starts_at, r.ends_at, r.rrule, r.exdates, r.category, r.title
+    from private.redacted_events(
+      visible_sources.owner,
+      visible_sources.tier,
+      visible_sources.range_start,
+      visible_sources.range_end
+    ) r
+    join public.events e on e.id = r.id
+  )
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'period', case
+          when s.period_start is not null then jsonb_build_object(
+            'start', s.period_start,
+            'end', s.period_end,
+            'exceptions', (
+              select coalesce(
+                jsonb_agg(
+                  jsonb_build_object('start', x.value -> 'start', 'end', x.value -> 'end')
+                  order by x.n
+                ),
+                '[]'::jsonb
+              )
+              from jsonb_array_elements(s.period_exceptions) with ordinality as x (value, n)
+              where jsonb_typeof(x.value) = 'object'
+                and x.value ->> 'start' ~ '^\d{4}-\d{2}-\d{2}$'
+                and x.value ->> 'end' ~ '^\d{4}-\d{2}-\d{2}$'
+            )
+          )
+        end,
+        'events', (
+          select coalesce(
+            jsonb_agg(
+              jsonb_build_object(
+                'id', ev.id,
+                'start', private.epoch_ms(ev.starts_at),
+                'end', private.epoch_ms(ev.ends_at),
+                'rrule', ev.rrule,
+                'exdates', (
+                  select coalesce(jsonb_agg(private.epoch_ms(d) order by d), '[]'::jsonb)
+                  from unnest(ev.exdates) d
+                ),
+                'category', ev.category,
+                'title', ev.title
+              )
+              order by ev.starts_at, ev.id
+            ),
+            '[]'::jsonb
+          )
+          from visible_events ev
+          where ev.source_id = s.id
+        )
+      )
+      order by s.created_at, s.id
+    ),
+    '[]'::jsonb
+  )
+  from public.sources s
+  where visible_sources.tier between 1 and 3
+    and s.user_id = visible_sources.owner
+    and s.offline_friend_id is null
+$$;
+
+revoke all on function private.visible_sources(uuid, smallint, timestamptz, timestamptz)
+  from public;
+
+-- ---------------------------------------------------------------------------
+-- public.now_for_viewer(range_start, range_end): the signed-in viewer's
+-- connections for the Now screen, one row each, ordered by name.
+--
+-- The viewer is always the caller (current_user_id()); there is no viewer
+-- argument. No rows when the caller has no users row.
+--
+-- The range is the window the engine will look at: range_start defaults to
+-- now() and range_end to range_start + 7 days (the engine's default "until X"
+-- look-ahead, DEFAULT_UNTIL_HORIZON_MS), and it may be at most 8 days. Call
+-- it with the same `now` you pass to statusAt(), so "free soon" (within 60
+-- minutes) and every "until X" are exact.
+--
+-- Columns:
+--   user_id, name, handle, avatar_url, relationship
+--                    the public profile, from private.visible_profile
+--                    (relationship: 'friend', or 'none' for a group
+--                    co-member who isn't a friend, or a pending request).
+--   tier             the viewer's resolved tier (1-3) of this person.
+--   paused           they paused sharing (FR-VIS-6): show "Sharing paused".
+--                    Then every schedule field below is empty: has_schedule
+--                    false, timezone and available_hours null, overrides and
+--                    sources [].
+--   has_schedule     they have at least one schedule source of their own
+--                    (false = "Not sharing yet", no_schedule, D22); an
+--                    offline friend's schedule doesn't count (D44).
+--   group_ids        the groups both people are in, for the group filter
+--                    (FR-VIEW-2); empty for a friend with no shared group.
+--   timezone         their IANA timezone (AvailabilityInput.timeZone).
+--   available_hours  AvailableHours[] (AvailabilityInput.availableHours).
+--   overrides        see private.visible_overrides (label only at T3).
+--   sources          see private.visible_sources (redacted events).
+--
+-- Mapping to the engine: { timeZone: timezone, sharingPaused: paused,
+-- availableHours: available_hours, overrides, sources }.
+-- ---------------------------------------------------------------------------
+create function public.now_for_viewer(
+  range_start timestamptz default now(),
+  range_end timestamptz default null
+)
+returns table (
+  user_id uuid,
+  name text,
+  handle text,
+  avatar_url text,
+  relationship text,
+  tier smallint,
+  paused boolean,
+  has_schedule boolean,
+  group_ids uuid[],
+  timezone text,
+  available_hours jsonb,
+  overrides jsonb,
+  sources jsonb
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  viewer uuid;
+  window_start timestamptz := now_for_viewer.range_start;
+  window_end timestamptz :=
+    coalesce(now_for_viewer.range_end, now_for_viewer.range_start + interval '7 days');
+begin
+  if window_start is null or window_end is null or window_end <= window_start then
+    raise exception 'range_end must be after range_start' using errcode = '22023';
+  end if;
+  if window_end - window_start > interval '8 days' then
+    raise exception 'The range can be at most 8 days' using errcode = '22023';
+  end if;
+
+  viewer := public.current_user_id();
+  if viewer is null then
+    return;
+  end if;
+
+  return query
+    select
+      p.id,
+      p.name,
+      p.handle,
+      p.avatar_url,
+      p.relationship,
+      c.tier,
+      u.sharing_paused,
+      not u.sharing_paused and exists (
+        select 1 from public.sources s where s.user_id = u.id and s.offline_friend_id is null
+      ),
+      array(
+        select mine.group_id
+        from public.group_members mine
+        join public.group_members theirs
+          on theirs.group_id = mine.group_id
+         and theirs.user_id = u.id
+        where mine.user_id = viewer
+        order by mine.group_id
+      ),
+      case when not u.sharing_paused then u.timezone end,
+      case when not u.sharing_paused then ap.weekly end,
+      case
+        when u.sharing_paused then '[]'::jsonb
+        else private.visible_overrides(u.id, c.tier, window_start, window_end)
+      end,
+      case
+        when u.sharing_paused then '[]'::jsonb
+        else private.visible_sources(u.id, c.tier, window_start, window_end)
+      end
+    from (
+      select cn.user_id as id, private.resolve_tier(viewer, cn.user_id) as tier
+      from private.connections(viewer) cn
+    ) c
+    join public.users u on u.id = c.id
+    cross join lateral private.visible_profile(viewer, c.id) p
+    left join public.availability_prefs ap on ap.user_id = c.id
+    where c.tier is not null
+    order by p.name, p.id;
+end;
+$$;
+
+comment on function public.now_for_viewer(timestamptz, timestamptz) is
+  'WF-064: the caller''s connections (friends and group co-members, no blocks) with profile, resolved tier, paused and has-schedule flags, shared group ids, and tier-redacted engine input (timezone, available hours, overrides, sources with events) for the range.';
+
+revoke all on function public.now_for_viewer(timestamptz, timestamptz)
+  from public, anon, authenticated, service_role;
+grant execute on function public.now_for_viewer(timestamptz, timestamptz) to authenticated;
+
+-- ============================================================================================
+-- 20261002400100_now_realtime_signals.sql
+-- ============================================================================================
+
+-- WF-064: Realtime "changed" signals for the Now screen (PRD §8.1, §8.5,
+-- FR-VIEW-3, NFR-PERF-3, D41).
+--
+-- When something a viewer's Now screen shows changes, a database trigger sends
+-- a Supabase Realtime Broadcast to that viewer's private channel. The message
+-- carries NO data (payload `{}`): the client re-fetches through
+-- now_for_viewer, which redacts. Clients never subscribe to row changes
+-- (postgres_changes) on other users' tables, which would bypass redaction.
+--
+-- Channel: `user:<users.id>`, one private channel per user, e.g.
+--   user:6f1c0c1e-0d7a-4a7c-9a55-0a8f0b7d9e21
+-- Event:   `now_changed`
+--   (REALTIME_USER_CHANNEL_PREFIX and NOW_CHANGED_EVENT in @whosfree/shared.)
+-- A client subscribes with its own users.id (current_user_id()) as a private
+-- channel, e.g. supabase.channel(`user:${me}`, { config: { private: true } })
+-- .on('broadcast', { event: 'now_changed' }, refetch), after giving Realtime
+-- the Clerk token. The policy at the end lets a user join only their own
+-- channel, and nobody can send on it from a client.
+--
+-- What signals whom (every trigger is statement-level and reads the changed
+-- rows from transition tables, so a bulk write sends one signal per viewer):
+--   events, sources, status_overrides, availability_prefs
+--                     -> the owner's connections (not for an offline
+--                        friend's sources and events, D44: nothing the
+--                        connections see changed)
+--   users (name, handle, avatar, timezone, sharing_paused)
+--                     -> the user's connections
+--   visibility_rules  -> the connections the rule covers (the friend, or the
+--                        group's members)
+--   friendships       -> both people, when an accepted friendship starts or
+--                        ends (pending requests don't change the Now screen)
+--   group_members     -> the member and the group's other members (join,
+--                        leave, removal, group deletion)
+--   blocks            -> both people (either way, visibility changes)
+-- "Connections" are private.connections: friends and group co-members, with
+-- blocked pairs left out, so a blocked person never gets a signal from the
+-- blocker's data.
+--
+-- Each viewer is signalled at most once per transaction (set_status, for
+-- example, closes the old status and inserts a new one): the ids already
+-- signalled are kept in the transaction-local setting whosfree.now_signalled.
+-- Messages are delivered after commit; a rolled-back transaction sends none.
+
+-- ---------------------------------------------------------------------------
+-- private.signal_now_changed(recipients): sends `now_changed` with an empty
+-- payload to each recipient's private channel, once per transaction.
+--
+-- realtime.send() (Supabase) inserts into realtime.messages and never raises:
+-- a failure becomes a WARNING, so a Realtime problem can't block a write.
+-- ---------------------------------------------------------------------------
+create function private.signal_now_changed(recipients uuid[]) returns void
+language plpgsql
+volatile
+set search_path = ''
+as $$
+declare
+  signalled text := coalesce(pg_catalog.current_setting('whosfree.now_signalled', true), '');
+  recipient uuid;
+begin
+  for recipient in
+    select distinct r.id
+    from unnest(signal_now_changed.recipients) as r (id)
+    where r.id is not null
+    order by r.id
+  loop
+    if pg_catalog.strpos(signalled, recipient::text) = 0 then
+      perform realtime.send('{}'::jsonb, 'now_changed', 'user:' || recipient::text, true);
+      signalled := signalled || recipient::text || ',';
+    end if;
+  end loop;
+  perform pg_catalog.set_config('whosfree.now_signalled', signalled, true);
+end;
+$$;
+
+revoke all on function private.signal_now_changed(uuid[]) from public;
+
+-- ---------------------------------------------------------------------------
+-- private.signal_connections_of(owners): signals every connection of each
+-- owner.
+-- ---------------------------------------------------------------------------
+create function private.signal_connections_of(owners uuid[]) returns void
+language sql
+volatile
+set search_path = ''
+as $$
+  select private.signal_now_changed(
+    array(
+      select c.user_id
+      from (select distinct o.id from unnest(signal_connections_of.owners) as o (id)) ow
+      cross join lateral private.connections(ow.id) c
+    )
+  )
+$$;
+
+revoke all on function private.signal_connections_of(uuid[]) from public;
+
+-- ---------------------------------------------------------------------------
+-- Trigger functions. They are security definer (owned by postgres) because
+-- they fire for writes made by clients under RLS, and must read other users'
+-- connections and write realtime.messages, which clients can't. They return
+-- `trigger`, so they can't be called directly, and the private schema isn't
+-- reachable by clients anyway. Transition tables are named new_rows/old_rows
+-- on every trigger below.
+-- ---------------------------------------------------------------------------
+
+-- Rows with a user_id owner: events, sources, status_overrides,
+-- availability_prefs. Rows of an offline friend's schedule (sources and
+-- events with offline_friend_id set, D44) are skipped. status_overrides and
+-- availability_prefs have no such column, so it is read through to_jsonb
+-- (missing = null = the user's own row). OLD and NEW are checked separately:
+-- an event moved from an offline friend's source to the user's own still
+-- signals, through its NEW row.
+create function private.signal_owner_rows_changed() returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  owners uuid[] := '{}';
+begin
+  if tg_op <> 'DELETE' then
+    owners := owners || array(
+      select n.user_id from new_rows n where to_jsonb(n) ->> 'offline_friend_id' is null
+    );
+  end if;
+  if tg_op <> 'INSERT' then
+    owners := owners || array(
+      select o.user_id from old_rows o where to_jsonb(o) ->> 'offline_friend_id' is null
+    );
+  end if;
+  perform private.signal_connections_of(owners);
+  return null;
+end;
+$$;
+
+revoke all on function private.signal_owner_rows_changed() from public;
+
+-- users: only the columns the Now screen shows or the engine uses.
+create function private.signal_user_changed() returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  perform private.signal_connections_of(
+    array(
+      select n.id
+      from new_rows n
+      join old_rows o on o.id = n.id
+      where (n.name, n.handle, n.avatar_url, n.timezone, n.sharing_paused)
+        is distinct from (o.name, o.handle, o.avatar_url, o.timezone, o.sharing_paused)
+    )
+  );
+  return null;
+end;
+$$;
+
+revoke all on function private.signal_user_changed() from public;
+
+-- visibility_rules: the owner's connections that the rule covers.
+create function private.signal_visibility_rules_changed() returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  recipients uuid[] := '{}';
+begin
+  if tg_op <> 'DELETE' then
+    recipients := recipients || array(
+      select c.user_id
+      from new_rows n
+      cross join lateral private.connections(n.owner_id) c
+      where (n.target_type = 'friend' and c.user_id = n.target_id)
+         or (n.target_type = 'group' and exists (
+              select 1 from public.group_members m
+              where m.group_id = n.target_id and m.user_id = c.user_id
+            ))
+    );
+  end if;
+  if tg_op <> 'INSERT' then
+    recipients := recipients || array(
+      select c.user_id
+      from old_rows o
+      cross join lateral private.connections(o.owner_id) c
+      where (o.target_type = 'friend' and c.user_id = o.target_id)
+         or (o.target_type = 'group' and exists (
+              select 1 from public.group_members m
+              where m.group_id = o.target_id and m.user_id = c.user_id
+            ))
+    );
+  end if;
+  perform private.signal_now_changed(recipients);
+  return null;
+end;
+$$;
+
+revoke all on function private.signal_visibility_rules_changed() from public;
+
+-- friendships: both people, when an accepted friendship is involved.
+create function private.signal_friendships_changed() returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  recipients uuid[] := '{}';
+begin
+  if tg_op <> 'DELETE' then
+    recipients := recipients
+      || array(select n.user_a from new_rows n where n.status = 'accepted')
+      || array(select n.user_b from new_rows n where n.status = 'accepted');
+  end if;
+  if tg_op <> 'INSERT' then
+    recipients := recipients
+      || array(select o.user_a from old_rows o where o.status = 'accepted')
+      || array(select o.user_b from old_rows o where o.status = 'accepted');
+  end if;
+  perform private.signal_now_changed(recipients);
+  return null;
+end;
+$$;
+
+revoke all on function private.signal_friendships_changed() from public;
+
+-- group_members: the member, and the group's (remaining) other members that
+-- aren't blocked either way with them.
+create function private.signal_group_members_changed() returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  recipients uuid[];
+begin
+  if tg_op = 'INSERT' then
+    recipients := array(select n.user_id from new_rows n) || array(
+      select m.user_id
+      from new_rows n
+      join public.group_members m on m.group_id = n.group_id
+      where m.user_id <> n.user_id
+        and not private.is_blocked(m.user_id, n.user_id)
+    );
+  else
+    recipients := array(select o.user_id from old_rows o) || array(
+      select m.user_id
+      from old_rows o
+      join public.group_members m on m.group_id = o.group_id
+      where m.user_id <> o.user_id
+        and not private.is_blocked(m.user_id, o.user_id)
+    );
+  end if;
+  perform private.signal_now_changed(recipients);
+  return null;
+end;
+$$;
+
+revoke all on function private.signal_group_members_changed() from public;
+
+-- blocks: both people.
+create function private.signal_blocks_changed() returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  recipients uuid[] := '{}';
+begin
+  if tg_op = 'INSERT' then
+    recipients := array(select n.blocker_id from new_rows n)
+      || array(select n.blocked_id from new_rows n);
+  else
+    recipients := array(select o.blocker_id from old_rows o)
+      || array(select o.blocked_id from old_rows o);
+  end if;
+  perform private.signal_now_changed(recipients);
+  return null;
+end;
+$$;
+
+revoke all on function private.signal_blocks_changed() from public;
+
+-- ---------------------------------------------------------------------------
+-- Triggers. Postgres allows transition tables only on single-event triggers,
+-- hence one trigger per event.
+-- ---------------------------------------------------------------------------
+create trigger events_signal_now_insert
+  after insert on public.events
+  referencing new table as new_rows
+  for each statement execute function private.signal_owner_rows_changed();
+create trigger events_signal_now_update
+  after update on public.events
+  referencing old table as old_rows new table as new_rows
+  for each statement execute function private.signal_owner_rows_changed();
+create trigger events_signal_now_delete
+  after delete on public.events
+  referencing old table as old_rows
+  for each statement execute function private.signal_owner_rows_changed();
+
+create trigger sources_signal_now_insert
+  after insert on public.sources
+  referencing new table as new_rows
+  for each statement execute function private.signal_owner_rows_changed();
+create trigger sources_signal_now_update
+  after update on public.sources
+  referencing old table as old_rows new table as new_rows
+  for each statement execute function private.signal_owner_rows_changed();
+create trigger sources_signal_now_delete
+  after delete on public.sources
+  referencing old table as old_rows
+  for each statement execute function private.signal_owner_rows_changed();
+
+create trigger status_overrides_signal_now_insert
+  after insert on public.status_overrides
+  referencing new table as new_rows
+  for each statement execute function private.signal_owner_rows_changed();
+create trigger status_overrides_signal_now_update
+  after update on public.status_overrides
+  referencing old table as old_rows new table as new_rows
+  for each statement execute function private.signal_owner_rows_changed();
+create trigger status_overrides_signal_now_delete
+  after delete on public.status_overrides
+  referencing old table as old_rows
+  for each statement execute function private.signal_owner_rows_changed();
+
+-- Prefs rows are created and deleted with their user, who has no connections
+-- yet / whose friendships and memberships signal on their own, so only
+-- updates matter.
+create trigger availability_prefs_signal_now_update
+  after update on public.availability_prefs
+  referencing old table as old_rows new table as new_rows
+  for each statement execute function private.signal_owner_rows_changed();
+
+create trigger users_signal_now_update
+  after update on public.users
+  referencing old table as old_rows new table as new_rows
+  for each statement execute function private.signal_user_changed();
+
+create trigger visibility_rules_signal_now_insert
+  after insert on public.visibility_rules
+  referencing new table as new_rows
+  for each statement execute function private.signal_visibility_rules_changed();
+create trigger visibility_rules_signal_now_update
+  after update on public.visibility_rules
+  referencing old table as old_rows new table as new_rows
+  for each statement execute function private.signal_visibility_rules_changed();
+create trigger visibility_rules_signal_now_delete
+  after delete on public.visibility_rules
+  referencing old table as old_rows
+  for each statement execute function private.signal_visibility_rules_changed();
+
+create trigger friendships_signal_now_insert
+  after insert on public.friendships
+  referencing new table as new_rows
+  for each statement execute function private.signal_friendships_changed();
+create trigger friendships_signal_now_update
+  after update on public.friendships
+  referencing old table as old_rows new table as new_rows
+  for each statement execute function private.signal_friendships_changed();
+create trigger friendships_signal_now_delete
+  after delete on public.friendships
+  referencing old table as old_rows
+  for each statement execute function private.signal_friendships_changed();
+
+-- Updates of a membership (role, permissions) don't change the Now screen.
+create trigger group_members_signal_now_insert
+  after insert on public.group_members
+  referencing new table as new_rows
+  for each statement execute function private.signal_group_members_changed();
+create trigger group_members_signal_now_delete
+  after delete on public.group_members
+  referencing old table as old_rows
+  for each statement execute function private.signal_group_members_changed();
+
+create trigger blocks_signal_now_insert
+  after insert on public.blocks
+  referencing new table as new_rows
+  for each statement execute function private.signal_blocks_changed();
+create trigger blocks_signal_now_delete
+  after delete on public.blocks
+  referencing old table as old_rows
+  for each statement execute function private.signal_blocks_changed();
+
+-- ---------------------------------------------------------------------------
+-- Who may join a private channel (Supabase Realtime Authorization): a signed-in
+-- user may receive Broadcast messages on `user:<their own users.id>` only.
+-- Realtime checks this SELECT policy on realtime.messages, with
+-- realtime.topic() set to the channel's topic and the user's JWT claims set,
+-- when the client joins. There is deliberately no INSERT policy, so no client
+-- can send on any user channel; only the triggers above (as postgres) do.
+-- ---------------------------------------------------------------------------
+create policy whosfree_user_channel_receive_own on realtime.messages
+  for select to authenticated
+  using (
+    realtime.messages.extension = 'broadcast'
+    and (select realtime.topic()) = 'user:' || (select public.current_user_id())::text
+  );
+
+comment on policy whosfree_user_channel_receive_own on realtime.messages is
+  'WF-064: a user may receive Broadcast messages only on their own channel, user:<users.id>. No INSERT policy: clients cannot send.';
 
 commit;

@@ -33,13 +33,15 @@ describe('supabase/init.sql', () => {
   let fromMigrations: PGlite;
   let fromInit: PGlite;
 
+  // Two cold databases (initdb each, without the shared template), while the other test
+  // files compete for CPU: allow more than the default hook timeout.
   beforeAll(async () => {
     fromMigrations = await PGlite.create();
     await applySchema(fromMigrations);
     fromInit = await PGlite.create();
     await fromInit.exec(await readFile(SHIM_PATH, 'utf8'));
     await fromInit.exec(await readFile(INIT_SQL_PATH, 'utf8'));
-  });
+  }, 180_000);
 
   afterAll(async () => {
     await fromMigrations.close();

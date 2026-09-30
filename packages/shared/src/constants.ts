@@ -131,3 +131,17 @@ export const PARSE_JOB_STATUSES = [
   'failed',
 ] as const;
 export type ParseJobStatus = (typeof PARSE_JOB_STATUSES)[number];
+
+/**
+ * Realtime "changed" signals (PRD §8.1, FR-VIEW-3, NFR-PERF-3, D41). Each user has one private
+ * Broadcast channel, `user:<users.id>`, that only they can join. Database triggers send
+ * {@link NOW_CHANGED_EVENT} on it, with an empty payload, whenever something their Now screen
+ * shows changes; the client then re-fetches `now_for_viewer`.
+ */
+export const REALTIME_USER_CHANNEL_PREFIX = 'user:';
+export const NOW_CHANGED_EVENT = 'now_changed';
+
+/** The private Realtime channel topic of the user with this `users.id`. */
+export function userChannel(userId: string): string {
+  return `${REALTIME_USER_CHANNEL_PREFIX}${userId}`;
+}

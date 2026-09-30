@@ -202,6 +202,7 @@ const CLIENT_DEFINER_FUNCTIONS = [
   'list_friends()',
   'list_group_invites(uuid)',
   'list_my_groups()',
+  'now_for_viewer(timestamp with time zone,timestamp with time zone)',
   'regenerate_group_invite(uuid)',
   'remove_group_member(uuid,uuid)',
   'revoke_group_invite(uuid)',
@@ -242,10 +243,12 @@ const PRIVATE_FUNCTIONS = [
   'private.clean_group_name(text)',
   'private.clean_offline_friend_nickname(text)',
   'private.close_active_status(uuid)',
+  'private.connections(uuid)',
   'private.consume_rate_limit(uuid,text,integer,interval)',
   'private.create_default_availability_prefs()',
   'private.delete_friend_rules(uuid,uuid)',
   'private.drop_membership(uuid,uuid)',
+  'private.epoch_ms(timestamp with time zone)',
   'private.group_admin_in_sync_trigger()',
   'private.insert_group_invite(uuid,uuid,timestamp with time zone,integer)',
   'private.invite_status(invites)',
@@ -265,31 +268,62 @@ const PRIVATE_FUNCTIONS = [
   'private.resolve_tier(uuid,uuid)',
   'private.send_friend_request(uuid,uuid,integer)',
   'private.set_friend_rule(uuid,uuid,smallint)',
+  'private.signal_blocks_changed()',
+  'private.signal_connections_of(uuid[])',
+  'private.signal_friendships_changed()',
+  'private.signal_group_members_changed()',
+  'private.signal_now_changed(uuid[])',
+  'private.signal_owner_rows_changed()',
+  'private.signal_user_changed()',
+  'private.signal_visibility_rules_changed()',
   'private.to_group_invite(invites,uuid)',
   'private.try_consume_rate_limit(uuid,text,integer,interval)',
   'private.validate_user_timezone()',
   'private.validate_weekly_hours()',
+  'private.visible_overrides(uuid,smallint,timestamp with time zone,timestamp with time zone)',
   'private.visible_profile(uuid,uuid)',
+  'private.visible_sources(uuid,smallint,timestamp with time zone,timestamp with time zone)',
+];
+
+/**
+ * The only security definer functions in `private`: the Realtime signal triggers (WF-064). They
+ * fire for client writes under RLS and must read other users' connections and write
+ * realtime.messages. They return `trigger`, so they can't be called directly.
+ */
+const PRIVATE_DEFINER_TRIGGER_FUNCTIONS = [
+  'private.signal_blocks_changed()',
+  'private.signal_friendships_changed()',
+  'private.signal_group_members_changed()',
+  'private.signal_owner_rows_changed()',
+  'private.signal_user_changed()',
+  'private.signal_visibility_rules_changed()',
 ];
 
 describe('functions', () => {
-  it('the private schema holds exactly the internal helpers, none security definer', async () => {
-    const fns = await rows<{ fn: string; definer: boolean }>(
-      `select p.oid::regprocedure::text as fn, p.prosecdef as definer
+  it('the private schema holds exactly the internal helpers; only signal triggers are definer', async () => {
+    const fns = await rows<{ fn: string; definer: boolean; returns: string }>(
+      `select p.oid::regprocedure::text as fn, p.prosecdef as definer,
+              p.prorettype::regtype::text as returns
        from pg_proc p join pg_namespace n on n.oid = p.pronamespace
        where n.nspname = 'private' order by 1`,
     );
     expect(fns.map((f) => f.fn)).toEqual(PRIVATE_FUNCTIONS);
-    expect(fns.filter((f) => f.definer)).toEqual([]);
+    const definers = fns.filter((f) => f.definer);
+    expect(definers.map((f) => f.fn)).toEqual(PRIVATE_DEFINER_TRIGGER_FUNCTIONS);
+    for (const f of definers)
+      expect({ fn: f.fn, returns: f.returns }).toEqual({ fn: f.fn, returns: 'trigger' });
   });
 
   it('every security definer function pins search_path to empty', async () => {
     const definers = await rows<{ fn: string; config: string[] | null }>(
       `select p.oid::regprocedure::text as fn, p.proconfig as config
        from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-       where n.nspname in ('public', 'private') and p.prosecdef order by 1`,
+       where n.nspname in ('public', 'private') and p.prosecdef
+       order by p.oid::regprocedure::text collate "C"`,
     );
-    expect(definers.map((d) => d.fn)).toEqual(CLIENT_DEFINER_FUNCTIONS);
+    expect(definers.map((d) => d.fn)).toEqual(
+      [...CLIENT_DEFINER_FUNCTIONS, ...PRIVATE_DEFINER_TRIGGER_FUNCTIONS].sort(),
+    );
     for (const d of definers) expect(d.config).toEqual(['search_path=""']);
   });
 
@@ -354,16 +388,60 @@ describe('triggers', () => {
        where n.nspname = 'public' and not t.tgisinternal order by 1`,
     );
     expect(triggers).toEqual([
+      { t: 'availability_prefs.availability_prefs_signal_now_update', deferred: false },
       { t: 'availability_prefs.availability_prefs_validate_weekly', deferred: false },
+      { t: 'blocks.blocks_signal_now_delete', deferred: false },
+      { t: 'blocks.blocks_signal_now_insert', deferred: false },
       { t: 'events.events_check_offline_friend', deferred: false },
+      { t: 'events.events_signal_now_delete', deferred: false },
+      { t: 'events.events_signal_now_insert', deferred: false },
+      { t: 'events.events_signal_now_update', deferred: false },
+      { t: 'friendships.friendships_signal_now_delete', deferred: false },
+      { t: 'friendships.friendships_signal_now_insert', deferred: false },
+      { t: 'friendships.friendships_signal_now_update', deferred: false },
       { t: 'group_members.group_members_admin_in_sync_delete', deferred: true },
       { t: 'group_members.group_members_admin_in_sync_insert', deferred: true },
       { t: 'group_members.group_members_admin_in_sync_update', deferred: true },
+      { t: 'group_members.group_members_signal_now_delete', deferred: false },
+      { t: 'group_members.group_members_signal_now_insert', deferred: false },
       { t: 'groups.groups_admin_in_sync', deferred: true },
       { t: 'sources.sources_protect_offline_friend', deferred: false },
+      { t: 'sources.sources_signal_now_delete', deferred: false },
+      { t: 'sources.sources_signal_now_insert', deferred: false },
+      { t: 'sources.sources_signal_now_update', deferred: false },
+      { t: 'status_overrides.status_overrides_signal_now_delete', deferred: false },
+      { t: 'status_overrides.status_overrides_signal_now_insert', deferred: false },
+      { t: 'status_overrides.status_overrides_signal_now_update', deferred: false },
       { t: 'users.users_create_default_availability_prefs', deferred: false },
       { t: 'users.users_protect_age_confirmation', deferred: false },
+      { t: 'users.users_signal_now_update', deferred: false },
       { t: 'users.users_validate_timezone', deferred: false },
+      { t: 'visibility_rules.visibility_rules_signal_now_delete', deferred: false },
+      { t: 'visibility_rules.visibility_rules_signal_now_insert', deferred: false },
+      { t: 'visibility_rules.visibility_rules_signal_now_update', deferred: false },
+    ]);
+  });
+
+  it('every Now signal trigger is an AFTER statement trigger (WF-064)', async () => {
+    const loose = await rows<{ t: string }>(
+      `select c.relname || '.' || t.tgname as t
+       from pg_trigger t join pg_class c on c.oid = t.tgrelid
+       where t.tgname like '%_signal_now_%'
+         and (t.tgtype & 1 = 1 or t.tgtype & 2 = 2)`,
+    );
+    // tgtype bit 0 = FOR EACH ROW, bit 1 = BEFORE.
+    expect(loose).toEqual([]);
+  });
+});
+
+describe('Realtime channel policies (WF-064)', () => {
+  it('realtime.messages has exactly one policy: authenticated users receive their own channel', async () => {
+    const policies = await rows<{ policyname: string; roles: string[]; cmd: string }>(
+      `select policyname, roles, cmd from pg_policies where schemaname = 'realtime'
+       order by policyname`,
+    );
+    expect(policies).toEqual([
+      { policyname: 'whosfree_user_channel_receive_own', roles: ['authenticated'], cmd: 'SELECT' },
     ]);
   });
 });

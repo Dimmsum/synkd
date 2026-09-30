@@ -9,6 +9,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { MAX_OFFLINE_FRIENDS, OFFLINE_FRIEND_NICKNAME_MAX_LENGTH } from '@whosfree/shared';
 import { OFFLINE_FRIEND_ERRORS } from '../src/index';
 import { createTestDb } from './harness/db';
+import type { NowConnection } from '../src/index';
 import type { TestDb } from './harness/db';
 import { codeOf } from './harness/errors';
 import { expectNoExecute, expectPgError, setRateCount } from './harness/groups';
@@ -528,6 +529,7 @@ describe('nobody but the owner can read an offline friend or their events (FR-SO
       [`select * from public.list_offline_friends()`, []],
       [`select * from public.events_for_viewer($1, $2, $3)`, [owner, ...RANGE]],
       [`select * from public.events_for_viewer($1, $2, $3)`, [offlineId, ...RANGE]],
+      [`select * from public.now_for_viewer($1, $2)`, [...RANGE]],
     ];
     for (const clerk of OTHERS) {
       for (const [sql, params] of calls) {
@@ -602,5 +604,77 @@ describe('offline friends’ events are never the owner’s own schedule (D44)',
       );
       expect(rows.map((r) => r.id)).toEqual([ownEventId]);
     }
+  });
+});
+
+describe('offline friends on the Now screen (D44, WF-064)', () => {
+  async function ownerRow(clerkId: string): Promise<NowConnection | undefined> {
+    const rows = await db
+      .asUser(clerkId)
+      .query<NowConnection & Record<string, unknown>>(
+        `select * from public.now_for_viewer($1, $2)`,
+        [...RANGE],
+      );
+    return rows.find((r) => r.user_id === owner);
+  }
+
+  it('viewers get only the owner’s own source and events, never an offline friend’s', async () => {
+    for (const clerk of ['user_friend', 'user_comember']) {
+      const row = await ownerRow(clerk);
+      expect({ clerk, sources: row?.sources.length }).toEqual({ clerk, sources: 1 });
+      expect(row?.sources.flatMap((s) => s.events.map((e) => e.id))).toEqual([ownEventId]);
+      const text = JSON.stringify(row);
+      for (const secret of [...SECRETS, offlineId, offlineSource, ...offlineEventIds])
+        expect({ clerk, secret, leaked: text.includes(secret) }).toEqual({
+          clerk,
+          secret,
+          leaked: false,
+        });
+    }
+    expect(await ownerRow('user_stranger')).toBeUndefined();
+  });
+
+  it('an offline friend’s schedule never makes the owner has_schedule', async () => {
+    await db.admin.query(
+      `delete from public.sources where user_id = $1 and offline_friend_id is null`,
+      [owner],
+    );
+    for (const clerk of ['user_friend', 'user_comember']) {
+      expect({ clerk, row: await ownerRow(clerk) }).toMatchObject({
+        clerk,
+        row: { has_schedule: false, sources: [] },
+      });
+    }
+  });
+
+  it('writes to an offline friend’s schedule send no Realtime signal to the owner’s connections', async () => {
+    const owners = db.asUser('user_owner');
+    const signals = async () => (await db.admin.query(`select topic from realtime.messages`)).rows;
+    await db.admin.query(`delete from realtime.messages`);
+
+    const [source] = await owners.query<{ id: string }>(
+      `insert into public.sources (user_id, offline_friend_id, type) values ($1, $2, 'manual')
+       returning id`,
+      [owner, offlineId],
+    );
+    const [event] = await owners.query<{ id: string }>(
+      `insert into public.events (user_id, offline_friend_id, source_id, starts_at, ends_at)
+       values ($1, $2, $3, '2026-10-05T10:00:00Z', '2026-10-05T11:00:00Z') returning id`,
+      [owner, offlineId, source?.id],
+    );
+    await owners.query(`update public.events set ends_at = '2026-10-05T12:00:00Z' where id = $1`, [
+      event?.id,
+    ]);
+    await owners.query(`delete from public.events where id = $1`, [event?.id]);
+    await owners.query(`update public.sources set status = 'failed' where id = $1`, [source?.id]);
+    await owners.query(`delete from public.sources where id = $1`, [source?.id]);
+    await owners.query(`select public.delete_offline_friend($1)`, [offlineId]);
+    expect(await signals()).toEqual([]);
+
+    // The owner's own schedule still signals them.
+    await owners.query(`update public.events set ends_at = '2026-10-05T16:00:00Z' where id = $1`, [
+      ownEventId,
+    ]);
+    expect((await signals()).length).toBe(2);
   });
 });
