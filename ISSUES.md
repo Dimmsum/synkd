@@ -208,7 +208,7 @@ Everything else at P0, which adds:
 | WF-021 | Shared schemas package (event draft, statuses, tiers) | feature | repo | P0 | 1 | A | done | 001 |
 | WF-022 | Parser eval harness | test | parser | P0 | 1 | A | done | 013, 020, 021 |
 | WF-023 | Spike: compare vision models via OpenRouter | spike | parser | P0 | 1 | A | todo | 022 |
-| WF-024 | Spike: Vercel functions vs Railway worker | spike | worker | P0 | 1 | A | todo | 002 |
+| WF-024 | Spike: Vercel functions vs Railway worker | spike | worker | P0 | 1 | A | in-review | 002 |
 | WF-025 | Scaffold worker service (Hono, Railway, HMAC) | infra | worker | P0 | 1 | A | todo | 001, 024 |
 | WF-026 | File upload, validation and `scheduleFiles` | feature | web, backend | P0 | 1 | A | todo | 003, 014 |
 | WF-027 | Parse job pipeline (queue, worker call, callback, retries) | feature | backend, worker | P0 | 1 | A | todo | 023, 025, 026 |
@@ -544,15 +544,16 @@ A script in `packages/parser` that runs a model and prompt against the eval set 
 - [ ] Evidence it can reach **≥ 70% parse acceptance**, at a cost of about ≤ US$0.05 per parse and p95 ≤ 60 s. If it can't, say what would need to change.
 
 #### WF-024 · Spike: Vercel functions vs Railway worker
-- **Category:** `spike` · **Area:** `worker` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `spike` · **Area:** `worker` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-002
 - **PRD:** §8.1, D6, R8
 
 Can Vercel (Node) functions on the Next.js server handle PDF rasterisation and HEIC conversion within their limits?
 
-**Acceptance criteria**
+> Spike done: [docs/spikes/WF-024-vercel-vs-worker.md](docs/spikes/WF-024-vercel-vs-worker.md). **Recommendation: drop the worker** (medium-high confidence). PDFium (WASM) + libheif (WASM) + sharp convert every FR-IMP-1 input in about 0.02–3.3 s locally, under 1 GB of memory, adding about 25 MB to the function, with no custom binaries. Vercel's 4.5 MB body limit means uploads must go straight to Supabase Storage through a signed upload URL (affects WF-026). The prototype route is on branch `spike/wf-024` (not merged; gated to 404 in production without `SPIKE_WF024_TOKEN`). **Left (owner):** run the write-up's §10 checklist on a Vercel preview of that branch, then decide. If it passes: record D46 in the PRD (text in the report), set WF-025 to `wontfix`, move `convert.ts` into the parser for WF-027, and delete the spike route.
+
 - [ ] A prototype of PDF → image and HEIC → JPEG inside a Next.js route handler deployed on Vercel
-- [ ] Documented limits (runtime, memory, native dependencies)
+- [x] Documented limits (runtime, memory, native dependencies)
 - [ ] A decision recorded in the PRD: keep the worker or drop it. **If it's dropped, WF-025 becomes `wontfix`** and WF-027 calls OpenRouter from the Next.js server instead.
 
 #### WF-025 · Scaffold worker service (Hono, Railway, HMAC)

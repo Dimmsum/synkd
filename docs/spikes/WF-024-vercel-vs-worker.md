@@ -238,7 +238,7 @@ Do this after connecting the repo to Vercel. It should take about 15 minutes.
 
 ## 11. What changes if the decision is accepted (for the PRD/ISSUES update)
 
-- **D6**: replace "A Railway worker for heavy jobs only" with the new decision (proposed D45).
+- **D6**: replace "A Railway worker for heavy jobs only" with the new decision (proposed D46; D45 went to email sign-in).
 - **§8.1**: remove the Railway box, the "Why there's still a Railway worker" paragraph and the "Revisit" note. Conversion and OpenRouter move to "The Next.js server" bullet.
 - **§8.2**: remove `apps/worker`. **§8.4**: remove the "Worker HTTP: Hono" row and "Railway deploys from `main`". **§8.5 parse flow, steps 3–5**: replace with the §7 flow.
 - **NFR-SEC-5**: becomes "internal routes (cron, job dispatch) are authenticated with a shared secret". **NFR-SEC-6** and **R12**: "owner and the worker" becomes "owner and the server". **NFR-SEC-8**: the OpenRouter key lives only in the Next.js server's environment (never `NEXT_PUBLIC_`). **NFR-REL-4**: "if a parse run fails or times out, the job is retried by the cron sweep". **NFR-SCALE-2**: drop, or restate as "parse runs are stateless". **NFR-OPS-4/5**: drop "worker".
