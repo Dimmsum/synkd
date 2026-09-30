@@ -1,5 +1,6 @@
-> **DRAFT: NOT YET IN EFFECT.** Version 0.1-draft · Prepared 2026-09-30
-> This draft was prepared from the product requirements ([PRD.md](../../PRD.md) v0.5). **It is not legal advice.** A Jamaican data-protection lawyer must review it before publication (ISSUES WF-119). Replace every `[PLACEHOLDER]` before publishing.
+> **DRAFT: NOT YET IN EFFECT.** Prepared 2026-09-30
+> This draft was prepared from the product requirements ([PRD.md](../../PRD.md) v0.5, plus offline friends from v0.9, D44). **It is not legal advice.** A Jamaican data-protection lawyer must review it before publication (ISSUES WF-119).
+> The site renders everything from the `# Privacy Policy` title down at `/privacy`; this note isn't shown. Values in `[CAPITALS]` (the entity, emails, domain, effective date, retention periods) and the version are filled in **one place**, `apps/web/src/lib/legal.ts`; don't type them here. `[COUNSEL: …]` and `[VERIFY: …]` notes are resolved in this text during the legal review.
 
 # Privacy Policy
 
@@ -12,6 +13,7 @@ whosfree ("**whosfree**", "**we**", "**us**") helps you and the people you choos
 - We show your availability, **not your location**. We never store where your classes, shifts or events take place.
 - By default, people you connect with see only **"Free" or "Busy" and until when**. You decide who sees more.
 - Uploaded timetables and rosters are **deleted as soon as you confirm your schedule**.
+- If you add a friend who isn't on whosfree, you need **their permission**, we keep only a nickname and their schedule, and **only you** can see it.
 - We **never sell** your data, and we don't use it for advertising.
 - You must be **18 or older** to use whosfree.
 
@@ -19,10 +21,10 @@ whosfree ("**whosfree**", "**we**", "**us**") helps you and the people you choos
 
 ## 1. Who we are
 
-whosfree is operated by **[LEGAL ENTITY NAME]**, [REGISTERED ADDRESS], Jamaica ("we"). For the Data Protection Act, 2020 of Jamaica, we are the **data controller** of the personal data described in this policy.
+whosfree ([DOMAIN]) is operated by **[LEGAL ENTITY NAME]**, [REGISTERED ADDRESS], Jamaica ("we"). For the Data Protection Act, 2020 of Jamaica, we are the **data controller** of the personal data described in this policy.
 
 - **Privacy contact:** [PRIVACY EMAIL]
-- **Data Protection Officer:** [DPO NAME / "not required": confirm with counsel]
+- **Data Protection Officer:** [DATA PROTECTION OFFICER]
 
 ---
 
@@ -64,7 +66,23 @@ We also store an encrypted access token so we can keep your calendar in sync. Yo
 
 We've configured our analytics and error-reporting tools **not to store your IP address**.
 
-### 2.4 What we do *not* collect
+### 2.4 Friends who aren't on whosfree ("offline friends")
+You can add a friend who isn't on whosfree yet, so you can see when they're free before they join. If you do, we store **only**:
+- a **nickname** you choose for them (and an optional emoji), not their real name;
+- **their schedule**, from a timetable or roster you upload for them or enter yourself: the same kind of details as your own schedule in §2.1 (event titles, types, days and times, and how often they repeat); and
+- the **date and time you confirmed** that you have their permission.
+
+We **never** store their contact details, photo or account details, or where their events take place. A file you upload for them is handled exactly like your own: it's read by the same automated tools (§5) and **deleted as soon as you confirm the schedule**, or 7 days after upload if you never confirm it.
+
+**Only you can see an offline friend.** Their nickname and schedule are never shown to anyone else, at any level, never searchable, and never matched or merged with a whosfree account, even if that person joins later. Their schedule never changes your own availability or what other people see of you.
+
+**Legal basis.** Before you can add an offline friend, you must confirm that **you have that person's permission** to add their schedule, and we record when you confirmed it. We hold their information on the basis of that permission, which you obtain and confirm to us. [COUNSEL: confirm the lawful basis for holding the schedules of people who aren't users (NFR-COMP-9), and whether they must be told.]
+
+**Deleting it.** You can edit, re-upload or delete an offline friend at any time, and deleting one removes their schedule **straight away**. Their past events are deleted after 90 days, like yours. If you delete your account, your offline friends are deleted with it. If they join whosfree and become your friend, we'll offer to delete the offline copy.
+
+**If someone added your schedule.** If you think someone added your schedule without your permission, ask them to delete it, or contact us at [PRIVACY EMAIL]. Because we hold only a nickname, we may ask for details that help us find the entry (such as who added you), and we'll use them only to handle your request.
+
+### 2.5 What we do *not* collect
 - **Location.** We don't track where you are, and we don't store where your events take place. If your uploaded file shows rooms or addresses, we ignore them.
 - **ID numbers and other document details.** If your timetable shows a student or employee ID number, a photo or a programme code, our system is designed to ignore it and not save it. The file itself is deleted when you confirm your schedule. *Tip: you can crop those details out before uploading.*
 - **Your full date of birth.**
@@ -75,7 +93,7 @@ We've configured our analytics and error-reporting tools **not to store your IP 
 ## 3. How we use your information
 
 We use your information only to:
-1. **Provide whosfree**: work out your availability, show it to the people you've chosen at the level you've chosen, deliver pings, and find times when a group is free.
+1. **Provide whosfree**: work out your availability, show it to the people you've chosen at the level you've chosen, deliver pings, find times when a group is free, and show you when offline friends you've added are free (§2.4).
 2. **Read your uploaded schedule** using automated tools, including AI (§5).
 3. **Keep whosfree safe**: rate limits, blocking, reports, and investigating misuse.
 4. **Improve whosfree**: using usage events and error reports that don't include your schedule contents.
@@ -105,6 +123,7 @@ When you connect with a friend or join a group, **you choose what they see** bef
 - Group admins **don't** get extra access to your schedule.
 - You can change levels, mark events private, pause sharing, remove friends, leave groups or block people at any time.
 - **Nobody** ever sees your location, because we don't have it.
+- Offline friends you add (§2.4) are visible **only to you**.
 - People with the invite link to a group can see the group's name, its emoji, how many members it has, and who invited them.
 
 ### 4.2 Service providers
@@ -131,7 +150,7 @@ Most of these providers store or process data **outside Jamaica**, mainly in the
 
 ## 5. How we read your uploaded schedule (AI processing)
 
-When you upload a timetable or roster, we send the file to an AI model through **OpenRouter** to pull out your events. Then:
+When you upload a timetable or roster (yours, or an offline friend's), we send the file to an AI model through **OpenRouter** to pull out your events. Then:
 - You **always review and confirm** the result before anything is saved. Nothing is added to your schedule automatically.
 - We've configured OpenRouter to use only providers that **don't retain or train on** what we send. [VERIFY: confirm OpenRouter's current data-retention and training guarantees before publication.]
 - **Google Calendar data is never sent to any AI model.**
@@ -145,16 +164,17 @@ When you upload a timetable or roster, we send the file to an AI model through *
 |---|---|
 | **Uploaded files** | **Deleted as soon as you confirm your schedule.** Files you never confirm are deleted **7 days** after upload. |
 | **Schedule events** | While your account is active. **Past events are deleted after 90 days.** |
+| **Offline friends** (nickname, schedule and permission date) | Until you delete them or your account. Deleting one removes their schedule straight away. Their uploaded files and past events follow the same rules as yours. |
 | **Google Calendar data** | While connected. Titles are kept only while someone has the "Details" level. **Everything is deleted within 24 hours of disconnecting.** |
 | **Pings and replies** | **30 days** |
 | **Account details, connections, preferences** | Until you delete your account |
 | **Birth year and age confirmation** | Until you delete your account |
-| **Consent records** | [PLACEHOLDER: e.g. for the life of the account plus X years, to show consent was given] |
-| **Reports** | [PLACEHOLDER: e.g. 1 year after the report is resolved] |
-| **Analytics and error reports** | [PLACEHOLDER: e.g. 12 months analytics, 90 days errors] |
-| **Backups** | [PLACEHOLDER: e.g. deleted data is removed from backups within 30 days] |
+| **Consent records** | [CONSENT RECORD RETENTION] |
+| **Reports** | [REPORT RETENTION] |
+| **Analytics and error reports** | [ANALYTICS RETENTION] |
+| **Backups** | [BACKUP RETENTION] |
 
-When you **delete your account**, you're removed from all groups straight away, and all your data is permanently deleted within **30 days**.
+When you **delete your account**, you're removed from all groups straight away, and all your data, including any offline friends you added, is permanently deleted within **30 days**.
 
 ---
 
