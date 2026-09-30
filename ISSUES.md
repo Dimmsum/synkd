@@ -206,7 +206,7 @@ Everything else at P0, which adds:
 | WF-015 | Consent record (versioned terms/privacy acceptance) | compliance | backend | P0 | 0 | A | in-progress | 004, 010 |
 | WF-020 | Collect 20+ real schedule samples (eval set) | test | parser | P0 | 1 | A | todo | — |
 | WF-021 | Shared schemas package (event draft, statuses, tiers) | feature | repo | P0 | 1 | A | done | 001 |
-| WF-022 | Parser eval harness | test | parser | P0 | 1 | A | todo | 013, 020, 021 |
+| WF-022 | Parser eval harness | test | parser | P0 | 1 | A | done | 013, 020, 021 |
 | WF-023 | Spike: compare vision models via OpenRouter | spike | parser | P0 | 1 | A | todo | 022 |
 | WF-024 | Spike: Vercel functions vs Railway worker | spike | worker | P0 | 1 | A | todo | 002 |
 | WF-025 | Scaffold worker service (Hono, Railway, HMAC) | infra | worker | P0 | 1 | A | todo | 001, 024 |
@@ -512,16 +512,18 @@ The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy
 - [x] Unit tests for the schema edge cases
 
 #### WF-022 · Parser eval harness
-- **Category:** `test` · **Area:** `parser` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `test` · **Area:** `parser` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-013, WF-020, WF-021
 - **PRD:** NFR-OPS-3, FR-ADM-3
 
 A script in `packages/parser` that runs a model and prompt against the eval set and scores the results.
 
+> Merged, built ahead of WF-013/WF-020 (no live call made yet; the first real run is WF-023). `packages/parser`: `parseSchedule` through OpenRouter (validated with the shared `ParseDraft`, `data_collection: deny`, ZDR on by default, temperature 0), scoring (recall/precision/F1, exact and ±5 min times, recurrence, an edit-count estimate for "≤ 3 edits"), and a CLI: `pnpm --filter @whosfree/parser eval:check`, `eval --model <id> --prompt v1`, `eval:compare`. Samples go in `evals/schedules/` (gitignored) as `<name>.<ext>` + `<name>.expected.json`; results in `packages/parser/eval/results/` (gitignored). See `packages/parser/eval/README.md`. **For WF-027/028:** zod strips location *fields* but not a room typed into a title, so D35 needs a post-processing check there. **For WF-039:** there's no CI gate or baseline yet.
+
 **Acceptance criteria**
-- [ ] Scores each sample on event recall and precision, time accuracy, recurrence accuracy, and an estimate of "≤ 3 edits needed"
-- [ ] Reports cost and latency per sample (from OpenRouter)
-- [ ] Results saved in a form that can be compared across runs
+- [x] Scores each sample on event recall and precision, time accuracy, recurrence accuracy, and an estimate of "≤ 3 edits needed"
+- [x] Reports cost and latency per sample (from OpenRouter)
+- [x] Results saved in a form that can be compared across runs
 
 #### WF-023 · Spike: compare vision models via OpenRouter
 - **Category:** `spike` · **Area:** `parser` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
