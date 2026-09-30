@@ -7,6 +7,7 @@ import { Input } from '@whosfree/ui/components/input';
 import { Label } from '@whosfree/ui/components/label';
 import { Switch } from '@whosfree/ui/components/switch';
 import { cn } from '@whosfree/ui/lib/utils';
+import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH } from '@whosfree/shared';
 import { saveNotificationSettings, saveProfile, setSharingPaused } from '@/lib/actions/settings';
 
 const TIMEZONES = [
@@ -28,14 +29,26 @@ function Status({ text }: { text?: string }) {
   );
 }
 
+/**
+ * Display name, optional handle and timezone (FR-AUTH-2, FR-AUTH-3, WF-040). The server checks
+ * the handle's characters, reserved words and uniqueness (lib/profile-form.ts, `set_handle`).
+ */
 export function ProfileForm({
   initial,
 }: {
-  initial: { name: string; handle: string; timeZone: string; email: string };
+  initial: {
+    name: string;
+    handle: string;
+    timeZone: string;
+    email: string | null;
+    photoFromGoogle: boolean;
+  };
 }) {
   const [name, setName] = useState(initial.name);
   const [handle, setHandle] = useState(initial.handle);
   const [timeZone, setTimeZone] = useState(initial.timeZone);
+  // Keep the saved zone selectable even when it isn't one of the common ones.
+  const zones = TIMEZONES.includes(initial.timeZone) ? TIMEZONES : [initial.timeZone, ...TIMEZONES];
   const [status, setStatus] = useState<string>();
   const [pending, start] = useTransition();
   return (
@@ -71,13 +84,17 @@ export function ProfileForm({
             id="profile-handle"
             value={handle}
             autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            maxLength={HANDLE_MAX_LENGTH}
             onChange={(e) => setHandle(e.target.value.replace(/^@/, ''))}
             className="pl-7"
             aria-describedby="handle-hint"
           />
         </div>
         <p id="handle-hint" className="text-xs text-muted-foreground">
-          Friends can add you with this.
+          Optional. Friends can add you with this. {HANDLE_MIN_LENGTH}–{HANDLE_MAX_LENGTH} letters,
+          numbers or underscores, starting with a letter. Leave it empty to have none.
         </p>
       </div>
       <div className="flex flex-col gap-2">
@@ -88,16 +105,20 @@ export function ProfileForm({
           onChange={(e) => setTimeZone(e.target.value)}
           className="h-11 rounded-[10px] border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:h-10"
         >
-          {TIMEZONES.map((tz) => (
+          {zones.map((tz) => (
             <option key={tz} value={tz}>
-              {tz.replace('_', ' ')}
+              {tz.replaceAll('_', ' ')}
             </option>
           ))}
         </select>
       </div>
-      <p className="text-xs text-muted-foreground">
-        Signed in with Google as {initial.email}. Your photo comes from Google.
-      </p>
+      {/* Google or email + password (FR-AUTH-1, D45). TODO(WF-040): photo upload needs storage. */}
+      {initial.email || initial.photoFromGoogle ? (
+        <p className="text-xs text-muted-foreground">
+          {initial.email ? `Signed in as ${initial.email}. ` : null}
+          {initial.photoFromGoogle ? 'Your photo comes from Google.' : null}
+        </p>
+      ) : null}
       <div className="flex items-center gap-3">
         <Button type="submit" size="sm" disabled={pending}>
           Save profile

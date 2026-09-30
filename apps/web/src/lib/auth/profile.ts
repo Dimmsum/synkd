@@ -1,6 +1,6 @@
 // The first-sign-in profile (WF-004): what `ensure_current_user` gets from the Clerk user.
 
-import { DEFAULT_TIMEZONE } from '@whosfree/shared';
+import { DEFAULT_TIMEZONE, DISPLAY_NAME_MAX_LENGTH } from '@whosfree/shared';
 
 /**
  * Cookie holding the browser's IANA timezone, set on the sign-in/sign-up pages so the users
@@ -9,7 +9,7 @@ import { DEFAULT_TIMEZONE } from '@whosfree/shared';
 export const TIMEZONE_COOKIE = 'wf_tz';
 
 /** Name limit of `users.name` (1–100 characters). */
-const MAX_NAME = 100;
+const MAX_NAME = DISPLAY_NAME_MAX_LENGTH;
 
 /** The Clerk user fields we use (a subset of `User` from `@clerk/nextjs/server`). */
 export interface ClerkProfile {
@@ -28,18 +28,23 @@ export interface NewProfile {
   timezone: string;
 }
 
-/** A known IANA timezone name, or the default (America/Jamaica, FR-AUTH-3). */
-export function pickTimezone(candidate: string | undefined): string {
+/** True for an IANA timezone name both the database and `Intl` accept (FR-AUTH-3). */
+export function isKnownTimezone(candidate: string | undefined): candidate is string {
   // Same shape rule as the users timezone trigger, which also rejects POSIX-style specs.
   if (!candidate || !/^[A-Za-z][A-Za-z0-9_+-]*(\/[A-Za-z0-9_+-]+)*$/.test(candidate)) {
-    return DEFAULT_TIMEZONE;
+    return false;
   }
   try {
     new Intl.DateTimeFormat('en', { timeZone: candidate });
-    return candidate;
+    return true;
   } catch {
-    return DEFAULT_TIMEZONE;
+    return false;
   }
+}
+
+/** A known IANA timezone name, or the default (America/Jamaica, FR-AUTH-3). */
+export function pickTimezone(candidate: string | undefined): string {
+  return isKnownTimezone(candidate) ? candidate : DEFAULT_TIMEZONE;
 }
 
 /**
