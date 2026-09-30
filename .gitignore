@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# build and tool output
+dist/
+coverage/
+.next/
+.turbo/
+.vercel/
+*.tsbuildinfo
+
+# env files (never commit secrets); .env.example is the documented template
+.env*
+!.env.example
+
+# supabase local state
+**/supabase/.temp/
+**/supabase/.branches/
+
+# eval samples may contain personal data (WF-020)
+evals/schedules/
+
+# misc
+.DS_Store
+*.log
