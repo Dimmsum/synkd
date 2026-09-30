@@ -165,17 +165,21 @@ describe('table privileges (on top of Supabase’s grant-everything defaults)', 
  */
 const CLIENT_FUNCTIONS = [
   'accept_friend_request(uuid,integer)',
+  'block_user(uuid)',
   'cancel_friend_request(uuid)',
   'current_user_id()',
   'decline_friend_request(uuid)',
   'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
   'find_user_by_handle(text)',
   'get_profile(uuid)',
+  'list_blocked_users()',
   'list_friend_requests()',
   'list_friends()',
   'send_friend_request(uuid,integer)',
   'send_friend_request_by_handle(text,integer)',
   'set_handle(text)',
+  'unblock_user(uuid)',
+  'unfriend(uuid)',
 ];
 
 /** Internal helpers in `private`: not security definer, not callable by clients. */

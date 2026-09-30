@@ -80,5 +80,13 @@ export type Friend = Omit<FriendRow, 'handle' | 'avatar_url' | 'tier'> & {
 /** What `send_friend_request*` returns: a new request, or a friendship if they had already asked. */
 export type SendFriendRequestResult = 'pending' | 'accepted';
 
+type BlockedUserRow = Database['public']['Functions']['list_blocked_users']['Returns'][number];
+
+/** One row of `list_blocked_users` (WF-047): someone the caller has blocked. */
+export type BlockedUser = Omit<BlockedUserRow, 'handle' | 'avatar_url'> & {
+  handle: string | null;
+  avatar_url: string | null;
+};
+
 export { DB_ERROR } from './errors';
 export type { DbErrorCode } from './errors';

@@ -404,6 +404,7 @@ export type Database = {
     };
     Functions: {
       accept_friend_request: { Args: { tier?: number; user_id: string }; Returns: undefined };
+      block_user: { Args: { user_id: string }; Returns: undefined };
       cancel_friend_request: { Args: { user_id: string }; Returns: undefined };
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
       decline_friend_request: { Args: { user_id: string }; Returns: undefined };
@@ -439,6 +440,16 @@ export type Database = {
           relationship: string;
         }[];
       };
+      list_blocked_users: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          avatar_url: string;
+          blocked_at: string;
+          handle: string;
+          name: string;
+          user_id: string;
+        }[];
+      };
       list_friend_requests: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -464,6 +475,8 @@ export type Database = {
       send_friend_request: { Args: { tier?: number; user_id: string }; Returns: string };
       send_friend_request_by_handle: { Args: { handle: string; tier?: number }; Returns: string };
       set_handle: { Args: { handle: string }; Returns: string };
+      unblock_user: { Args: { user_id: string }; Returns: undefined };
+      unfriend: { Args: { user_id: string }; Returns: undefined };
     };
     Enums: {
       [_ in never]: never;
