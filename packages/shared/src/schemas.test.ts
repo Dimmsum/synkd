@@ -3,6 +3,7 @@ import {
   AvailableHours,
   EventDraft,
   LocalTime,
+  OfflineFriendNickname,
   ParseDraft,
   PingText,
   SchedulePeriod,
@@ -170,5 +171,23 @@ describe('PingText', () => {
   });
   it('rejects whitespace-only text', () => {
     expect(PingText.safeParse('   ').success).toBe(false);
+  });
+});
+
+describe('OfflineFriendNickname', () => {
+  it('trims and accepts 1 to 40 characters', () => {
+    expect(OfflineFriendNickname.parse('  Tash ')).toBe('Tash');
+    expect(OfflineFriendNickname.safeParse('a'.repeat(40)).success).toBe(true);
+  });
+  it('rejects blank and 41 characters', () => {
+    expect(OfflineFriendNickname.safeParse('   ').success).toBe(false);
+    expect(OfflineFriendNickname.safeParse('a'.repeat(41)).success).toBe(false);
+  });
+  it('counts an emoji as one character', () => {
+    expect(OfflineFriendNickname.safeParse('🍗'.repeat(40)).success).toBe(true);
+  });
+  it('rejects control characters', () => {
+    expect(OfflineFriendNickname.safeParse('Ta\u0000sh').success).toBe(false);
+    expect(OfflineFriendNickname.safeParse('Ta\u0007sh').success).toBe(false);
   });
 });

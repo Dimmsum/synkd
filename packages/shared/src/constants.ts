@@ -68,6 +68,16 @@ export const DEFAULT_MEMBER_PERMISSIONS = {
 /** Default group size cap. Stored per group so it can be raised without a schema change (NFR-SCALE-4). */
 export const DEFAULT_GROUP_MAX_MEMBERS = 20;
 
+/**
+ * Offline friends (D44): people who aren't on whosfree, added by a user with a nickname and a
+ * schedule. At most this many per user (FR-SOC-18). The database enforces the same cap in
+ * `create_offline_friend` (backend migration 20261002300000_offline_friends.sql).
+ */
+export const MAX_OFFLINE_FRIENDS = 20;
+
+/** Offline friend nickname length, in characters (PRD §9 `offlineFriends`, FR-SOC-14). */
+export const OFFLINE_FRIEND_NICKNAME_MAX_LENGTH = 40;
+
 /** Ping templates (J3) and one-tap replies (FR-PING-4). */
 export const PING_TEMPLATES = ['Free for food?', 'Wanna study?', 'Link up?', 'Call me'] as const;
 export type PingTemplate = (typeof PING_TEMPLATES)[number];
