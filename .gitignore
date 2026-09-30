@@ -23,3 +23,6 @@ evals/schedules/
 # misc
 .DS_Store
 *.log
+
+# Claude Code agent worktrees
+.claude/worktrees/
