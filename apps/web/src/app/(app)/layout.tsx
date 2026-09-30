@@ -6,6 +6,8 @@ import { BottomNav, SidebarNav } from '@/components/app/nav';
 import { StatusChip } from '@/components/app/status-chip';
 import { getGroups, getNow, getViewer } from '@/lib/data/people';
 import { getUnreadCount } from '@/lib/data/inbox';
+import { getMyManualStatus } from '@/lib/data/status';
+import { describeOverride } from '@/lib/manual-status';
 import { describeStatus } from '@/lib/status';
 
 // Signed-in app shell (WF-014). Rendered per request: statuses depend on the current time.
@@ -14,13 +16,26 @@ import { describeStatus } from '@/lib/status';
 export const dynamic = 'force-dynamic';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [viewer, groups, unread, { now, timeZone }] = await Promise.all([
+  const [viewer, groups, unread, { now, timeZone }, manual] = await Promise.all([
     getViewer(),
     getGroups(),
     getUnreadCount(),
     getNow(),
+    getMyManualStatus(),
   ]);
-  const me = describeStatus({ ...viewer, nextFreeAt: null }, now, timeZone);
+  // A manual status overrides the calendar (FR-AVL-3, D5). TODO(WF-064): once getViewer's status
+  // comes from the engine, which applies overrides itself, describeStatus covers both.
+  const me = manual
+    ? describeOverride(manual.override, manual.now, viewer.timeZone)
+    : describeStatus({ ...viewer, nextFreeAt: null }, now, timeZone);
+  const chip = {
+    name: viewer.name,
+    tone: me.tone,
+    label: me.label,
+    detail: me.detail,
+    manual: manual?.override ?? null,
+    timeZone: viewer.timeZone,
+  };
 
   return (
     <div className="min-h-dvh md:flex">
@@ -63,7 +78,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           ))}
         </div>
         <div className="mt-auto">
-          <StatusChip variant="card" name={viewer.name} tone={me.tone} label={me.label}>
+          <StatusChip variant="card" {...chip}>
             <PersonAvatar name={viewer.name} hue={viewer.hue} />
           </StatusChip>
         </div>
@@ -78,7 +93,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           >
             <LogoMark />
           </Link>
-          <StatusChip name={viewer.name} tone={me.tone} label={me.label} />
+          <StatusChip {...chip} />
         </header>
         <main
           id="main"

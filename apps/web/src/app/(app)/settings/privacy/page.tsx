@@ -12,14 +12,13 @@ export const metadata: Metadata = { title: 'Privacy and data' };
 // TODO(WF-011): final domain and contact address.
 const CONTACT = 'privacy@whosfree.app';
 
+const formatAccepted = (at: string) =>
+  new Date(at).toLocaleDateString('en-JM', { dateStyle: 'medium', timeZone: 'America/Jamaica' });
+
 // FR-SET-1/2 (export and delete, handled by email until WF-113/WF-114, D39) and FR-SET-5
 // (links + consent record).
 export default async function PrivacyPage() {
   const consent = await getConsentRecord();
-  const accepted = new Date(consent.acceptedAt).toLocaleDateString('en-JM', {
-    dateStyle: 'medium',
-    timeZone: 'America/Jamaica',
-  });
   return (
     <SettingsPage title="Privacy and data">
       <Panel id="your-data" title="Your data">
@@ -50,8 +49,9 @@ export default async function PrivacyPage() {
       </Panel>
       <Panel id="consent" title="What you agreed to">
         <p className="text-sm text-body-foreground">
-          Terms {consent.termsVersion} and privacy notice {consent.privacyVersion}, accepted{' '}
-          {accepted}.
+          {consent
+            ? `Terms ${consent.termsVersion} and privacy notice ${consent.privacyVersion}, accepted ${formatAccepted(consent.acceptedAt)}.`
+            : 'We have no record of you accepting the terms yet.'}
         </p>
         <div className="mt-2 flex gap-4 text-sm font-semibold">
           <Link

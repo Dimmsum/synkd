@@ -1,17 +1,29 @@
-import { DAYS_OF_WEEK, DEFAULT_AVAILABLE_HOURS, DEFAULT_TIER, type Tier } from '@whosfree/shared';
-import type { AvailableHoursDay, VisibilityRow } from '@/lib/types';
-import { LEGAL_VERSIONS } from '@/lib/config';
-import { PEOPLE, VIEWER } from '@/lib/mock/data';
-import { groupsOf, minutesAgo, toGroupSummary, toPerson, viewerGroups } from '@/lib/mock/selectors';
+// Settings reads (WF-015, WF-040, WF-062). Own rows only: RLS lets the signed-in user read just
+// their own `users` and `availability_prefs` rows (D41), so these read the tables directly.
 
-/** TODO(WF-062): read availabilityPrefs.weekly. Missing days = switched off (Away). */
+import { redirect } from 'next/navigation';
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { DEFAULT_TIER, type Tier } from '@whosfree/shared';
+import type { AvailableHoursDay, Iso, VisibilityRow } from '@/lib/types';
+import { weeklyToDays } from '@/lib/available-hours';
+import { hueFor } from '@/lib/hue';
+import { createServerSupabase } from '@/lib/supabase/server';
+import { PEOPLE } from '@/lib/mock/data';
+import { groupsOf, toGroupSummary, toPerson, viewerGroups } from '@/lib/mock/selectors';
+
+/**
+ * The signed-in user's available hours, one row per day (FR-AVL-2, WF-062). A day missing from
+ * `availability_prefs.weekly` is switched off, which the engine shows as Away all day. Every user
+ * gets a prefs row (08:00–22:00 every day, D24) when their users row is created.
+ */
 export async function getAvailableHours(): Promise<AvailableHoursDay[]> {
-  return DAYS_OF_WEEK.map((day) => ({
-    day,
-    enabled: true,
-    start: day === 'sat' || day === 'sun' ? '10:00' : DEFAULT_AVAILABLE_HOURS.start,
-    end: day === 'fri' || day === 'sat' ? '23:30' : DEFAULT_AVAILABLE_HOURS.end,
-  }));
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase.from('availability_prefs').select('weekly').maybeSingle();
+  if (error) throw new Error(`Reading available hours failed (${error.code})`);
+  // proxy.ts creates the users row (and with it this one) first, so a missing row is a setup
+  // problem, not a user one.
+  if (!data) throw new Error('No availability_prefs row for this sign-in');
+  return weeklyToDays(data.weekly);
 }
 
 /**
@@ -68,21 +80,61 @@ export async function getNotificationSettings() {
   };
 }
 
-/** TODO(WF-040, WF-050): the users row. */
+/** The signed-in user's own users row (RLS allows only that one), with the fields settings show. */
+async function readOwnUser() {
+  const { userId } = await auth();
+  if (!userId) redirect('/sign-in');
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, name, handle, avatar_url, timezone, sharing_paused, consent_version, consent_at')
+    .eq('clerk_id', userId)
+    .maybeSingle();
+  if (error) throw new Error(`Reading the profile failed (${error.code})`);
+  if (!data) throw new Error('No users row for this sign-in');
+  return data;
+}
+
+/**
+ * The profile settings page (FR-AUTH-2, WF-040): the users row plus the sign-in email, which
+ * only Clerk has. `handle` is '' when the user hasn't chosen one (handles are optional).
+ * `avatarUrl` is the photo taken from the sign-in provider at sign-up, or null; people who sign
+ * in with email and password (D45) start without one. `photoFromGoogle` says whether it came
+ * from a linked Google account.
+ */
 export async function getProfile() {
+  const [row, clerkUser] = await Promise.all([readOwnUser(), currentUser()]);
   return {
-    ...toPerson(VIEWER),
-    email: 'kemar.brown@example.com',
-    timeZone: 'America/Jamaica',
-    sharingPaused: false,
+    id: row.id,
+    name: row.name,
+    handle: row.handle ?? '',
+    hue: hueFor(row.id),
+    avatarUrl: row.avatar_url,
+    photoFromGoogle:
+      row.avatar_url !== null &&
+      (clerkUser?.externalAccounts.some((a) => a.provider.includes('google')) ?? false),
+    email: clerkUser?.primaryEmailAddress?.emailAddress ?? null,
+    timeZone: row.timezone,
+    // TODO(WF-050): pause sharing is still a stub (setSharingPaused).
+    sharingPaused: row.sharing_paused,
   };
 }
 
-/** TODO(WF-015): the consent record from the users row. */
-export async function getConsentRecord() {
+/**
+ * The consent record (FR-SET-5, WF-015): the terms/privacy version the user accepted and when.
+ * Both documents share one version (`users.consent_version`). Null before the first acceptance,
+ * which proxy.ts doesn't let reach the app; a stale version is sent back to /sign-up/terms.
+ */
+export async function getConsentRecord(): Promise<{
+  termsVersion: string;
+  privacyVersion: string;
+  acceptedAt: Iso;
+} | null> {
+  const row = await readOwnUser();
+  if (!row.consent_version || !row.consent_at) return null;
   return {
-    termsVersion: LEGAL_VERSIONS.terms,
-    privacyVersion: LEGAL_VERSIONS.privacy,
-    acceptedAt: minutesAgo(60 * 24 * 12),
+    termsVersion: row.consent_version,
+    privacyVersion: row.consent_version,
+    acceptedAt: row.consent_at,
   };
 }
