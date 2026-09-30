@@ -338,6 +338,8 @@ Google sign-in through Clerk, connected to Supabase through **third-party auth**
 
 > From WF-003/041: clients can't insert `users` rows. Create them server-side (a Clerk webhook using the service role, or a security-definer function that reads `auth.jwt()->>'sub'`), with a name of 1–100 characters and a valid timezone. Clerk session tokens must carry `role: "authenticated"`.
 
+> Backend done (merged): `ensure_current_user(name, avatar_url, timezone)` creates the row on first sign-in (idempotent, Clerk ID from the token only) and `account_status()` tells middleware what's missing. Left: Clerk pages, calling these from the server, and middleware.
+
 **Acceptance criteria**
 - [ ] `/sign-in` and `/sign-up` use Clerk components
 - [ ] The first sign-in creates a `users` row (`clerkId`, name, avatar, timezone defaulting to `America/Jamaica`)
@@ -348,6 +350,8 @@ Google sign-in through Clerk, connected to Supabase through **third-party auth**
 - **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-004
 - **PRD:** FR-AUTH-6, NFR-COMP-7, D13, D29
+
+> Backend done (merged): `checkAge` / `localDateIn` in `@whosfree/shared` (today = the Jamaica calendar date; 29 Feb birthdays count from 1 Mar), then `confirm_age(birth_year)` with the user's own token. Write-once. Left: the web form and middleware.
 
 **Acceptance criteria**
 - [ ] Sign-up asks for a date of birth, and anyone under 18 is blocked with a clear message
@@ -460,6 +464,8 @@ The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy
 - **Category:** `compliance` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-004, WF-010
 - **PRD:** FR-SET-5
+
+> Backend done (merged): `current_consent_version()`, `accept_consent(version)`, `account_status().consent_required`. **Bumping the version is a migration** that ships with the new legal text. Left: web wiring.
 
 **Acceptance criteria**
 - [ ] Sign-up records `consentVersion` and `consentAt`
@@ -673,6 +679,8 @@ Only start this once recurring extraction (WF-028) is working, and only if the e
 
 The ping part waits for WF-092 (it can ship without it and be extended later).
 
+> From WF-063: also call `private.purge_expired_status_overrides()`.
+
 **Acceptance criteria**
 - [ ] A daily cron deletes **unconfirmed** files past `deleteAt` (7 days), along with their drafts
 - [ ] A daily cron purges past events older than 90 days
@@ -861,6 +869,8 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - **Depends on:** WF-014, WF-060
 - **PRD:** FR-AVL-2, D24
 
+> Backend done (merged): `availability_prefs` (default 08:00–22:00, one window per day, no overnight windows), `set_day_hours(day, start, end)`. Left: onboarding slider and settings UI.
+
 **Acceptance criteria**
 - [ ] Onboarding asks "When are you usually up and about?" with a slider pre-set to **08:00–22:00 every day**
 - [ ] In settings, hours can be edited separately for each day
@@ -870,6 +880,8 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-060
 - **PRD:** FR-AVL-3, J5
+
+> Backend done (merged): `set_status(status, label, ends_at)` (closes the previous status; `ends_at` ≤ 7 days; label ≤ 40 chars) and `clear_status()`. Left: the status chip, and WF-064 exposing it to viewers.
 
 **Acceptance criteria**
 - [ ] A status chip is reachable from anywhere in the app. Options: Free, Busy, Do not disturb, Away, Studying/Focused.
@@ -882,6 +894,8 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - **PRD:** FR-VIEW-1, FR-VIEW-2, FR-VIEW-3, §8.5 (Now screen), NFR-PERF-1, NFR-PERF-3
 
 > From WF-041: `events_for_viewer` returns nothing when the owner has paused sharing, so the Now query needs its own `paused` flag to show "Sharing paused".
+
+> From WF-062/063: the Now function must read `availability_prefs` and `status_overrides` inside its definer function (clients can't read other users' rows). Suggest showing a status label only at T3, like event titles.
 
 **Acceptance criteria**
 - [ ] The `now_for_viewer` database function returns connections already redacted by `resolve_tier` and the redaction path (WF-041)
