@@ -318,6 +318,44 @@ export type Database = {
           },
         ];
       };
+      status_overrides: {
+        Row: {
+          created_at: string;
+          ends_at: string | null;
+          id: string;
+          label: string | null;
+          starts_at: string;
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          ends_at?: string | null;
+          id?: string;
+          label?: string | null;
+          starts_at?: string;
+          status: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          ends_at?: string | null;
+          id?: string;
+          label?: string | null;
+          starts_at?: string;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'status_overrides_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       users: {
         Row: {
           age_confirmed_at: string | null;
@@ -414,6 +452,7 @@ export type Database = {
           has_profile: boolean;
         }[];
       };
+      clear_status: { Args: Record<PropertyKey, never>; Returns: undefined };
       confirm_age: { Args: { birth_year: number }; Returns: string };
       current_consent_version: { Args: Record<PropertyKey, never>; Returns: string };
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
@@ -455,6 +494,24 @@ export type Database = {
       set_day_hours: {
         Args: { day: string; end_time?: string; start_time?: string };
         Returns: Json;
+      };
+      set_status: {
+        Args: { ends_at?: string; label?: string; status: string };
+        Returns: {
+          created_at: string;
+          ends_at: string | null;
+          id: string;
+          label: string | null;
+          starts_at: string;
+          status: string;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'status_overrides';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
     };
     Enums: {

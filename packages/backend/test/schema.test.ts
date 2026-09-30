@@ -44,6 +44,7 @@ describe('migrations', () => {
       'group_members',
       'groups',
       'sources',
+      'status_overrides',
       'users',
       'visibility_rules',
     ]);
@@ -93,6 +94,7 @@ describe('row-level security', () => {
       'sources.sources_insert_own (INSERT)',
       'sources.sources_select_own (SELECT)',
       'sources.sources_update_own (UPDATE)',
+      'status_overrides.status_overrides_select_own (SELECT)',
       'users.users_select_own (SELECT)',
       'users.users_update_own (UPDATE)',
       'visibility_rules.visibility_rules_select_own (SELECT)',
@@ -157,6 +159,7 @@ describe('table privileges (on top of Supabase’s grant-everything defaults)', 
       sources: ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
       events: ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
       availability_prefs: ['SELECT', 'UPDATE(weekly, min_gap_minutes, count_all_day_events)'],
+      status_overrides: ['SELECT'],
     });
   });
 });
@@ -170,10 +173,12 @@ describe('functions', () => {
     );
     expect(definers.map((d) => d.fn)).toEqual([
       'accept_consent(text)',
+      'clear_status()',
       'confirm_age(integer)',
       'current_user_id()',
       'ensure_current_user(text,text,text)',
       'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
+      'set_status(text,text,timestamp with time zone)',
     ]);
     for (const d of definers) expect(d.config).toEqual(['search_path=""']);
   });
@@ -205,12 +210,14 @@ describe('functions', () => {
             ? [
                 'accept_consent(text)',
                 'account_status()',
+                'clear_status()',
                 'confirm_age(integer)',
                 'current_consent_version()',
                 'current_user_id()',
                 'ensure_current_user(text,text,text)',
                 'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
                 'set_day_hours(text,text,text)',
+                'set_status(text,text,timestamp with time zone)',
               ]
             : [],
       });
