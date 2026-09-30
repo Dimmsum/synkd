@@ -1,6 +1,10 @@
 import { SiteFooter, SiteHeader } from '@/components/public/site-chrome';
 
-/** Shell for simple public text pages (privacy, terms, help). */
+/** Inline text links on the public text pages. */
+export const textLinkClass =
+  'rounded-sm font-medium text-primary-ink underline underline-offset-2 hover:text-primary';
+
+/** Shell for simple public text pages (privacy, terms, contact, help). */
 export function InfoPage({
   title,
   intro,

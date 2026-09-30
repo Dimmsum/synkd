@@ -5,6 +5,8 @@
 // as the signed-in user (Clerk token → Supabase RLS). Everything about other people must
 // come back already redacted to the viewer's tier (FR-VIS-5, D41).
 
+import { redirect } from 'next/navigation';
+import { auth } from '@clerk/nextjs/server';
 import { minutesIntoDay, startOfWeek } from '@whosfree/ui/lib/time';
 import type {
   Connection,
@@ -16,7 +18,9 @@ import type {
   OverlapWeek,
   Viewer,
 } from '@/lib/types';
+import { hueFor } from '@/lib/hue';
 import { rankSlots } from '@/lib/overlap';
+import { createServerSupabase } from '@/lib/supabase/server';
 import { FRIEND_REQUESTS, GROUPS, PEOPLE, VIEWER } from '@/lib/mock/data';
 import { statusAt } from '@/lib/mock/engine';
 import {
@@ -36,14 +40,34 @@ import {
   visibleBlocks,
 } from '@/lib/mock/selectors';
 
-/** The signed-in user. TODO(WF-004, WF-040): read from Clerk + the users row. */
+/**
+ * The signed-in user, from their own users row (WF-004; RLS lets them read only that row).
+ * proxy.ts guarantees the row exists before any app route renders.
+ */
 export async function getViewer(): Promise<Viewer> {
+  const { userId } = await auth();
+  if (!userId) redirect('/sign-in');
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, name, handle, timezone, sharing_paused')
+    .eq('clerk_id', userId)
+    .maybeSingle();
+  if (error) throw new Error(`Reading the viewer failed (${error.code})`);
+  // proxy.ts creates the row first, so a missing one is a setup problem, not a user one.
+  if (!data) throw new Error('No users row for this sign-in');
+
+  // TODO(WF-064): the viewer's own status from their schedule (availability engine). Until
+  // then it comes from the mock data, like everything on the Now screen.
   const { now, today, tz } = ctx();
   const s = statusAt(VIEWER, now, today, tz);
   return {
-    ...toPerson(VIEWER),
-    timeZone: tz,
-    sharingPaused: false,
+    id: data.id,
+    name: data.name,
+    handle: data.handle ?? '',
+    hue: hueFor(data.id),
+    timeZone: data.timezone,
+    sharingPaused: data.sharing_paused,
     status: s.status,
     until: s.until,
   };

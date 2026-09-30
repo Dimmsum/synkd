@@ -3,6 +3,7 @@ import {
   DAYS_OF_WEEK,
   EVENT_CATEGORIES,
   MANUAL_STATUSES,
+  OFFLINE_FRIEND_NICKNAME_MAX_LENGTH,
   PING_TEXT_MAX_LENGTH,
   TIERS,
 } from './constants';
@@ -118,3 +119,19 @@ export const PingText = z
   .refine((t) => [...t].length <= PING_TEXT_MAX_LENGTH, {
     message: `At most ${PING_TEXT_MAX_LENGTH} characters`,
   });
+
+/**
+ * An offline friend's nickname (FR-SOC-14, D44): trimmed, 1–40 characters, no control
+ * characters. Length counts Unicode code points, as the database does. Besides their schedule
+ * it's the only thing stored about the person (NFR-COMP-9), so the UI should ask for a
+ * nickname, not a full name or contact details.
+ */
+export const OfflineFriendNickname = z
+  .string()
+  .trim()
+  .min(1, 'Enter a nickname')
+  .refine((t) => [...t].length <= OFFLINE_FRIEND_NICKNAME_MAX_LENGTH, {
+    message: `At most ${OFFLINE_FRIEND_NICKNAME_MAX_LENGTH} characters`,
+  })
+  .refine((t) => !/\p{Cc}/u.test(t), { message: 'No control characters' });
+export type OfflineFriendNickname = z.infer<typeof OfflineFriendNickname>;

@@ -32,6 +32,7 @@ export function SiteFooter({ className }: { className?: string }) {
               ['/privacy', 'Privacy'],
               ['/terms', 'Terms'],
               ['/help', 'Help'],
+              ['/contact', 'Contact'],
             ] as const
           ).map(([href, label]) => (
             <Link

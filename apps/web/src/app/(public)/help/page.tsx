@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { TIER_DETAILS } from '@whosfree/ui/lib/tiers';
 import { TIERS } from '@whosfree/shared';
-import { InfoPage } from '@/components/public/info-page';
+import { InfoPage, textLinkClass } from '@/components/public/info-page';
 
 export const metadata: Metadata = { title: 'Help' };
 
@@ -31,7 +32,14 @@ export default function HelpPage() {
       </section>
       <section>
         <h2>How do I delete my account or get a copy of my data?</h2>
-        <p>Email us from the address you signed up with and we&apos;ll handle it within 30 days.</p>
+        <p>
+          Email us from the address you signed up with and we&apos;ll handle it within 30 days. The
+          address is on the{' '}
+          <Link href="/contact" className={textLinkClass}>
+            contact page
+          </Link>
+          .
+        </p>
       </section>
     </InfoPage>
   );

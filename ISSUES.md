@@ -206,7 +206,7 @@ Everything else at P0, which adds:
 | WF-015 | Consent record (versioned terms/privacy acceptance) | compliance | backend | P0 | 0 | A | in-progress | 004, 010 |
 | WF-020 | Collect 20+ real schedule samples (eval set) | test | parser | P0 | 1 | A | todo | — |
 | WF-021 | Shared schemas package (event draft, statuses, tiers) | feature | repo | P0 | 1 | A | done | 001 |
-| WF-022 | Parser eval harness | test | parser | P0 | 1 | A | todo | 013, 020, 021 |
+| WF-022 | Parser eval harness | test | parser | P0 | 1 | A | done | 013, 020, 021 |
 | WF-023 | Spike: compare vision models via OpenRouter | spike | parser | P0 | 1 | A | todo | 022 |
 | WF-024 | Spike: Vercel functions vs Railway worker | spike | worker | P0 | 1 | A | todo | 002 |
 | WF-025 | Scaffold worker service (Hono, Railway, HMAC) | infra | worker | P0 | 1 | A | todo | 001, 024 |
@@ -254,7 +254,7 @@ Everything else at P0, which adds:
 | WF-085 | Sync health UI | feature | web | P1 | 4 | stretch | todo | 082 |
 | WF-086 | Submit Google OAuth verification | compliance | gcal | P0 | 4 | B | todo | 010, 012, 080 |
 | WF-087 | Handle Google accounts managed by an organisation | feature | gcal | P1 | 4 | stretch | todo | 080 |
-| WF-090 | PWA manifest and service worker (Serwist) | infra | pwa | P0 | 5 | A | todo | 002 |
+| WF-090 | PWA manifest and service worker (Serwist) | infra | pwa | P0 | 5 | A | in-review | 002 |
 | WF-091 | Web Push infrastructure | infra | pwa, backend | P0 | 5 | A | todo | 004, 090 |
 | WF-092 | Send pings and inbox | feature | ping | P0 | 5 | A | todo | 064, 091 |
 | WF-093 | Ping replies | feature | ping | P0 | 5 | A | todo | 092 |
@@ -281,7 +281,7 @@ Everything else at P0, which adds:
 | WF-124 | Schedule-expiry reminder | feature | backend | P1 | 6 | stretch | todo | 030, 091 |
 | WF-125 | Google event titles only while a T3 grant exists | security | gcal | P0 | 4 | B | todo | 041, 081 |
 | WF-126 | Manual export/deletion request process | compliance | legal | P0 | 6 | Gate | todo | 010 |
-| WF-127 | Offline friends: add someone not on whosfree and import their timetable | feature | social, backend, web | P0 | 2 | A | todo | 030, 031 |
+| WF-127 | Offline friends: add someone not on whosfree and import their timetable | feature | social, backend, web | P0 | 2 | A | in-progress | 030, 031 |
 | WF-128 | Show offline friends on Now, detail page and Find a time | feature | web, availability | P0 | 3 | A | todo | 064, 127 |
 
 ---
@@ -415,14 +415,16 @@ Google sign-in through Clerk, connected to Supabase through **third-party auth**
 
 The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy.md) and [docs/legal/terms.md](docs/legal/terms.md). What's left is filling in the placeholders and showing them as pages on the site. A lawyer reviews them in WF-119.
 
+> Merged: `/privacy` and `/terms` render `docs/legal/*.md` at build time (static), `/contact` has no form, and the drafts cover offline friends (D44). **Every open value is in `apps/web/src/lib/legal.ts` (`LEGAL_VALUES`)**: the entity name, registered address, domain, effective date, the privacy/support/security emails, DPO, OIC contact, four retention periods and the liability cap. Until they're filled in, they render highlighted and the pages show a draft banner. One version, `LEGAL_VERSION = '0.1-draft'`, matches `current_consent_version()`, and a test fails if they drift. A bump = new text + new `LEGAL_VERSION` + a migration replacing `current_consent_version()`. **Left (owner):** supply the values, mostly after WF-011 and WF-119.
+
 **Acceptance criteria**
 - [x] Draft privacy policy covers what we collect, what we *don't* collect, why, retention (files deleted on confirm, events 90 days, pings 30 days), the processors we use, sending data abroad, the **Google Limited Use** disclosure, and user rights
 - [x] Draft terms cover the 18+ rule, acceptable use, pings, groups and admins, parsing accuracy, and Jamaican law
 - [ ] Every `[PLACEHOLDER]` filled in (legal entity, contact email, domain, effective date)
-- [ ] Shown at `/privacy` and `/terms`
-- [ ] `/contact` is a contact page
-- [ ] Each document has a version number (used by WF-015)
-- [ ] The drafts cover offline friends (D44): the privacy policy explains we hold a nickname and schedule for people who aren't users, only for the user who added them; the terms require their permission
+- [x] Shown at `/privacy` and `/terms`
+- [x] `/contact` is a contact page
+- [x] Each document has a version number (used by WF-015)
+- [x] The drafts cover offline friends (D44): the privacy policy explains we hold a nickname and schedule for people who aren't users, only for the user who added them; the terms require their permission
 
 #### WF-011 · Decide final name and register domain
 - **Category:** `chore` · **Area:** `ops` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
@@ -510,16 +512,18 @@ The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy
 - [x] Unit tests for the schema edge cases
 
 #### WF-022 · Parser eval harness
-- **Category:** `test` · **Area:** `parser` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `test` · **Area:** `parser` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-013, WF-020, WF-021
 - **PRD:** NFR-OPS-3, FR-ADM-3
 
 A script in `packages/parser` that runs a model and prompt against the eval set and scores the results.
 
+> Merged, built ahead of WF-013/WF-020 (no live call made yet; the first real run is WF-023). `packages/parser`: `parseSchedule` through OpenRouter (validated with the shared `ParseDraft`, `data_collection: deny`, ZDR on by default, temperature 0), scoring (recall/precision/F1, exact and ±5 min times, recurrence, an edit-count estimate for "≤ 3 edits"), and a CLI: `pnpm --filter @whosfree/parser eval:check`, `eval --model <id> --prompt v1`, `eval:compare`. Samples go in `evals/schedules/` (gitignored) as `<name>.<ext>` + `<name>.expected.json`; results in `packages/parser/eval/results/` (gitignored). See `packages/parser/eval/README.md`. **For WF-027/028:** zod strips location *fields* but not a room typed into a title, so D35 needs a post-processing check there. **For WF-039:** there's no CI gate or baseline yet.
+
 **Acceptance criteria**
-- [ ] Scores each sample on event recall and precision, time accuracy, recurrence accuracy, and an estimate of "≤ 3 edits needed"
-- [ ] Reports cost and latency per sample (from OpenRouter)
-- [ ] Results saved in a form that can be compared across runs
+- [x] Scores each sample on event recall and precision, time accuracy, recurrence accuracy, and an estimate of "≤ 3 edits needed"
+- [x] Reports cost and latency per sample (from OpenRouter)
+- [x] Results saved in a form that can be compared across runs
 
 #### WF-023 · Spike: compare vision models via OpenRouter
 - **Category:** `spike` · **Area:** `parser` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
@@ -861,17 +865,19 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [ ] Resuming restores the previous tiers
 
 #### WF-127 · Offline friends: add someone not on whosfree and import their timetable
-- **Category:** `feature` · **Area:** `social`, `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `social`, `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-030, WF-031
 - **PRD:** FR-SOC-14, FR-SOC-15, FR-SOC-16, FR-SOC-18, FR-SOC-19, NFR-COMP-9, R14, D44, J8
 
 Makes the app useful before someone's friends join (R2): they can upload or type in a friend's timetable and see when that friend is free. The table, RLS and tests can be built before the import pipeline; the upload part reuses WF-026 to WF-031.
 
+> Backend done (merged, migrations `20261002300000`/`20261002300100`): `offline_friends` (owner-only RLS, writes through functions), `create_offline_friend(nickname, emoji, permission_confirmed)` (20 per user under a lock, 20/day), `update_offline_friend`, `delete_offline_friend` (cascades the schedule), `list_offline_friends()` (with `has_schedule`). `sources`/`events.offline_friend_id` has a composite FK so it can only point at the row owner's offline friend. `private.redacted_events` skips these rows. **Any other read of a user's own `events`/`sources` (own status in the web app, `now_for_viewer`, WF-049) must filter `offline_friend_id is null`**, because RLS can't tell them apart. Left: `scheduleFiles`/parse jobs must carry the target offline friend (WF-026–031), the web UI, and FR-SOC-19 (UI only: offer `delete_offline_friend`).
+
 **Acceptance criteria**
-- [ ] `offline_friends` table (nickname 1–40 characters, optional emoji, `permission_confirmed_at`), owner-only under RLS; `sources` and `events` gain `offline_friend_id`
-- [ ] Adding one requires ticking "I have their permission to add their schedule", and the time is recorded
+- [x] `offline_friends` table (nickname 1–40 characters, optional emoji, `permission_confirmed_at`), owner-only under RLS; `sources` and `events` gain `offline_friend_id`
+- [x] Adding one requires ticking "I have their permission to add their schedule", and the time is recorded
 - [ ] Their schedule comes from the same upload → parse → review → confirm flow (file deleted on confirm, D38) or from manual entry. Their parses count towards the owner's parse limit (WF-035).
-- [ ] **Nobody but the owner** can read an offline friend or their events, through any table or function, including `events_for_viewer`, friend lists and group views. Tests prove it.
+- [x] **Nobody but the owner** can read an offline friend or their events, through any table or function, including `events_for_viewer`, friend lists and group views. Tests prove it.
 - [ ] Offline friends' events never affect the owner's own status, free time or what others see of the owner
 - [ ] The owner can edit the nickname, re-upload and delete (deleting removes the schedule straight away). At most 20 per user, as a config value.
 - [ ] If the same person later becomes a real friend, the owner is offered to delete the offline copy. The two are never merged automatically. (FR-SOC-19, Should)
@@ -1129,16 +1135,18 @@ Google event titles often contain sensitive details ("Therapy", "Clinic", "Court
 ### Phase 5: Pings & slot finder
 
 #### WF-090 · PWA manifest and service worker (Serwist)
-- **Category:** `infra` · **Area:** `pwa` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `infra` · **Area:** `pwa` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-002
 - **PRD:** FR-PWA-1
 
 Could start at any point after WF-002. It's placed here because push notifications need it.
 
+> Merged: `app/manifest.ts`, icons and iOS launch images, and a Serwist worker (`@serwist/turbopack`) served at `/serwist/sw.js` with scope `/`. It precaches only `/_next/static`, `public/icons` and a static `/offline` page. Navigations are network-only, and HTML, RSC, server actions and API responses are never cached. Headless Chrome reports no installability errors. **Left:** install on a real Android and iOS 16.4+ device from an HTTPS deploy (needs WF-002's Vercel connection). The auth proxy must leave `/serwist/*`, `/manifest.webmanifest`, `/icons/*`, `/splash/*` and `/offline` public. `skipWaiting` stays on until WF-112.
+
 **Acceptance criteria**
-- [ ] A manifest with icons, a splash screen and `display: standalone`
-- [ ] A Serwist service worker precaches the app shell
-- [ ] The app can be installed on Android Chrome and iOS Safari
+- [x] A manifest with icons, a splash screen and `display: standalone`
+- [x] A Serwist service worker precaches the app shell
+- [ ] The app can be installed on Android Chrome and iOS Safari (verified in headless Chrome only; needs a device test on a deploy)
 
 #### WF-091 · Web Push infrastructure
 - **Category:** `infra` · **Area:** `pwa`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`

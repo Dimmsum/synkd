@@ -1,0 +1,45 @@
+{
+  "events": [
+    {
+      "title": "SYN1001 Lecture",
+      "category": "class",
+      "start": "09:00",
+      "end": "10:00",
+      "when": { "kind": "weekly", "days": ["mon", "wed"], "pattern": { "type": "every" } }
+    },
+    {
+      "title": "SYN1002 Lab",
+      "category": "lab",
+      "start": "10:00",
+      "end": "12:00",
+      "when": {
+        "kind": "weekly",
+        "days": ["tue"],
+        "pattern": { "type": "alternating", "parity": "odd" }
+      }
+    },
+    {
+      "title": "SYN1003 Tutorial",
+      "category": "tutorial",
+      "start": "13:00",
+      "end": "14:00",
+      "when": {
+        "kind": "weekly",
+        "days": ["thu"],
+        "pattern": { "type": "weeks", "weeks": [2, 3, 4, 5, 6] }
+      }
+    },
+    {
+      "title": "Part-time shift",
+      "category": "work",
+      "start": "14:00",
+      "end": "16:00",
+      "when": { "kind": "weekly", "days": ["fri"], "pattern": { "type": "every" } }
+    }
+  ],
+  "suggestedPeriod": {
+    "start": "2026-09-07",
+    "end": "2026-12-11",
+    "exceptions": [{ "start": "2026-10-26", "end": "2026-10-30", "label": "Reading week" }]
+  }
+}

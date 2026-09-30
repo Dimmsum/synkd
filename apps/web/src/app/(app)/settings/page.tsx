@@ -1,4 +1,7 @@
 import type { Metadata } from 'next';
+import { LogOut } from 'lucide-react';
+import { SignOutButton } from '@clerk/nextjs';
+import { Button } from '@whosfree/ui/components/button';
 import { PageHeader } from '@/components/app/page-header';
 import { SettingsNav } from '@/components/settings/settings-nav';
 
@@ -9,7 +12,12 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-2xl">
       <PageHeader title="Settings" />
       <SettingsNav variant="list" />
-      {/* TODO(WF-004): sign out with Clerk. */}
+      <SignOutButton redirectUrl="/">
+        <Button variant="ghost" className="mt-4 w-full justify-start">
+          <LogOut aria-hidden="true" />
+          Sign out
+        </Button>
+      </SignOutButton>
     </div>
   );
 }

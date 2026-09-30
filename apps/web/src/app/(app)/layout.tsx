@@ -9,9 +9,8 @@ import { getUnreadCount } from '@/lib/data/inbox';
 import { describeStatus } from '@/lib/status';
 
 // Signed-in app shell (WF-014). Rendered per request: statuses depend on the current time.
-// TODO(WF-004/WF-005): protect these routes in proxy.ts: signed-out users go to
-// /sign-in, and users without a confirmed age or current consent go to /sign-up/age or
-// /sign-up/terms. There is NO route protection yet.
+// proxy.ts protects every route here: signed-out users go to /sign-in, and users without a
+// confirmed age or current consent go to /sign-up/age or /sign-up/terms (lib/auth/gate.ts).
 export const dynamic = 'force-dynamic';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -43,7 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <Link
               href="/groups?new=1"
               aria-label="New group"
-              className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
+              className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
             >
               <Plus aria-hidden="true" className="size-4" />
             </Link>
@@ -72,7 +71,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b bg-card/95 px-4 py-2 backdrop-blur md:hidden">
-          <Link href="/now" aria-label="Who's Free, go to Now" className="rounded-lg">
+          <Link
+            href="/now"
+            aria-label="Who's Free, go to Now"
+            className="-ml-1.5 flex size-11 items-center justify-center rounded-lg"
+          >
             <LogoMark />
           </Link>
           <StatusChip name={viewer.name} tone={me.tone} label={me.label} />
