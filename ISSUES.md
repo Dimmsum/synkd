@@ -254,7 +254,7 @@ Everything else at P0, which adds:
 | WF-085 | Sync health UI | feature | web | P1 | 4 | stretch | todo | 082 |
 | WF-086 | Submit Google OAuth verification | compliance | gcal | P0 | 4 | B | todo | 010, 012, 080 |
 | WF-087 | Handle Google accounts managed by an organisation | feature | gcal | P1 | 4 | stretch | todo | 080 |
-| WF-090 | PWA manifest and service worker (Serwist) | infra | pwa | P0 | 5 | A | todo | 002 |
+| WF-090 | PWA manifest and service worker (Serwist) | infra | pwa | P0 | 5 | A | in-review | 002 |
 | WF-091 | Web Push infrastructure | infra | pwa, backend | P0 | 5 | A | todo | 004, 090 |
 | WF-092 | Send pings and inbox | feature | ping | P0 | 5 | A | todo | 064, 091 |
 | WF-093 | Ping replies | feature | ping | P0 | 5 | A | todo | 092 |
@@ -1129,16 +1129,18 @@ Google event titles often contain sensitive details ("Therapy", "Clinic", "Court
 ### Phase 5: Pings & slot finder
 
 #### WF-090 · PWA manifest and service worker (Serwist)
-- **Category:** `infra` · **Area:** `pwa` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `infra` · **Area:** `pwa` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-002
 - **PRD:** FR-PWA-1
 
 Could start at any point after WF-002. It's placed here because push notifications need it.
 
+> Merged: `app/manifest.ts`, icons and iOS launch images, and a Serwist worker (`@serwist/turbopack`) served at `/serwist/sw.js` with scope `/`. It precaches only `/_next/static`, `public/icons` and a static `/offline` page. Navigations are network-only, and HTML, RSC, server actions and API responses are never cached. Headless Chrome reports no installability errors. **Left:** install on a real Android and iOS 16.4+ device from an HTTPS deploy (needs WF-002's Vercel connection). The auth proxy must leave `/serwist/*`, `/manifest.webmanifest`, `/icons/*`, `/splash/*` and `/offline` public. `skipWaiting` stays on until WF-112.
+
 **Acceptance criteria**
-- [ ] A manifest with icons, a splash screen and `display: standalone`
-- [ ] A Serwist service worker precaches the app shell
-- [ ] The app can be installed on Android Chrome and iOS Safari
+- [x] A manifest with icons, a splash screen and `display: standalone`
+- [x] A Serwist service worker precaches the app shell
+- [ ] The app can be installed on Android Chrome and iOS Safari (verified in headless Chrome only; needs a device test on a deploy)
 
 #### WF-091 · Web Push infrastructure
 - **Category:** `infra` · **Area:** `pwa`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
