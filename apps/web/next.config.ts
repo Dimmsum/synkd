@@ -10,7 +10,7 @@ if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 
 const nextConfig: NextConfig = {
   // Internal packages ship TypeScript source (no build step), so Next compiles them.
-  transpilePackages: ['@whosfree/ui', '@whosfree/shared'],
+  transpilePackages: ['@whosfree/ui', '@whosfree/shared', '@whosfree/backend'],
   typedRoutes: true,
   poweredByHeader: false,
   // TODO(WF-008): wrap with Sentry once error tracking is added.

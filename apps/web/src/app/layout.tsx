@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono, Onest } from 'next/font/google';
+import { ClerkProvider } from '@clerk/nextjs';
+import { clerkAppearance } from '@/lib/auth/clerk-appearance';
 import './globals.css';
 
 const onest = Onest({
@@ -39,7 +41,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-JM" className={`${onest.variable} ${jetbrainsMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        {/* Clerk (D19, WF-004). Since Clerk Core 3 the provider goes inside <body>. */}
+        <ClerkProvider appearance={clerkAppearance} afterSignOutUrl="/">
+          {children}
+        </ClerkProvider>
+      </body>
     </html>
   );
 }

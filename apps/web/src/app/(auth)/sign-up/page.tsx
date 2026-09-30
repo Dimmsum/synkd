@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ShieldCheck } from 'lucide-react';
-import { GoogleButton } from '@/components/auth/google-button';
+import { SignUp } from '@clerk/nextjs';
 import { SignUpSteps } from '@/components/auth/sign-up-steps';
 
 export const metadata: Metadata = { title: 'Sign up' };
 
+// Clerk's sign-up (FR-WEB-2, D19), step 1 of 3. Hash routing keeps Clerk's own steps on this
+// route. proxy.ts creates the users row on the first signed-in request and then sends the
+// user on to /sign-up/age.
 // TODO(WF-045): if ?invite=<code> is present, remember it (cookie) through sign-up and
 // onboarding, and show "You're joining <group>" here.
 export default function SignUpPage() {
@@ -19,7 +22,7 @@ export default function SignUpPage() {
             See who&apos;s free, ping friends and find a time for the whole crew.
           </p>
         </div>
-        <GoogleButton mode="sign-up" />
+        <SignUp routing="hash" signInUrl="/sign-in" fallbackRedirectUrl="/sign-up/age" />
         <p className="flex gap-2 rounded-xl bg-muted p-3 text-[13px] text-body-foreground">
           <ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-status-free-ink" />
           We only ask Google for your name, email and photo. Never your calendar. You can connect it

@@ -1,12 +1,18 @@
 import Link from 'next/link';
 import { Logo } from '@whosfree/ui/components/misc';
+import { TimezoneCookie } from '@/components/auth/timezone-cookie';
 
-// Custom auth UI (not Clerk's prebuilt components) so it can be wired to Clerk's
-// custom-flow hooks later. TODO(WF-004): wrap the app in <ClerkProvider> in the root layout.
+// Sign-in, sign-up and the sign-up steps (FR-WEB-2). Clerk's components render flat inside
+// this card (lib/auth/clerk-appearance.ts); proxy.ts decides who may see which step.
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col items-center px-4 py-6 sm:justify-center sm:py-12">
-      <Link href="/" aria-label="Who's Free home" className="mb-8 rounded-lg sm:mb-10">
+      <TimezoneCookie />
+      <Link
+        href="/"
+        aria-label="Who's Free home"
+        className="mb-6 inline-flex min-h-11 items-center rounded-lg sm:mb-8"
+      >
         <Logo />
       </Link>
       <main className="w-full max-w-md rounded-2xl border bg-card p-6 sm:p-8">{children}</main>
