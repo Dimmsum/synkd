@@ -1,10 +1,12 @@
 import { z } from 'zod';
 import {
   DAYS_OF_WEEK,
+  DISPLAY_NAME_MAX_LENGTH,
   EVENT_CATEGORIES,
   MANUAL_STATUSES,
   OFFLINE_FRIEND_NICKNAME_MAX_LENGTH,
   PING_TEXT_MAX_LENGTH,
+  STATUS_LABEL_MAX_LENGTH,
   TIERS,
 } from './constants';
 
@@ -135,3 +137,32 @@ export const OfflineFriendNickname = z
   })
   .refine((t) => !/\p{Cc}/u.test(t), { message: 'No control characters' });
 export type OfflineFriendNickname = z.infer<typeof OfflineFriendNickname>;
+
+/**
+ * The optional label on a manual status (FR-AVL-3, J5), e.g. "Revising for MATH1141": trimmed,
+ * 1–40 characters, no control characters. Length counts Unicode code points, as `set_status` does.
+ * An empty label means none. The UI shouldn't invite a location here (D35).
+ */
+export const StatusLabel = z
+  .string()
+  .trim()
+  .min(1, 'Enter a label')
+  .refine((t) => [...t].length <= STATUS_LABEL_MAX_LENGTH, {
+    message: `At most ${STATUS_LABEL_MAX_LENGTH} characters`,
+  })
+  .refine((t) => !/\p{Cc}/u.test(t), { message: 'No control characters' });
+export type StatusLabel = z.infer<typeof StatusLabel>;
+
+/**
+ * A display name (FR-AUTH-2, PRD §9 `users.name`): trimmed, 1–100 characters (code points, as
+ * the database counts), no control characters.
+ */
+export const DisplayName = z
+  .string()
+  .trim()
+  .min(1, 'Add your name')
+  .refine((t) => [...t].length <= DISPLAY_NAME_MAX_LENGTH, {
+    message: `At most ${DISPLAY_NAME_MAX_LENGTH} characters`,
+  })
+  .refine((t) => !/\p{Cc}/u.test(t), { message: 'No control characters' });
+export type DisplayName = z.infer<typeof DisplayName>;

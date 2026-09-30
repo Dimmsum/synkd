@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   AvailableHours,
+  DisplayName,
   EventDraft,
   LocalTime,
   OfflineFriendNickname,
   ParseDraft,
   PingText,
   SchedulePeriod,
+  StatusLabel,
   Tier,
 } from './schemas';
 
@@ -189,5 +191,32 @@ describe('OfflineFriendNickname', () => {
   it('rejects control characters', () => {
     expect(OfflineFriendNickname.safeParse('Ta\u0000sh').success).toBe(false);
     expect(OfflineFriendNickname.safeParse('Ta\u0007sh').success).toBe(false);
+  });
+});
+
+describe('StatusLabel', () => {
+  it('trims and accepts 1 to 40 characters', () => {
+    expect(StatusLabel.parse('  Revising for MATH1141 ')).toBe('Revising for MATH1141');
+    expect(StatusLabel.safeParse('a'.repeat(40)).success).toBe(true);
+  });
+  it('rejects blank, 41 characters and control characters', () => {
+    expect(StatusLabel.safeParse('  ').success).toBe(false);
+    expect(StatusLabel.safeParse('a'.repeat(41)).success).toBe(false);
+    expect(StatusLabel.safeParse('Rev\u0000ising').success).toBe(false);
+  });
+  it('counts an emoji as one character', () => {
+    expect(StatusLabel.safeParse('📚'.repeat(40)).success).toBe(true);
+  });
+});
+
+describe('DisplayName', () => {
+  it('trims and accepts 1 to 100 characters', () => {
+    expect(DisplayName.parse(' Kemar Brown ')).toBe('Kemar Brown');
+    expect(DisplayName.safeParse('a'.repeat(100)).success).toBe(true);
+  });
+  it('rejects blank, 101 characters and control characters', () => {
+    expect(DisplayName.safeParse('   ').success).toBe(false);
+    expect(DisplayName.safeParse('a'.repeat(101)).success).toBe(false);
+    expect(DisplayName.safeParse('Ke\u0007mar').success).toBe(false);
   });
 });

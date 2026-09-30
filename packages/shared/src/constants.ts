@@ -19,6 +19,23 @@ export const MANUAL_STATUS_TO_STATUS = {
   focused: 'busy',
 } as const satisfies Record<ManualStatus, Status>;
 
+/** How a manual status is named in the UI (J5, FR-AVL-3). */
+export const MANUAL_STATUS_LABELS = {
+  free: 'Free',
+  busy: 'Busy',
+  dnd: 'Do not disturb',
+  away: 'Away',
+  focused: 'Studying/Focused',
+} as const satisfies Record<ManualStatus, string>;
+
+/**
+ * Manual status limits (PRD §9 `statusOverrides`, FR-AVL-3). The database enforces the same in
+ * `set_status` (backend migration 20261001300400_status_overrides.sql): an optional label of at
+ * most 40 characters, and an end time at most 7 days away (anything longer is "until I change it").
+ */
+export const STATUS_LABEL_MAX_LENGTH = 40;
+export const STATUS_OVERRIDE_MAX_DAYS = 7;
+
 /** Visibility tiers (PRD §6.7, D1). T1 is the default and the minimum (D20). */
 export const TIERS = [1, 2, 3] as const;
 type Tier = (typeof TIERS)[number];
@@ -92,6 +109,9 @@ export const PING_TEXT_MAX_LENGTH = 140;
 export const DEFAULT_AVAILABLE_HOURS = { start: '08:00', end: '22:00' } as const;
 
 export const DEFAULT_TIMEZONE = 'America/Jamaica';
+
+/** Display name length, in characters (PRD §9 `users.name`, FR-AUTH-2). The database checks 1–100. */
+export const DISPLAY_NAME_MAX_LENGTH = 100;
 
 export const SOURCE_TYPES = ['upload', 'manual', 'gcal'] as const;
 export type SourceType = (typeof SOURCE_TYPES)[number];
