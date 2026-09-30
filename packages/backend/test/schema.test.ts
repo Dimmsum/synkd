@@ -158,17 +158,52 @@ describe('table privileges (on top of Supabase’s grant-everything defaults)', 
   });
 });
 
+/**
+ * Every function clients can call. All are security definer (they read or
+ * write rows the caller can't reach under RLS) and executable by
+ * `authenticated` only.
+ */
+const CLIENT_FUNCTIONS = [
+  'current_user_id()',
+  'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
+  'find_user_by_handle(text)',
+  'get_profile(uuid)',
+  'set_handle(text)',
+];
+
+/** Internal helpers in `private`: not security definer, not callable by clients. */
+const PRIVATE_FUNCTIONS = [
+  'private.consume_rate_limit(uuid,text,integer,interval)',
+  'private.is_blocked(uuid,uuid)',
+  'private.normalize_handle(text)',
+  'private.purge_expired_rate_limits()',
+  'private.redacted_events(uuid,smallint,timestamp with time zone,timestamp with time zone)',
+  'private.relationship(uuid,uuid)',
+  'private.require_user()',
+  'private.resolve_tier(uuid,uuid)',
+  'private.try_consume_rate_limit(uuid,text,integer,interval)',
+  'private.validate_user_timezone()',
+  'private.visible_profile(uuid,uuid)',
+];
+
 describe('functions', () => {
+  it('the private schema holds exactly the internal helpers, none security definer', async () => {
+    const fns = await rows<{ fn: string; definer: boolean }>(
+      `select p.oid::regprocedure::text as fn, p.prosecdef as definer
+       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'private' order by 1`,
+    );
+    expect(fns.map((f) => f.fn)).toEqual(PRIVATE_FUNCTIONS);
+    expect(fns.filter((f) => f.definer)).toEqual([]);
+  });
+
   it('every security definer function pins search_path to empty', async () => {
     const definers = await rows<{ fn: string; config: string[] | null }>(
       `select p.oid::regprocedure::text as fn, p.proconfig as config
        from pg_proc p join pg_namespace n on n.oid = p.pronamespace
        where n.nspname in ('public', 'private') and p.prosecdef order by 1`,
     );
-    expect(definers.map((d) => d.fn)).toEqual([
-      'current_user_id()',
-      'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
-    ]);
+    expect(definers.map((d) => d.fn)).toEqual(CLIENT_FUNCTIONS);
     for (const d of definers) expect(d.config).toEqual(['search_path=""']);
   });
 
@@ -181,7 +216,7 @@ describe('functions', () => {
     expect(loose).toEqual([]);
   });
 
-  it('clients can execute only current_user_id and events_for_viewer, and only when signed in', async () => {
+  it('clients can execute only CLIENT_FUNCTIONS, and only when signed in', async () => {
     for (const role of CLIENT_ROLES) {
       const callable = await rows<{ fn: string }>(
         `select p.oid::regprocedure::text as fn from pg_proc p
@@ -194,13 +229,7 @@ describe('functions', () => {
       );
       expect({ role, callable: callable.map((c) => c.fn) }).toEqual({
         role,
-        callable:
-          role === 'authenticated'
-            ? [
-                'current_user_id()',
-                'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
-              ]
-            : [],
+        callable: role === 'authenticated' ? CLIENT_FUNCTIONS : [],
       });
     }
   });

@@ -416,6 +416,27 @@ export type Database = {
           title: string;
         }[];
       };
+      find_user_by_handle: {
+        Args: { lookup: string };
+        Returns: {
+          avatar_url: string;
+          handle: string;
+          id: string;
+          name: string;
+          relationship: string;
+        }[];
+      };
+      get_profile: {
+        Args: { user_id: string };
+        Returns: {
+          avatar_url: string;
+          handle: string;
+          id: string;
+          name: string;
+          relationship: string;
+        }[];
+      };
+      set_handle: { Args: { handle: string }; Returns: string };
     };
     Enums: {
       [_ in never]: never;
