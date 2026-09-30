@@ -37,7 +37,7 @@ begin
       or new.age_confirmed_at is distinct from old.age_confirmed_at
     )
   then
-    raise exception 'Age is already confirmed; the birth year can''t be changed'
+    raise exception 'birth_year and age_confirmed_at are write-once (the age is already confirmed)'
       using errcode = '55000';
   end if;
   return new;

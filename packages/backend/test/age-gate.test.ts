@@ -90,16 +90,16 @@ describe('confirm_age()', () => {
     await confirm('user_alice', 2000);
     await expect(
       db.asService().query(`update public.users set birth_year = 1990 where id = $1`, [alice]),
-    ).rejects.toThrow(/Age is already confirmed/);
+    ).rejects.toThrow(/birth_year and age_confirmed_at are write-once/);
     await expect(
       db.admin.query(`update public.users set age_confirmed_at = now() where id = $1`, [alice]),
-    ).rejects.toThrow(/Age is already confirmed/);
+    ).rejects.toThrow(/birth_year and age_confirmed_at are write-once/);
     await expect(
       db.admin.query(
         `update public.users set birth_year = null, age_confirmed_at = null where id = $1`,
         [alice],
       ),
-    ).rejects.toThrow(/Age is already confirmed/);
+    ).rejects.toThrow(/birth_year and age_confirmed_at are write-once/);
   });
 
   it('the user can’t write the age fields directly', async () => {
