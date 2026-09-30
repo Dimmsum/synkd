@@ -6,6 +6,283 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      blocks: {
+        Row: {
+          blocked_id: string;
+          blocker_id: string;
+          created_at: string;
+          id: string;
+        };
+        Insert: {
+          blocked_id: string;
+          blocker_id: string;
+          created_at?: string;
+          id?: string;
+        };
+        Update: {
+          blocked_id?: string;
+          blocker_id?: string;
+          created_at?: string;
+          id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'blocks_blocked_id_fkey';
+            columns: ['blocked_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'blocks_blocker_id_fkey';
+            columns: ['blocker_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      events: {
+        Row: {
+          busy: boolean;
+          category: string | null;
+          created_at: string;
+          ends_at: string;
+          exdates: string[];
+          external_id: string | null;
+          id: string;
+          is_private: boolean;
+          rrule: string | null;
+          source_id: string;
+          starts_at: string;
+          title: string | null;
+          user_id: string;
+        };
+        Insert: {
+          busy?: boolean;
+          category?: string | null;
+          created_at?: string;
+          ends_at: string;
+          exdates?: string[];
+          external_id?: string | null;
+          id?: string;
+          is_private?: boolean;
+          rrule?: string | null;
+          source_id: string;
+          starts_at: string;
+          title?: string | null;
+          user_id: string;
+        };
+        Update: {
+          busy?: boolean;
+          category?: string | null;
+          created_at?: string;
+          ends_at?: string;
+          exdates?: string[];
+          external_id?: string | null;
+          id?: string;
+          is_private?: boolean;
+          rrule?: string | null;
+          source_id?: string;
+          starts_at?: string;
+          title?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'events_source_same_user';
+            columns: ['source_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'sources';
+            referencedColumns: ['id', 'user_id'];
+          },
+          {
+            foreignKeyName: 'events_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      friendships: {
+        Row: {
+          created_at: string;
+          id: string;
+          requested_by: string;
+          status: string;
+          user_a: string;
+          user_b: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          requested_by: string;
+          status?: string;
+          user_a: string;
+          user_b: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          requested_by?: string;
+          status?: string;
+          user_a?: string;
+          user_b?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'friendships_user_a_fkey';
+            columns: ['user_a'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'friendships_user_b_fkey';
+            columns: ['user_b'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      group_members: {
+        Row: {
+          can_edit_group: boolean;
+          can_group_ping: boolean;
+          can_invite: boolean;
+          can_manage_members: boolean;
+          created_at: string;
+          group_id: string;
+          id: string;
+          joined_at: string;
+          role: string;
+          user_id: string;
+        };
+        Insert: {
+          can_edit_group?: boolean;
+          can_group_ping?: boolean;
+          can_invite?: boolean;
+          can_manage_members?: boolean;
+          created_at?: string;
+          group_id: string;
+          id?: string;
+          joined_at?: string;
+          role?: string;
+          user_id: string;
+        };
+        Update: {
+          can_edit_group?: boolean;
+          can_group_ping?: boolean;
+          can_invite?: boolean;
+          can_manage_members?: boolean;
+          created_at?: string;
+          group_id?: string;
+          id?: string;
+          joined_at?: string;
+          role?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'group_members_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'group_members_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      groups: {
+        Row: {
+          admin_id: string;
+          created_at: string;
+          emoji: string | null;
+          id: string;
+          join_mode: string;
+          max_members: number;
+          name: string;
+        };
+        Insert: {
+          admin_id: string;
+          created_at?: string;
+          emoji?: string | null;
+          id?: string;
+          join_mode?: string;
+          max_members?: number;
+          name: string;
+        };
+        Update: {
+          admin_id?: string;
+          created_at?: string;
+          emoji?: string | null;
+          id?: string;
+          join_mode?: string;
+          max_members?: number;
+          name?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'groups_admin_id_fkey';
+            columns: ['admin_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      sources: {
+        Row: {
+          created_at: string;
+          id: string;
+          last_synced_at: string | null;
+          period_end: string | null;
+          period_exceptions: NonNullable<Json>;
+          period_start: string | null;
+          status: string;
+          type: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          last_synced_at?: string | null;
+          period_end?: string | null;
+          period_exceptions?: NonNullable<Json>;
+          period_start?: string | null;
+          status?: string;
+          type: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          last_synced_at?: string | null;
+          period_end?: string | null;
+          period_exceptions?: NonNullable<Json>;
+          period_start?: string | null;
+          status?: string;
+          type?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'sources_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       users: {
         Row: {
           age_confirmed_at: string | null;
@@ -51,12 +328,59 @@ export type Database = {
         };
         Relationships: [];
       };
+      visibility_rules: {
+        Row: {
+          created_at: string;
+          id: string;
+          owner_id: string;
+          target_id: string;
+          target_type: string;
+          tier: number;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          owner_id: string;
+          target_id: string;
+          target_type: string;
+          tier?: number;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          owner_id?: string;
+          target_id?: string;
+          target_type?: string;
+          tier?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'visibility_rules_owner_id_fkey';
+            columns: ['owner_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
+      events_for_viewer: {
+        Args: { owner_id: string; range_end: string; range_start: string };
+        Returns: {
+          category: string;
+          ends_at: string;
+          exdates: string[];
+          id: string;
+          rrule: string;
+          starts_at: string;
+          title: string;
+        }[];
+      };
     };
     Enums: {
       [_ in never]: never;
