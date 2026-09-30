@@ -87,6 +87,7 @@ export type Database = {
           external_id: string | null;
           id: string;
           is_private: boolean;
+          offline_friend_id: string | null;
           rrule: string | null;
           source_id: string;
           starts_at: string;
@@ -102,6 +103,7 @@ export type Database = {
           external_id?: string | null;
           id?: string;
           is_private?: boolean;
+          offline_friend_id?: string | null;
           rrule?: string | null;
           source_id: string;
           starts_at: string;
@@ -117,6 +119,7 @@ export type Database = {
           external_id?: string | null;
           id?: string;
           is_private?: boolean;
+          offline_friend_id?: string | null;
           rrule?: string | null;
           source_id?: string;
           starts_at?: string;
@@ -124,6 +127,13 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'events_offline_friend_same_user';
+            columns: ['offline_friend_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'offline_friends';
+            referencedColumns: ['id', 'user_id'];
+          },
           {
             foreignKeyName: 'events_source_same_user';
             columns: ['source_id', 'user_id'];
@@ -325,6 +335,44 @@ export type Database = {
           },
         ];
       };
+      offline_friends: {
+        Row: {
+          created_at: string;
+          emoji: string | null;
+          id: string;
+          nickname: string;
+          permission_confirmed_at: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          emoji?: string | null;
+          id?: string;
+          nickname: string;
+          permission_confirmed_at: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          emoji?: string | null;
+          id?: string;
+          nickname?: string;
+          permission_confirmed_at?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'offline_friends_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       rate_limits: {
         Row: {
           action: string;
@@ -365,6 +413,7 @@ export type Database = {
           created_at: string;
           id: string;
           last_synced_at: string | null;
+          offline_friend_id: string | null;
           period_end: string | null;
           period_exceptions: NonNullable<Json>;
           period_start: string | null;
@@ -376,6 +425,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           last_synced_at?: string | null;
+          offline_friend_id?: string | null;
           period_end?: string | null;
           period_exceptions?: NonNullable<Json>;
           period_start?: string | null;
@@ -387,6 +437,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           last_synced_at?: string | null;
+          offline_friend_id?: string | null;
           period_end?: string | null;
           period_exceptions?: NonNullable<Json>;
           period_start?: string | null;
@@ -395,6 +446,13 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'sources_offline_friend_same_user';
+            columns: ['offline_friend_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'offline_friends';
+            referencedColumns: ['id', 'user_id'];
+          },
           {
             foreignKeyName: 'sources_user_id_fkey';
             columns: ['user_id'];
@@ -554,10 +612,15 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      create_offline_friend: {
+        Args: { emoji?: string; nickname: string; permission_confirmed?: boolean };
+        Returns: string;
+      };
       current_consent_version: { Args: Record<PropertyKey, never>; Returns: string };
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
       decline_friend_request: { Args: { user_id: string }; Returns: undefined };
       delete_group: { Args: { group_id: string }; Returns: undefined };
+      delete_offline_friend: { Args: { offline_friend_id: string }; Returns: undefined };
       ensure_current_user: {
         Args: { avatar_url?: string; name: string; timezone?: string };
         Returns: {
@@ -700,6 +763,18 @@ export type Database = {
           role: string;
         }[];
       };
+      list_offline_friends: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          created_at: string;
+          emoji: string;
+          has_schedule: boolean;
+          id: string;
+          nickname: string;
+          permission_confirmed_at: string;
+          updated_at: string;
+        }[];
+      };
       regenerate_group_invite: {
         Args: { invite_id: string };
         Returns: Database['public']['CompositeTypes']['group_invite'];
@@ -755,6 +830,10 @@ export type Database = {
       unblock_user: { Args: { user_id: string }; Returns: undefined };
       unfriend: { Args: { user_id: string }; Returns: undefined };
       update_group: { Args: { emoji: string; group_id: string; name: string }; Returns: undefined };
+      update_offline_friend: {
+        Args: { emoji: string; nickname: string; offline_friend_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;

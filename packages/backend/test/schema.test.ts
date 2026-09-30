@@ -12,7 +12,7 @@ import {
   SOURCE_TYPES,
   TIERS,
 } from '@whosfree/shared';
-import { GROUP_ERRORS } from '../src/index';
+import { GROUP_ERRORS, OFFLINE_FRIEND_ERRORS } from '../src/index';
 import { createTestDb, migrationFiles } from './harness/db';
 import type { TestDb } from './harness/db';
 import { addSource, addUser } from './harness/seed';
@@ -46,6 +46,7 @@ describe('migrations', () => {
       'group_members',
       'groups',
       'invites',
+      'offline_friends',
       'rate_limits',
       'sources',
       'status_overrides',
@@ -94,6 +95,7 @@ describe('row-level security', () => {
       'friendships.friendships_select_party (SELECT)',
       'group_members.group_members_select_own (SELECT)',
       'groups.groups_select_member (SELECT)',
+      'offline_friends.offline_friends_select_own (SELECT)',
       'sources.sources_delete_own (DELETE)',
       'sources.sources_insert_own (INSERT)',
       'sources.sources_select_own (SELECT)',
@@ -164,6 +166,7 @@ describe('table privileges (on top of Supabase’s grant-everything defaults)', 
       events: ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
       availability_prefs: ['SELECT', 'UPDATE(weekly, min_gap_minutes, count_all_day_events)'],
       status_overrides: ['SELECT'],
+      offline_friends: ['SELECT'],
     });
   });
 });
@@ -181,9 +184,11 @@ const CLIENT_DEFINER_FUNCTIONS = [
   'confirm_age(integer)',
   'create_group(text,text,integer)',
   'create_group_invite(uuid,timestamp with time zone,integer)',
+  'create_offline_friend(text,text,boolean)',
   'current_user_id()',
   'decline_friend_request(uuid)',
   'delete_group(uuid)',
+  'delete_offline_friend(uuid)',
   'ensure_current_user(text,text,text)',
   'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
   'find_user_by_handle(text)',
@@ -209,12 +214,14 @@ const CLIENT_DEFINER_FUNCTIONS = [
   'unblock_user(uuid)',
   'unfriend(uuid)',
   'update_group(uuid,text,text)',
+  'update_offline_friend(uuid,text,text)',
 ];
 
 /** Client-callable functions that run as the caller, so RLS applies. `authenticated` only. */
 const CLIENT_INVOKER_FUNCTIONS = [
   'account_status()',
   'current_consent_version()',
+  'list_offline_friends()',
   'set_day_hours(text,text,text)',
 ];
 
@@ -229,9 +236,11 @@ const PRIVATE_FUNCTIONS = [
   'private.assert_group_admin_in_sync(uuid)',
   'private.authorize_group(uuid,uuid,text)',
   'private.authorize_invite_change(invites,uuid)',
+  'private.check_event_offline_friend()',
   'private.check_tier(integer)',
   'private.clean_group_emoji(text)',
   'private.clean_group_name(text)',
+  'private.clean_offline_friend_nickname(text)',
   'private.close_active_status(uuid)',
   'private.consume_rate_limit(uuid,text,integer,interval)',
   'private.create_default_availability_prefs()',
@@ -247,6 +256,7 @@ const PRIVATE_FUNCTIONS = [
   'private.new_invite_code()',
   'private.normalize_handle(text)',
   'private.protect_age_confirmation()',
+  'private.protect_source_offline_friend()',
   'private.purge_expired_rate_limits()',
   'private.purge_expired_status_overrides(interval)',
   'private.redacted_events(uuid,smallint,timestamp with time zone,timestamp with time zone)',
@@ -322,12 +332,12 @@ describe('functions', () => {
   });
 });
 
-describe('GROUP_ERRORS (src/index.ts) matches what the migrations raise', () => {
+describe('GROUP_ERRORS and OFFLINE_FRIEND_ERRORS (src/index.ts) match what the migrations raise', () => {
   it('every message is raised somewhere, verbatim', async () => {
     const sql = (await Promise.all((await migrationFiles()).map((f) => readFile(f, 'utf8')))).join(
       '\n',
     );
-    for (const message of Object.values(GROUP_ERRORS))
+    for (const message of [...Object.values(GROUP_ERRORS), ...Object.values(OFFLINE_FRIEND_ERRORS)])
       expect({ message, raised: sql.includes(`'${message.replaceAll("'", "''")}'`) }).toEqual({
         message,
         raised: true,
@@ -345,10 +355,12 @@ describe('triggers', () => {
     );
     expect(triggers).toEqual([
       { t: 'availability_prefs.availability_prefs_validate_weekly', deferred: false },
+      { t: 'events.events_check_offline_friend', deferred: false },
       { t: 'group_members.group_members_admin_in_sync_delete', deferred: true },
       { t: 'group_members.group_members_admin_in_sync_insert', deferred: true },
       { t: 'group_members.group_members_admin_in_sync_update', deferred: true },
       { t: 'groups.groups_admin_in_sync', deferred: true },
+      { t: 'sources.sources_protect_offline_friend', deferred: false },
       { t: 'users.users_create_default_availability_prefs', deferred: false },
       { t: 'users.users_protect_age_confirmation', deferred: false },
       { t: 'users.users_validate_timezone', deferred: false },
