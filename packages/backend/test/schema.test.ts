@@ -199,6 +199,7 @@ const CLIENT_DEFINER_FUNCTIONS = [
   'clear_status()',
   'commit_schedule(jsonb,text,uuid)',
   'confirm_age(integer)',
+  'create_friend_invite()',
   'create_group(text,text,integer)',
   'create_group_invite(uuid,timestamp with time zone,integer)',
   'create_offline_friend(text,text,boolean)',
@@ -210,8 +211,10 @@ const CLIENT_DEFINER_FUNCTIONS = [
   'ensure_current_user(text,text,text)',
   'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
   'find_user_by_handle(text)',
+  'get_friend_invite_summary(text)',
   'get_group_members(uuid)',
   'get_invite_summary(text)',
+  'get_my_friend_invite()',
   'get_profile(uuid)',
   'join_group(text,integer)',
   'leave_group(uuid)',
@@ -223,10 +226,14 @@ const CLIENT_DEFINER_FUNCTIONS = [
   'list_my_groups()',
   'mark_pings_read(uuid[])',
   'now_for_viewer(timestamp with time zone,timestamp with time zone)',
+  'preview_friend_invite(text)',
+  'regenerate_friend_invite()',
   'regenerate_group_invite(uuid)',
   'remove_group_member(uuid,uuid)',
   'reply_to_ping(uuid,text,text)',
+  'request_friend_by_invite(text,integer)',
   'request_test_push()',
+  'revoke_friend_invite()',
   'revoke_group_invite(uuid)',
   'save_push_subscription(text,text,text,text)',
   'send_friend_request(uuid,integer)',
@@ -251,8 +258,8 @@ const CLIENT_INVOKER_FUNCTIONS = [
   'set_day_hours(text,text,text)',
 ];
 
-/** The only function callable without signing in: the /i/[code] invite page (FR-WEB-3). */
-const ANON_FUNCTIONS = ['get_invite_summary(text)'];
+/** The only functions callable without signing in: the /i/[code] invite page (FR-WEB-3). */
+const ANON_FUNCTIONS = ['get_friend_invite_summary(text)', 'get_invite_summary(text)'];
 
 /** Every function signed-in clients can call. */
 const CLIENT_FUNCTIONS = [...CLIENT_DEFINER_FUNCTIONS, ...CLIENT_INVOKER_FUNCTIONS].sort();
@@ -277,6 +284,7 @@ const PRIVATE_FUNCTIONS = [
   'private.delete_friend_rules(uuid,uuid)',
   'private.drop_membership(uuid,uuid)',
   'private.epoch_ms(timestamp with time zone)',
+  'private.find_friend_invite(text)',
   'private.group_admin_in_sync_trigger()',
   'private.insert_group_invite(uuid,uuid,timestamp with time zone,integer)',
   'private.invite_status(invites)',
@@ -285,6 +293,7 @@ const PRIVATE_FUNCTIONS = [
   'private.lock_group(uuid)',
   'private.lock_invite_for_member(uuid,uuid)',
   'private.lock_pair(uuid,uuid)',
+  'private.lock_user(uuid)',
   'private.new_invite_code()',
   'private.normalize_handle(text)',
   'private.ping_status(uuid,timestamp with time zone)',
@@ -312,6 +321,7 @@ const PRIVATE_FUNCTIONS = [
   'private.signal_owner_rows_changed()',
   'private.signal_user_changed()',
   'private.signal_visibility_rules_changed()',
+  'private.to_friend_invite(invites)',
   'private.to_group_invite(invites,uuid)',
   'private.try_consume_rate_limit(uuid,text,integer,interval)',
   'private.validate_user_timezone()',

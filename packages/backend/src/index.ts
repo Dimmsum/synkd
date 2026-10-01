@@ -166,6 +166,58 @@ export type InviteSummary =
     };
 
 /**
+ * The caller's friend invite link (WF-042), from `get_my_friend_invite`, `create_friend_invite`
+ * and `regenerate_friend_invite`. A friend link never expires and has no use limit; `uses`
+ * counts the requests it produced.
+ */
+export interface FriendInvite {
+  id: string;
+  code: string;
+  uses: number;
+  created_at: string;
+}
+
+/**
+ * The row `get_friend_invite_summary` returns for /i/[code] (WF-042), callable signed out. No
+ * row at all: not a friend link, or the signed-in caller and the inviter blocked each other.
+ */
+export type FriendInviteSummary =
+  { status: 'valid'; inviter_name: string } | { status: 'revoked'; inviter_name: null };
+
+/**
+ * The row `preview_friend_invite` returns (WF-042): the inviter's public profile and how they
+ * relate to the caller. No row: not a friend link, or blocked either way.
+ */
+export type FriendInvitePreview =
+  | {
+      status: 'valid';
+      user_id: string;
+      name: string;
+      handle: string | null;
+      avatar_url: string | null;
+      relationship: Relationship;
+    }
+  | {
+      status: 'revoked';
+      user_id: null;
+      name: null;
+      handle: null;
+      avatar_url: null;
+      relationship: null;
+    };
+
+/**
+ * The row `request_friend_by_invite` returns (WF-042): a new request (`pending`), or a
+ * friendship if the inviter had already asked (`accepted`), and the inviter's id, who may be
+ * notified. Errors are those of the group invite functions for the link (`Invite not found`,
+ * `This invite has been revoked`) and of `send_friend_request` (`DB_ERROR`).
+ */
+export interface RequestFriendByInviteResult {
+  status: SendFriendRequestResult;
+  user_id: string;
+}
+
+/**
  * The messages the group and invite functions raise (WF-043/044/045/047), so clients can
  * tell errors apart (e.g. show "This group is full"). Match on `error.message`.
  * SQLSTATEs: WF001 no account for this sign-in and PT429 rate limited (see `DB_ERROR`),

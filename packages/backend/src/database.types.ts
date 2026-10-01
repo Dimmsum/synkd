@@ -719,6 +719,16 @@ export type Database = {
         Returns: string;
       };
       confirm_age: { Args: { birth_year: number }; Returns: string };
+      create_friend_invite: {
+        Args: Record<PropertyKey, never>;
+        Returns: Database['public']['CompositeTypes']['friend_invite'];
+        SetofOptions: {
+          from: '*';
+          to: 'friend_invite';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       create_group: { Args: { emoji?: string; name: string; tier?: number }; Returns: string };
       create_group_invite: {
         Args: { expires_at?: string; group_id: string; max_uses?: number };
@@ -785,6 +795,13 @@ export type Database = {
           relationship: string;
         }[];
       };
+      get_friend_invite_summary: {
+        Args: { code: string };
+        Returns: {
+          inviter_name: string;
+          status: string;
+        }[];
+      };
       get_group_members: {
         Args: { group_id: string };
         Returns: {
@@ -810,6 +827,16 @@ export type Database = {
           member_count: number;
           status: string;
         }[];
+      };
+      get_my_friend_invite: {
+        Args: Record<PropertyKey, never>;
+        Returns: Database['public']['CompositeTypes']['friend_invite'][];
+        SetofOptions: {
+          from: '*';
+          to: 'friend_invite';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
       };
       get_profile: {
         Args: { user_id: string };
@@ -932,6 +959,27 @@ export type Database = {
           user_id: string;
         }[];
       };
+      preview_friend_invite: {
+        Args: { code: string };
+        Returns: {
+          avatar_url: string;
+          handle: string;
+          name: string;
+          relationship: string;
+          status: string;
+          user_id: string;
+        }[];
+      };
+      regenerate_friend_invite: {
+        Args: Record<PropertyKey, never>;
+        Returns: Database['public']['CompositeTypes']['friend_invite'];
+        SetofOptions: {
+          from: '*';
+          to: 'friend_invite';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       regenerate_group_invite: {
         Args: { invite_id: string };
         Returns: Database['public']['CompositeTypes']['group_invite'];
@@ -951,7 +999,15 @@ export type Database = {
           sender_id: string;
         }[];
       };
+      request_friend_by_invite: {
+        Args: { code: string; tier?: number };
+        Returns: {
+          status: string;
+          user_id: string;
+        }[];
+      };
       request_test_push: { Args: Record<PropertyKey, never>; Returns: string };
+      revoke_friend_invite: { Args: Record<PropertyKey, never>; Returns: undefined };
       revoke_group_invite: { Args: { invite_id: string }; Returns: undefined };
       save_push_subscription: {
         Args: { auth: string; device_label?: string; endpoint: string; p256dh: string };
@@ -1019,6 +1075,12 @@ export type Database = {
       [_ in never]: never;
     };
     CompositeTypes: {
+      friend_invite: {
+        id: string | null;
+        code: string | null;
+        uses: number | null;
+        created_at: string | null;
+      };
       group_invite: {
         id: string | null;
         code: string | null;
