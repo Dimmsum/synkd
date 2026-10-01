@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ShieldCheck } from 'lucide-react';
@@ -28,7 +28,10 @@ export default async function ImportPage({ searchParams }: PageProps<'/import'>)
         }
         back={
           offlineFriend
-            ? { href: '/friends', label: 'Friends' }
+            ? {
+                href: `/friends/offline/${offlineFriend.id}` as Route,
+                label: offlineFriend.nickname,
+              }
             : { href: '/schedule', label: 'My schedule' }
         }
       />

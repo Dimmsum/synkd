@@ -32,7 +32,9 @@ export default async function ReviewPage({
     : (job.offlineFriend ?? null);
   if (manual && friend !== undefined && !offlineFriend) notFound();
 
-  const doneHref: Route = offlineFriend ? '/friends' : '/schedule';
+  const doneHref: Route = offlineFriend
+    ? (`/friends/offline/${offlineFriend.id}` as Route)
+    : '/schedule';
   if (job.status === 'committed') redirect(doneHref);
 
   const whose = offlineFriend ? `${offlineFriend.nickname}’s` : 'your';
