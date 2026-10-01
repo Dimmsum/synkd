@@ -1,49 +1,49 @@
+// The inbox (WF-092, WF-093, FR-PING-3) as the signed-in user. Pings are read only through
+// `list_inbox`, which returns the viewer's own pings with the other person's public profile and
+// leaves out anyone blocked either way (FR-SOC-6, D41). The page re-fetches when the viewer's
+// Realtime channel says `inbox_changed` (components/inbox/inbox-live.tsx).
+//
+// Only error codes are logged, never ping text or names (NFR-SEC-11).
+
+import 'server-only';
+import { cache } from 'react';
+import type { InboxPing } from '@whosfree/backend';
+import { createServerSupabase } from '@/lib/supabase/server';
+import { splitInbox } from '@/lib/pings/mappers';
 import type { Ping } from '@/lib/types';
-import { GROUPS, PINGS, VIEWER } from '@/lib/mock/data';
-import { findPerson, minutesAgo, toGroupSummary, toPerson } from '@/lib/mock/selectors';
 
-/** Pings expire after 2 hours (FR-PING-9). */
-const PING_TTL_MIN = 120;
-
-function toPing(p: (typeof PINGS)[number]): Ping {
-  const from = findPerson(p.fromId);
-  if (!from) throw new Error('unknown sender');
-  const toId = p.toId;
-  const group = typeof toId === 'object' ? GROUPS.find((g) => g.id === toId.groupId) : null;
-  const toPersonRecord = typeof toId === 'string' ? findPerson(toId) : null;
-  return {
-    id: p.id,
-    from: toPerson(from),
-    to: group ? { group: toGroupSummary(group) } : toPerson(toPersonRecord ?? from),
-    template: p.template,
-    text: p.text,
-    sentAt: minutesAgo(p.minutesAgo),
-    expiresAt: minutesAgo(p.minutesAgo - PING_TTL_MIN),
-    reply: p.replies?.map((r) => {
-      const who = findPerson(r.fromId);
-      return {
-        from: who ? toPerson(who) : toPerson(from),
-        reply: r.reply,
-        text: r.text,
-        at: minutesAgo(r.minutesAgo),
-      };
-    }),
-    read: p.read,
-  };
-}
+/** Received and sent pings from the last 30 days, newest first (WF-092, FR-PING-3). */
+export const getInbox = cache(async (): Promise<{ received: Ping[]; sent: Ping[] }> => {
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase.rpc('list_inbox');
+  if (error) throw new Error(`list_inbox failed (${error.code ?? 'no code'})`);
+  return splitInbox(data as InboxPing[]);
+});
 
 /**
- * Received and sent pings, newest first (WF-092, FR-PING-3).
- * TODO(WF-092): query pings (RLS: only sender and recipient can read) and subscribe to
- * Realtime for new ones.
+ * The inbox badge: unread pings plus unread replies to the viewer's pings. Never fails the
+ * page it's on (the app layout): on an error it logs the code and shows no badge.
  */
-export async function getInbox(): Promise<{ received: Ping[]; sent: Ping[] }> {
-  return {
-    received: PINGS.filter((p) => p.toId === VIEWER.id).map(toPing),
-    sent: PINGS.filter((p) => p.fromId === VIEWER.id).map(toPing),
-  };
-}
+export const getUnreadCount = cache(async (): Promise<number> => {
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase.rpc('unread_ping_count');
+  if (error) {
+    console.error('unread_ping_count failed', error.code ?? 'no code');
+    return 0;
+  }
+  return data;
+});
 
-export async function getUnreadCount(): Promise<number> {
-  return PINGS.filter((p) => p.toId === VIEWER.id && !p.read).length;
-}
+/**
+ * The viewer's users.id, which names their private Realtime channel (`user:<id>`), or null
+ * without an account.
+ */
+export const getViewerUserId = cache(async (): Promise<string | null> => {
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase.rpc('current_user_id');
+  if (error) {
+    console.error('current_user_id failed', error.code ?? 'no code');
+    return null;
+  }
+  return data ?? null;
+});

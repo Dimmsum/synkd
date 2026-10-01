@@ -4,7 +4,7 @@
 //
 // Coverage on purpose: every tier (T1/T2/T3), every status including no_schedule
 // and paused, stale sources, non-friend group members, an admin and a member view,
-// a friend using group settings (overlap hint), and pings with/without replies.
+// a friend using group settings (overlap hint). Pings are real (WF-092, lib/data/inbox.ts).
 // No locations anywhere (D35): titles are course codes and generic labels only.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -12,8 +12,6 @@ import {
   type EventCategory,
   type GroupPermissions,
   type ManualStatus,
-  type PingReply,
-  type PingTemplate,
   type SourceType,
   type Tier,
 } from '@whosfree/shared';
@@ -352,68 +350,5 @@ export const GROUPS: MockGroup[] = [
     viewerTier: 1,
     permissions: { me: { manageMembers: true } },
     inviteCode: 'ballin',
-  },
-];
-
-export interface MockPing {
-  id: string;
-  fromId: string;
-  toId: string | { groupId: string };
-  template?: PingTemplate;
-  text?: string;
-  /** Minutes before the mock now. */
-  minutesAgo: number;
-  replies?: { fromId: string; reply?: PingReply; text?: string; minutesAgo: number }[];
-  read: boolean;
-}
-
-export const PINGS: MockPing[] = [
-  {
-    id: 'p1',
-    fromId: 'shanice',
-    toId: 'me',
-    template: 'Free for food?',
-    minutesAgo: 6,
-    read: false,
-  },
-  {
-    id: 'p2',
-    fromId: 'andre',
-    toId: 'me',
-    template: 'Wanna study?',
-    text: 'Bring the past papers, exam is Friday 😩',
-    minutesAgo: 25,
-    read: false,
-  },
-  {
-    id: 'p3',
-    fromId: 'tiamarie',
-    toId: 'me',
-    text: 'Yo check this flyer https://example.com/fete-flyer and tell me if you going',
-    minutesAgo: 70,
-    replies: [{ fromId: 'me', reply: "I'm down", minutesAgo: 60 }],
-    read: true,
-  },
-  { id: 'p4', fromId: 'jordan', toId: 'me', template: 'Call me', minutesAgo: 190, read: true },
-  {
-    id: 's1',
-    fromId: 'me',
-    toId: 'omar',
-    template: 'Free for food?',
-    text: 'Patty run?',
-    minutesAgo: 14,
-    read: true,
-  },
-  {
-    id: 's2',
-    fromId: 'me',
-    toId: { groupId: 'flat-4' },
-    template: 'Link up?',
-    minutesAgo: 45,
-    replies: [
-      { fromId: 'tiamarie', reply: 'In 10', minutesAgo: 40 },
-      { fromId: 'aaliyah', reply: "Can't right now", minutesAgo: 38 },
-    ],
-    read: true,
   },
 ];

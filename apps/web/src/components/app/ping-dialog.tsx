@@ -91,20 +91,26 @@ function PingForm({ target, needsConfirm }: { target: PingTarget; needsConfirm: 
   const [text, setText] = useState('');
   const [confirmed, setConfirmed] = useState(!needsConfirm);
   const [error, setError] = useState<string>();
+  // The server is the authority (FR-PING-1): if it says they aren't free after all, it asks
+  // "Ping anyway?" here, and the answer resends with `confirmed`.
+  const [serverConfirm, setServerConfirm] = useState<string>();
   const [sent, setSent] = useState(false);
   const [pending, startTransition] = useTransition();
   const left = pingCharsLeft(text);
   const canSend = (template || text.trim()) && left >= 0;
 
-  function send() {
+  function send(confirm = needsConfirm) {
     setError(undefined);
+    setServerConfirm(undefined);
     startTransition(async () => {
       const res = await sendPing({
         to: target.kind === 'person' ? { personId: target.id } : { groupId: target.id },
         template,
         text: text.trim() || undefined,
+        confirmed: confirm,
       });
       if (res.ok) setSent(true);
+      else if (res.needsConfirmation) setServerConfirm(res.error);
       else setError(res.error);
     });
   }
@@ -197,11 +203,26 @@ function PingForm({ target, needsConfirm }: { target: PingTarget; needsConfirm: 
               {error}
             </p>
           ) : null}
+          {serverConfirm ? (
+            <p
+              role="alert"
+              className="rounded-xl bg-status-soon-soft p-3 text-sm text-status-soon-ink"
+            >
+              {serverConfirm}
+            </p>
+          ) : null}
           <DialogFooter>
-            <Button onClick={send} disabled={!canSend || pending}>
-              <Send aria-hidden="true" />
-              Send ping
-            </Button>
+            {serverConfirm ? (
+              <Button onClick={() => send(true)} disabled={!canSend || pending}>
+                <Send aria-hidden="true" />
+                Yes, ping anyway
+              </Button>
+            ) : (
+              <Button onClick={() => send()} disabled={!canSend || pending}>
+                <Send aria-hidden="true" />
+                Send ping
+              </Button>
+            )}
           </DialogFooter>
         </div>
       )}
