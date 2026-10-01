@@ -6,6 +6,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { DEFAULT_TIER, type Tier } from '@whosfree/shared';
 import type { AvailableHoursDay, Iso, VisibilityRow } from '@/lib/types';
 import { weeklyToDays } from '@/lib/available-hours';
+import { isStoredAvatarUrl } from '@/lib/avatars/paths';
 import { hueFor } from '@/lib/hue';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { PEOPLE } from '@/lib/mock/data';
@@ -98,9 +99,9 @@ async function readOwnUser() {
 /**
  * The profile settings page (FR-AUTH-2, WF-040): the users row plus the sign-in email, which
  * only Clerk has. `handle` is '' when the user hasn't chosen one (handles are optional).
- * `avatarUrl` is the photo taken from the sign-in provider at sign-up, or null; people who sign
- * in with email and password (D45) start without one. `photoFromGoogle` says whether it came
- * from a linked Google account.
+ * `avatarUrl` is the photo taken from the sign-in provider at sign-up, one the user uploaded
+ * (WF-040), or null; people who sign in with email and password (D45) start without one.
+ * `photoFromGoogle` says whether it is still the one from a linked Google account.
  */
 export async function getProfile() {
   const [row, clerkUser] = await Promise.all([readOwnUser(), currentUser()]);
@@ -112,6 +113,7 @@ export async function getProfile() {
     avatarUrl: row.avatar_url,
     photoFromGoogle:
       row.avatar_url !== null &&
+      !isStoredAvatarUrl(row.avatar_url, process.env.NEXT_PUBLIC_SUPABASE_URL) &&
       (clerkUser?.externalAccounts.some((a) => a.provider.includes('google')) ?? false),
     email: clerkUser?.primaryEmailAddress?.emailAddress ?? null,
     timeZone: row.timezone,
