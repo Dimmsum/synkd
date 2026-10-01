@@ -131,14 +131,22 @@ export function parseAdminFrom(client: SupabaseClient<Database>): ParseAdmin {
       }
       return true;
     },
+    // Storage's message ("Bucket not found", "Invalid Compact JWS") is what tells a missing
+    // bucket apart from a bad key: both are a 400. It never carries the path or a URL.
     async signUpload(path) {
       const { data, error } = await bucket().createSignedUploadUrl(path, { upsert: true });
-      if (error) throw new Error(`Signing an upload URL failed (${error.status ?? 'error'})`);
+      if (error) {
+        throw new Error(
+          `Signing an upload URL failed (${error.status ?? 'error'}: ${error.message})`,
+        );
+      }
       return { path: data.path, token: data.token };
     },
     async signRead(path, seconds) {
       const { data, error } = await bucket().createSignedUrl(path, seconds);
-      if (error) throw new Error(`Signing a read URL failed (${error.status ?? 'error'})`);
+      if (error) {
+        throw new Error(`Signing a read URL failed (${error.status ?? 'error'}: ${error.message})`);
+      }
       return data.signedUrl;
     },
   };
