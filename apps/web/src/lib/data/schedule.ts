@@ -3,7 +3,6 @@
 // viewer's own schedule from their offline friends' (D44), so every read here filters
 // `offline_friend_id is null`. Expansion and wording live in lib/my-schedule.ts.
 
-import { DEFAULT_TIMEZONE } from '@whosfree/shared';
 import { addDays, zonedTimeToInstant } from '@whosfree/ui/lib/time';
 import type { MyEvent, ScheduleSource } from '@/lib/types';
 import {
@@ -13,6 +12,7 @@ import {
   type StoredEvent,
   type StoredSource,
 } from '@/lib/my-schedule';
+import { getViewerRow } from '@/lib/data/now';
 import { createServerSupabase, type ServerSupabase } from '@/lib/supabase/server';
 
 const SOURCE_COLUMNS = 'id, type, status, period_start, period_end, period_exceptions';
@@ -29,13 +29,6 @@ async function ownSources(supabase: ServerSupabase): Promise<StoredSource[]> {
   return data;
 }
 
-async function ownTimeZone(supabase: ServerSupabase): Promise<string> {
-  // RLS lets the viewer read only their own users row.
-  const { data, error } = await supabase.from('users').select('timezone').maybeSingle();
-  if (error) throw new Error(`Reading your timezone failed (${error.code})`);
-  return data?.timezone ?? DEFAULT_TIMEZONE;
-}
-
 /**
  * The viewer's combined schedule for the given consecutive dates (FR-VIEW-5): every busy
  * occurrence of their own events, expanded with @whosfree/availability in their timezone.
@@ -47,7 +40,11 @@ export async function getMySchedule(dates: string[]): Promise<MyEvent[]> {
   const last = dates[dates.length - 1];
   if (first === undefined || last === undefined) return [];
   const supabase = await createServerSupabase();
-  const [timeZone, sources] = await Promise.all([ownTimeZone(supabase), ownSources(supabase)]);
+  // The viewer's users row is read once per request and shared with the status chip.
+  const [{ timezone: timeZone }, sources] = await Promise.all([
+    getViewerRow(),
+    ownSources(supabase),
+  ]);
   if (sources.length === 0) return [];
 
   // Rows that can have an occurrence in the range: recurring ones that started before its end
