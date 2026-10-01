@@ -6,6 +6,7 @@ import { DEFAULT_TIER, type Tier } from '@whosfree/shared';
 import { Button } from '@whosfree/ui/components/button';
 import { TierPicker } from '@whosfree/ui/components/tier-picker';
 import { respondToFriendRequest, sendFriendRequestTo } from '@/lib/actions/social';
+import { friendedHref } from '@/lib/offline-friends';
 
 /**
  * From someone's friend link or QR code (FR-SOC-1): pick what they'll see (FR-VIS-1, T1
@@ -39,11 +40,16 @@ export function AddFromLinkForm({
         disabled={pending}
         onClick={() =>
           start(async () => {
-            const res = theyAsked
-              ? await respondToFriendRequest({ requestId: personId, accept: true, tier })
-              : await sendFriendRequestTo(personId, tier);
-            if (res.ok) router.push('/friends');
-            else setError(res.error);
+            if (theyAsked) {
+              const res = await respondToFriendRequest({ requestId: personId, accept: true, tier });
+              // Now friends: Friends offers to delete an offline copy of them (FR-SOC-19).
+              if (res.ok) router.push(friendedHref(personId));
+              else setError(res.error);
+              return;
+            }
+            const res = await sendFriendRequestTo(personId, tier);
+            if (!res.ok) setError(res.error);
+            else router.push(res.data.status === 'accepted' ? friendedHref(personId) : '/friends');
           })
         }
       >
