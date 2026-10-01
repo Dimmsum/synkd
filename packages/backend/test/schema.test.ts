@@ -369,11 +369,13 @@ const PRIVATE_FUNCTIONS = [
 ];
 
 /**
- * The only security definer functions in `private`: the Realtime signal triggers (WF-064). They
+ * The only security definer functions in `private`: the Realtime signal triggers (WF-064), which
  * fire for client writes under RLS and must read other users' connections and write
- * realtime.messages. They return `trigger`, so they can't be called directly.
+ * realtime.messages, and the group admin check (WF-043), a deferred trigger that fires at commit
+ * whatever role Postgres fires it as. They return `trigger`, so they can't be called directly.
  */
 const PRIVATE_DEFINER_TRIGGER_FUNCTIONS = [
+  'private.group_admin_in_sync_trigger()',
   'private.signal_blocks_changed()',
   'private.signal_friendships_changed()',
   'private.signal_group_members_changed()',
@@ -383,7 +385,7 @@ const PRIVATE_DEFINER_TRIGGER_FUNCTIONS = [
 ];
 
 describe('functions', () => {
-  it('the private schema holds exactly the internal helpers; only signal triggers are definer', async () => {
+  it('the private schema holds exactly the internal helpers; only trigger functions are definer', async () => {
     const fns = await rows<{ fn: string; definer: boolean; returns: string }>(
       `select p.oid::regprocedure::text as fn, p.prosecdef as definer,
               p.prorettype::regtype::text as returns
