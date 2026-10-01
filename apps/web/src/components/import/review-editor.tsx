@@ -323,7 +323,7 @@ export function ReviewEditor({
           {error}
         </p>
       ) : null}
-      <div className="sticky bottom-20 z-20 flex flex-col gap-2 rounded-2xl border bg-card/95 p-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between md:bottom-4">
+      <div className="sticky bottom-[max(1rem,env(safe-area-inset-bottom))] z-20 flex flex-col gap-2 rounded-2xl border bg-card/95 p-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between md:bottom-4">
         <p className="text-xs text-muted-foreground">
           {manual
             ? 'Nothing is saved until you confirm.'
