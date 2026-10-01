@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Product | whosfree (working name, see D23) |
-| Document version | 0.9 |
+| Document version | 0.12 |
 | Status | Draft. All open questions resolved, ready for Phase 0 (see [§14](#14-open-questions)) |
 | Last updated | 2026-09-30 |
 | Owner | Dimetri Lee |
@@ -20,6 +20,7 @@
 | 0.6 | 2026-09-30 | **Backend moves from Convex to Supabase** (D40): Postgres with row-level security, Supabase Storage, Realtime and Cron. Clerk stays for sign-in, connected through Supabase's third-party auth. **Authorisation and tier redaction are enforced in Postgres**, and TypeScript server logic runs on the Next.js server (D41). Updated the architecture (§8), data model (§9), NFRs and risks to match. |
 | 0.7 | 2026-09-30 | Recorded decisions from building the availability engine (D42): recurrence and timezones are handled in-house instead of with `rrule` and `date-fns-tz`, `exdates` are occurrence start instants, and week numbers count from the Monday week containing the schedule's start date (FR-IMP-5). |
 | 0.8 | 2026-09-30 | Data model matches the first migrations (D43): blocks get their own directed `blocks` table instead of a `blocked` friendship status; `events` use `startsAt`/`endsAt`; group permissions are four boolean columns; a source's period is three columns. |
+| 0.12 | 2026-09-30 | **No Railway worker** (D46, after the WF-024 spike): PDF and HEIC conversion and the OpenRouter call run on the Next.js server, with uploads going straight to Supabase Storage and parse jobs queued in Postgres with a cron sweep. Updated §8, the parse flow and the NFRs that mentioned the worker. |
 | 0.11 | 2026-09-30 | Phone navigation is a **hamburger menu** in the header, not the design's bottom bar (FR-WEB-9). |
 | 0.10 | 2026-09-30 | Sign-in accepts **email and password** as well as Google (D45, FR-AUTH-1). |
 | 0.9 | 2026-09-30 | Added **offline friends** (D44, FR-SOC-14 to FR-SOC-19, J8): a user can add someone who isn't on whosfree and upload or type in that person's timetable, so the app is useful before their friends join. Private to the uploader, a nickname only, with a permission confirmation. Part of Milestone A. |
@@ -126,7 +127,7 @@ Shanice is why every group gets its own visibility tier, chosen when you join it
 | A7 | People are happy to share Free/Busy with times, and more hesitant about sharing details. | [ASSUMPTION], which is why D1 and D20 exist |
 
 ### Constraints
-- **Fixed stack** (D6, D15, D19): Next.js on Vercel, Supabase (Postgres), a Railway worker, Clerk, OpenRouter, all in one monorepo.
+- **Fixed stack** (D6, D15, D19, D46): Next.js on Vercel, Supabase (Postgres), Clerk, OpenRouter, all in one monorepo. There is no separate worker service (D46).
 - **Google OAuth verification** is required for the `calendar.readonly` scope (D8). Until it's approved, the app is capped at **100 test users** and shows an "unverified app" warning.
 - **Jamaica Data Protection Act 2020** applies (D9). See NFR-COMP.
 - **18+ only** (D13).
@@ -401,11 +402,11 @@ Location or room is **never stored or shared**, at any tier (NG1, D35).
 | NFR-SEC-1 | **Privacy by default and minimal data**: new connections start at T1 (D20), locations are never stored (D35), Google data is kept to the minimum (D36), raw files are deleted on confirm (D38), and sharing more is always opt-in. |
 | NFR-SEC-2 | **Every read and write checks authorisation.** Row-level security (RLS) is on for every table, and the client is never trusted. Other users' data can only be read through database functions that apply the tier filter (FR-VIS-5, D41). The Supabase service-role key is used only on the server, never in the browser. |
 | NFR-SEC-3 | **Google OAuth refresh tokens** (we store them ourselves, D30) are encrypted in the application (AES-256-GCM, key held in an environment secret) and never sent to the client. |
-| NFR-SEC-4 | TLS everywhere. Data at rest is encrypted by the providers (Supabase, Railway). |
-| NFR-SEC-5 | **Calls between services** (Next.js server ↔ worker) are authenticated with a shared secret and HMAC-signed requests with a timestamp, to stop replay attacks. The browser never calls the worker directly. |
-| NFR-SEC-6 | **Uploaded files** are validated by their magic bytes (not just the file extension), size-limited, stored privately and accessible only to the owner and the worker, through short-lived URLs. Files are deleted when the schedule is confirmed, or 7 days after upload if it never is (D38). |
+| NFR-SEC-4 | TLS everywhere. Data at rest is encrypted by the providers (Supabase). |
+| NFR-SEC-5 | **Internal routes** (cron sweeps, parse-job dispatch) are authenticated with a shared secret (`CRON_SECRET`) compared in constant time, and do nothing for unauthenticated callers. The browser never calls them (D46). |
+| NFR-SEC-6 | **Uploaded files** are validated by their magic bytes (not just the file extension), size-limited, stored privately and accessible only to the owner and the server, through short-lived URLs. Uploads go straight from the browser to Storage through a signed upload URL, never through a server function (D46). Files are deleted when the schedule is confirmed, or 7 days after upload if it never is (D38). |
 | NFR-SEC-7 | **The AI parser treats file content as untrusted.** The model gets no tools and no other data, its output must match a strict zod schema, and nothing it returns is executed or rendered as HTML. |
-| NFR-SEC-8 | **The OpenRouter API key** exists only in the worker's environment. Requests are routed only to providers that **don't store or train on prompts** (configured through OpenRouter's data-collection and zero-data-retention settings). Check what these settings actually guarantee before launch. |
+| NFR-SEC-8 | **The OpenRouter API key** exists only in the Next.js server's environment (never a `NEXT_PUBLIC_` variable, D46). Requests are routed only to providers that **don't store or train on prompts** (configured through OpenRouter's data-collection and zero-data-retention settings). Check what these settings actually guarantee before launch. |
 | NFR-SEC-9 | Every write that could be abused (pings, friend requests, invites, parses) is **rate-limited**. |
 | NFR-SEC-10 | Dependencies are scanned (Dependabot or Renovate), and CI scans for secrets. |
 | NFR-SEC-11 | Logs never contain event titles, ping text, file contents or tokens. |
@@ -427,13 +428,13 @@ Location or room is **never stored or shared**, at any tier (NG1, D35).
 | NFR-REL-1 | **99.5% monthly availability** for the core app during the beta. |
 | NFR-REL-2 | Parse jobs are **idempotent** and **retried** with backoff up to 3 times. OpenRouter **fallback models** are configured so a single provider outage doesn't stop parsing. |
 | NFR-REL-3 | A failed Google Calendar sync doesn't break the rest of the app, and stale data is flagged (FR-GCAL-10, FR-VIEW-8). |
-| NFR-REL-4 | If the worker is down, uploads still queue and are processed once it comes back. |
+| NFR-REL-4 | If a parse run fails, crashes or times out, the job stays queued (or its lease expires) and a cron sweep re-dispatches it with backoff, up to 3 attempts (D46). |
 
 ### 7.4 Scalability (SCALE)
 | ID | Requirement |
 |---|---|
 | NFR-SCALE-1 | The beta design handles **5,000 users and 500 concurrent** without architectural changes. **[ASSUMPTION]** |
-| NFR-SCALE-2 | The worker holds no state and can scale horizontally on Railway. |
+| NFR-SCALE-2 | Parse runs hold no state between requests: everything lives in the `parseJobs` row and Storage, so any server instance can pick a job up (D46). |
 | NFR-SCALE-3 | Availability is calculated **when read**, for small windows. "Now" statuses are cached or precomputed only if profiling shows it's needed. |
 | NFR-SCALE-4 | The 20-member group cap is a config value (FR-SOC-11). Raising it must not require a schema change. |
 
@@ -459,7 +460,7 @@ Location or room is **never stored or shared**, at any tier (NG1, D35).
 | NFR-COMP-1 | **Jamaica Data Protection Act 2020 (DPA)**: register as a data controller with the **Office of the Information Commissioner (OIC)**, and appoint a Data Protection Officer if required. |
 | NFR-COMP-2 | **Data-subject rights**: access, correction, erasure and objection, handled through FR-SET-1, FR-SET-2 and FR-IMP-16 plus a contact email address. |
 | NFR-COMP-3 | **Breach notification**: an internal runbook for notifying the OIC within the required time (believed to be **72 hours**, needs confirming). |
-| NFR-COMP-4 | **Sending data abroad**: our processors (Supabase, Vercel, Railway, Clerk, OpenRouter and the model providers it routes to) host data outside Jamaica, mostly in the US. Document the legal basis and disclose it in the privacy notice. |
+| NFR-COMP-4 | **Sending data abroad**: our processors (Supabase, Vercel or whichever host runs the web app, Clerk, OpenRouter and the model providers it routes to) host data outside Jamaica, mostly in the US. Document the legal basis and disclose it in the privacy notice. |
 | NFR-COMP-5 | **Google API Services User Data Policy, including Limited Use**: Google data is used only for features the user sees. It's never used for ads, never sold, and never sent to AI models or OpenRouter. Showing a user's event titles to friends they chose is a feature the user directs. Confirm Google accepts this during verification. |
 | NFR-COMP-6 | **Google OAuth verification** for `calendar.readonly`. Needs a privacy policy, a homepage (FR-WEB-1, FR-WEB-4), a verified domain, a demo video showing how the scope is used, and possibly a security assessment. **Start early** (D8, §13). Changing the app's name or logo afterwards may trigger a new review (see D23). |
 | NFR-COMP-7 | **Minimum age 18** (D13), enforced at sign-up with a self-declared date of birth (FR-AUTH-6, D29) and stated in the terms. Only the birth year is stored. |
@@ -470,7 +471,7 @@ Location or room is **never stored or shared**, at any tier (NG1, D35).
 | ID | Requirement |
 |---|---|
 | NFR-COST-1 | AI parsing costs **≤ US$0.05 per parse**, enforced with rate limits (FR-IMP-19), page limits (FR-IMP-1), image resizing and caching of identical files (by hash). OpenRouter lets us compare prices across models. **[ASSUMPTION]** |
-| NFR-COST-2 | Stay on free or hobby tiers (Vercel Hobby/Pro, Supabase free, Railway Hobby, Clerk free tier) until the beta shows traction. Check usage monthly. |
+| NFR-COST-2 | Stay on free or hobby tiers (Vercel Hobby/Pro, Supabase free, Clerk free tier) until the beta shows traction. Check usage monthly. |
 | NFR-COST-3 | Storage cost stays small because files are deleted on confirm (D38). Alert if unconfirmed files pile up. |
 
 ### 7.9 Maintainability & observability (OPS)
@@ -479,8 +480,8 @@ Location or room is **never stored or shared**, at any tier (NG1, D35).
 | NFR-OPS-1 | TypeScript `strict` everywhere, with types shared through `packages/shared`. |
 | NFR-OPS-2 | The availability engine has **≥ 90% test coverage**, including property-based tests for the interval maths. |
 | NFR-OPS-3 | Parser changes, including model or prompt changes on OpenRouter, run against the **eval set** (§13) in CI. A change fails if accuracy drops below the baseline. |
-| NFR-OPS-4 | **Error tracking** with Sentry (web and worker) and **product analytics** with PostHog. Analytics never include event titles, ping text, schedule contents or **IP addresses** (NFR-SEC-12, D37). |
-| NFR-OPS-5 | Structured logs with a correlation ID that follows a request from the Next.js server to the worker to OpenRouter. |
+| NFR-OPS-4 | **Error tracking** with Sentry (web app and server) and **product analytics** with PostHog. Analytics never include event titles, ping text, schedule contents or **IP addresses** (NFR-SEC-12, D37). |
+| NFR-OPS-5 | Structured logs with a correlation ID that follows a parse job from the upload through the Next.js server to OpenRouter. |
 | NFR-OPS-6 | Separate `dev`, `preview` (one per PR) and `prod` environments, each with its own Supabase project (previews use Supabase branching) and Clerk instance. |
 
 ---
@@ -511,12 +512,8 @@ Location or room is **never stored or shared**, at any tier (NG1, D35).
                 │ • Realtime (Broadcast change signals)    │
                 │ • Cron (pg_cron + pg_net → server routes)│
                 └──────────────────────────────────────────┘
-      Next.js server ──signed HTTP──►┌──────────────────────────────────┐
-      Next.js server ◄──signed cb────│ Railway: apps/worker (Node+Hono) │
-                                     │ • PDF → images/text              │──► OpenRouter ──► vision LLM
-                                     │ • HEIC → JPEG, resize            │     (no-data-retention providers,
-                                     │ • LLM extraction + validation    │      fallback models)
-                                     └──────────────────────────────────┘
+      Next.js server ──► OpenRouter ──► vision LLM   (parse jobs: PDF/HEIC → JPEG in WASM + sharp,
+                                                     no-data-retention providers, fallback models, D46)
       Next.js server ──► Google Calendar API  (OAuth, sync, watch webhooks)
       Next.js server ──► Web Push (VAPID) ──► browsers
 ```
@@ -526,11 +523,10 @@ Location or room is **never stored or shared**, at any tier (NG1, D35).
 **How the pieces fit (D41):**
 - **Clerk** signs users in. Supabase trusts Clerk's session tokens through **third-party auth**, and RLS policies identify the user from the Clerk user ID in the token (`auth.jwt()->>'sub'`).
 - **Postgres** is the single enforcement point. Users read and write their own rows directly, under RLS. **Other users' data is never selectable directly**: it comes only from `security definer` functions (e.g. `events_for_viewer`) that call `resolve_tier` and `redact`. Anything that must be atomic (committing a schedule, joining a group) is one SQL function, so it runs in one transaction.
-- **The Next.js server** runs the TypeScript logic: the availability engine (`packages/availability`), Google Calendar sync, Web Push and calls to the worker. For user requests it talks to Supabase **as that user** (with their Clerk token, so RLS applies). The service-role key is used only for background work (webhooks, cron routes, worker callbacks, and Web Push delivery). Push delivery reads a recipient's devices through one narrow module (`apps/web/src/lib/push/store.ts`) after a security-definer function, run as the acting user, has authorised the notification.
+- **The Next.js server** runs the TypeScript logic: the availability engine (`packages/availability`), Google Calendar sync, Web Push, and parse jobs (file conversion and the OpenRouter call, D46). For user requests it talks to Supabase **as that user** (with their Clerk token, so RLS applies). The service-role key is used only for background work (webhooks, cron routes, parse runs, and Web Push delivery). Push delivery reads a recipient's devices through one narrow module (`apps/web/src/lib/push/store.ts`) after a security-definer function, run as the acting user, has authorised the notification.
 - **Realtime** only tells clients that *something changed* (Broadcast on a private per-user channel, sent by database triggers, with no event data in it). The client then re-fetches through the redacting functions. Clients never subscribe to raw row changes on other users' tables, because that would bypass redaction.
 
-**Why there's still a Railway worker:** PDF rendering and HEIC conversion need native libraries (e.g. `pdfium`/`poppler`, and `sharp`/`libvips` with HEIC support), and AI parse jobs can run long and need their own retry and queue control.
-> 🔁 **Revisit after the Phase 1 spike:** if Vercel (Node) functions can handle PDF and HEIC processing within their limits, drop the worker and call OpenRouter directly from the Next.js server. Keep the worker behind a thin interface so it's easy to swap either way.
+**Why there's no worker (D46):** the WF-024 spike ([write-up](docs/spikes/WF-024-vercel-vs-worker.md)) showed that a Node function can turn every allowed upload into vision-ready JPEGs without custom binaries: PDFium and libheif compiled to WASM, plus `sharp` for resizing, in about 0.02–3.3 s per file and under 1 GB of memory. Parse jobs live in Postgres (`parseJobs` with a lease and an attempt counter). A dedicated internal route runs one LLM attempt per invocation, and a cron sweep retries failures and recovers expired leases. `dispatch(jobId)` is the single seam, so a queue product or a worker could be added later without touching the rest.
 
 **Why OpenRouter (D15):** one API and one key give access to many vision models. That makes comparing models on the eval set cheap, allows **fallback models** for reliability, and means switching models later doesn't change any code. We need models that accept **image input** and support **structured (JSON-schema) output**. When structured output isn't supported, validate the result with zod and retry.
 
@@ -539,14 +535,13 @@ Location or room is **never stored or shared**, at any tier (NG1, D35).
 ```
 whosfree/
 ├── apps/
-│   ├── web/                # Next.js (App Router) PWA + landing/auth/legal pages → Vercel
-│   └── worker/             # Node + Hono service → Railway (Dockerfile)
+│   └── web/                # Next.js (App Router) PWA + landing/auth/legal pages → Vercel
 ├── packages/
 │   ├── backend/            # Supabase: supabase/migrations (schema, RLS, SQL functions), config.toml,
 │   │                       #   generated DB types, typed client helpers, SQL tests
 │   ├── availability/       # Pure TS availability engine (no I/O) + tests
 │   ├── parser/             # Schedule extraction: prompts, output schema, OpenRouter client,
-│   │                       #   post-processing, eval harness
+│   │                       #   file conversion (Node-only), post-processing, eval harness
 │   ├── shared/             # zod schemas, types, constants (statuses, tiers, permissions, templates)
 │   ├── ui/                 # Shared React components (Tailwind + shadcn/ui)
 │   └── config/             # tsconfig, eslint, prettier presets
@@ -577,10 +572,9 @@ whosfree/
 | Recurrence | **In-house expander** in `packages/availability` (D42) | Recurring schedules stored as RRULE + EXDATE. Supports FREQ=DAILY/WEEKLY with INTERVAL, BYDAY, COUNT, UNTIL and WKST, and rejects anything else. |
 | Dates | **Platform `Intl`** for timezone conversion in the engine (D42); the web app may use `date-fns` for display | UTC internally. A time skipped by DST moves later, and a repeated time means the first one (Temporal's default). |
 | Validation | **zod** in shared code and at every route handler and server action | Postgres constraints (`CHECK`, foreign keys, enums) back it up in the database. |
-| Worker HTTP | **Hono** | Small, fast and typed. |
 | AI parsing | **OpenRouter** (decided, D15) with a vision model and structured output. The model is chosen from Phase 1 eval results. | Fallback models and no-data-retention provider routing (NFR-SEC-8). |
 | Testing | **Vitest** (unit), **Playwright** (E2E), and database tests (migrations, RLS, SQL functions) run in Vitest against **PGlite** (in-process Postgres with a small Supabase auth shim) | |
-| CI/CD | **GitHub Actions** for lint, typecheck, tests and parser evals. Vercel preview deploys. Railway deploys from `main`. | |
+| CI/CD | **GitHub Actions** for lint, typecheck, tests and parser evals. Vercel preview deploys. | |
 | Rate limiting | **A Postgres counter table** checked inside the write functions | Fixed-window counters per user and action (NFR-SEC-9). |
 | Observability | **Sentry**, **PostHog** | NFR-OPS-4 |
 
@@ -589,9 +583,9 @@ whosfree/
 **Schedule parse (FR-IMP)**
 1. The client compresses the image or validates the PDF, then asks the server for a signed upload URL and uploads the file to a **private Supabase Storage bucket**. A `scheduleFiles` row is created with `deleteAt = uploadedAt + 7 days` (the fallback for files that are never confirmed).
 2. The `create_parse_job` function saves a `queued` job, and the Next.js server dispatches it.
-3. The server sends a signed `POST` to the worker's `/parse` endpoint with `{ jobId, fileUrl (short-lived signed URL), parserVersion }`. A cron re-dispatches jobs left in `queued` (NFR-REL-4).
-4. The worker rasterises or extracts the file and calls **OpenRouter** with the prompt, the images and the JSON schema. It validates the response with zod, normalises it (times, days, week patterns, dates) and scores confidence.
-5. The worker sends a signed callback to a route handler on the Next.js server, which sets the job to `needs_review` and stores the draft events.
+3. An internal route on the Next.js server (authenticated with `CRON_SECRET`, NFR-SEC-5) claims the job with a lease, downloads the file from Storage with the service role, checks its magic bytes and converts it in memory to at most 5 JPEGs (never stored, D38). A cron sweep re-dispatches jobs left in `queued` or whose lease expired (NFR-REL-4).
+4. The server calls **OpenRouter** once per invocation with the prompt, the images and the JSON schema. It validates the response with zod, normalises it (times, days, week patterns, dates), scrubs anything location-like (D35) and scores confidence. A failure goes back to the queue with backoff, or to `failed` after 3 attempts.
+5. The server saves the draft, which sets the job to `needs_review` (D46).
 6. A Realtime signal tells the client the draft is ready, and it opens the review screen, where the user edits and confirms.
 7. The `commit_schedule` function writes the events and, in the same transaction, **deletes the draft and the file's row** (D38). The server then removes the object from Storage straight away. (Storage objects can't be removed inside a SQL transaction, so the expiry cron retries any removal that fails.)
 8. A daily cron deletes any unconfirmed files past their `deleteAt` date (FR-ADM-4).
@@ -679,11 +673,11 @@ Targets are **[ASSUMPTION]** placeholders for the closed beta and should be revi
 | R5 | **iOS PWA limits**: push notifications only work once installed, and storage can be cleared. | High | Medium | Install guide (FR-PWA-3). In-app inbox as a fallback (NFR-COMPAT-2). Measure the iOS share during the beta. |
 | R6 | **AI costs run away** through abuse or large files. | Medium | Medium | Rate limits, page and size limits, resizing, caching by file hash, cost recorded per job (`parseJobs.costUsd`), and price comparison across models on OpenRouter. |
 | R7 | **Stale data** makes people look free when they aren't. | Medium | Medium | Sync-health indicators (FR-GCAL-10) and the stale-data warning (FR-VIEW-8, D25). Reminders when a schedule is about to end (J6). |
-| R8 | **Complexity of several server pieces** (Supabase + Next.js server + worker). | Medium | Low | The worker has one job behind a thin interface. Revisit after the Phase 1 spike (§8.1). |
+| R8 | **Complexity of several server pieces** (Supabase + Next.js server). | Low | Low | Mitigated by D46: there is no separate worker. Parse runs sit behind one `dispatch` seam (§8.1). |
 | R9 | **Regulatory**: DPA registration and sending data abroad. | Low | High | Get legal advice before public launch (NFR-COMP). |
 | R10 | **Ping fatigue or abuse through free text** leads to muting or harassment. | Medium | Medium | Rate limits, quiet hours, DND, pings that expire, one-tap report and block (FR-PING-8), plain-text rendering. |
 | R11 | **Google accounts managed by a school or employer** block third-party apps from reading calendars. | Medium | Medium | Detect the specific OAuth error and explain it clearly. The upload path still works. Suggest connecting a personal Google account. |
-| R12 | **Uploaded files contain extra personal data** (ID numbers, photos, full names) (D38). | Low | Medium | Files are deleted on confirm (or after 7 days), the parser never extracts those fields (D35), storage is private and only the owner and worker can access it, and the privacy notice tells users they can crop before uploading. |
+| R12 | **Uploaded files contain extra personal data** (ID numbers, photos, full names) (D38). | Low | Medium | Files are deleted on confirm (or after 7 days), the parser never extracts those fields (D35), storage is private and only the owner and the server can access it, and the privacy notice tells users they can crop before uploading. |
 | R14 | **Accidental sensitive data** in Google event titles (health, religion) and in schedule titles. | Medium | High | Google titles are stored only while a T3 grant exists (D36). Google descriptions, attendees and locations are never stored. Private events. Titles are never logged or sent to analytics. |
 | R13 | **A broader audience (D11) blurs the focus** of the MVP. | Medium | Medium | Keep the product general, but **launch in one dense seed community** where schedules are structured and coordination is frequent. |
 | R14 | **Offline friends are misused** to track someone who never agreed (D44). | Medium | High | Nickname only, no locations anywhere (D35), a permission confirmation, a clear terms clause, visible only to the uploader, a cap of 20, report and account action under the terms, and a legal review of the basis for holding non-users' data (NFR-COMP-9). |
@@ -722,7 +716,7 @@ No fixed dates (D10). Each phase ends when its exit criteria are met.
 | Phase | Scope | Exit criteria |
 |---|---|---|
 | **0: Foundations** | Monorepo scaffold (Turborepo, pnpm), Next.js app, Supabase project, Clerk auth with the age check, CI, Sentry and PostHog, environments. **Landing and legal pages** (FR-WEB-1, FR-WEB-4). **Start preparing Google OAuth verification.** | A signed-in 18+ user sees an empty Now screen on a preview deploy. The landing page is live. CI is green. |
-| **1: Import spike, then build** | Collect samples, build the eval harness, **compare 2–3 vision models through OpenRouter**, decide whether the worker is needed (§8.1). Then build upload → parse → review → commit, manual entry, My uploads, and file expiry. | **≥ 70% parse acceptance** on the eval set. The whole flow works on a phone. |
+| **1: Import spike, then build** | Collect samples, build the eval harness, **compare 2–3 vision models through OpenRouter**, decide whether the worker is needed (decided: it isn't, D46). Then build upload → parse → review → commit, manual entry, My uploads, and file expiry. | **≥ 70% parse acceptance** on the eval set. The whole flow works on a phone. |
 | **2: Social & visibility** | Friends, groups (admin, permissions, 20-member cap), invite pages and links, WhatsApp sharing, blocking, choosing a tier at join, "Who can see me", server-side redaction. | Two test users in a group see each other at the tier each chose, permissions are enforced, and tests prove the redaction works. |
 | **3: Availability & Now** | `packages/availability`, available hours, manual status, the Now screen with "until X", friend detail, real-time updates. | Engine coverage ≥ 90%. The Now screen updates within 5 s. |
 | **4: Google Calendar** | Incremental OAuth, sync, webhooks and polling, private events, disconnect and delete. | A Google Calendar change appears in whosfree within 5 minutes (15 in the worst case). |
@@ -815,7 +809,7 @@ The **[ASSUMPTION]** markers still in this document (for example the file-size a
 | D3 | 2026-09-30 | **MVP sources: PDF/image upload with AI parsing, plus Google Calendar.** .ics and Outlook come after the MVP. | Parsing uploads is the core idea. ICS is noted as a reliable next source. |
 | D4 | 2026-09-30 | **Core actions: view, one-tap ping, group slot finder.** | A dashboard you can only look at doesn't keep people coming back. |
 | D5 | 2026-09-30 | **"Free" means inside available hours, with no busy event and no overriding manual status.** | A gap in a schedule isn't the same as being free (sleep, travel, work). |
-| D6 | 2026-09-30 | **Stack: Turborepo monorepo. Next.js on Vercel. ~~Convex~~ Supabase (D40) as the main backend. A Railway worker for heavy jobs only.** | Your preference. The worker handles native-library work and long-running parse jobs. |
+| D6 | 2026-09-30 | **Stack: Turborepo monorepo. Next.js on Vercel. ~~Convex~~ Supabase (D40) as the main backend. ~~A Railway worker for heavy jobs only~~ (dropped, D46).** | Your preference. |
 | D7 | 2026-09-30 | **The parser is generic from day one, and review is mandatory.** | Users bring many different formats, and review makes up for imperfect accuracy. |
 | D8 | 2026-09-30 | **Google Calendar uses the full-events scope (`calendar.readonly`). Events show as Busy by default. Start verification early.** | T2 and T3 need event details, and verification takes a long time. |
 | D9 | 2026-09-30 | **Main jurisdiction is Jamaica** (Data Protection Act 2020). | That's the launch market. |
@@ -850,11 +844,12 @@ The **[ASSUMPTION]** markers still in this document (for example the file-size a
 | D38 | 2026-09-30 | **Raw files are deleted when the schedule is confirmed**, or 7 days after upload if it never is. **Replaces D12 and D33.** Re-parsing confirmed files (FR-IMP-18) is dropped. | Files often contain ID numbers, photos and full names we don't need. Keeping them was the biggest avoidable privacy risk. |
 | D39 | 2026-09-30 | **Public-ready gate**: public launch needs Milestone A plus WF-035, 044, 094, 095, 119, 120 and 126. Export and deletion requests are handled by email until WF-113 and WF-114 exist. The rest of Milestone B ships after launch. Also corrects the earlier claim that Milestone A was capped at 100 users by Google. That cap only applies to the calendar scope, which A doesn't use. | Replaces "nothing public before Milestone B", which set the bar higher than needed. The gate covers the real legal, safety and cost risks. |
 | D40 | 2026-09-30 | **The backend is Supabase instead of Convex**: Postgres with row-level security, Storage, Realtime and Cron. **Clerk stays** for sign-in, connected through Supabase third-party auth. Replaces the Convex part of D6. | Owner's preference. The data is relational, RLS enforces authorisation in the database, and Postgres is portable. |
-| D41 | 2026-09-30 | **Authorisation and tier redaction are enforced in Postgres** (RLS plus `security definer` functions). TypeScript server logic (availability engine, Google sync, push, worker calls) runs on the Next.js server on Vercel. Realtime sends only "something changed" signals, never other users' rows. | No client path can bypass redaction, and the shared TypeScript packages run unchanged in Node. |
+| D41 | 2026-09-30 | **Authorisation and tier redaction are enforced in Postgres** (RLS plus `security definer` functions). TypeScript server logic (availability engine, Google sync, push, parse jobs) runs on the Next.js server on Vercel. Realtime sends only "something changed" signals, never other users' rows. | No client path can bypass redaction, and the shared TypeScript packages run unchanged in Node. |
 | D42 | 2026-09-30 | **Recurrence and timezones are handled in-house** in the availability engine, not with `rrule` or `date-fns-tz`. Occurrences keep the first occurrence's local wall-clock times. Week numbers count from the Monday week containing the schedule's start date. | We only need a small RRULE subset, and `rrule`'s timezone handling is a common source of DST bugs. Doing it ourselves keeps the rules explicit and fully tested. |
 | D43 | 2026-09-30 | **Blocks are a separate, directed table**, not a friendship status. | A shared friendship row would let the blocked person see the block. Two people can block each other independently, and blocks also apply between people who aren't friends. |
 | D44 | 2026-09-30 | **Offline friends**: users can add people who aren't on whosfree and upload or type in their timetables. Private to the uploader, nickname only, with a permission confirmation, and never merged with a real account. Part of Milestone A. | The app has to be useful before someone's friends join (R2, cold start), and people already have their friends' timetables. |
 | D45 | 2026-09-30 | **Sign-in accepts email and password as well as Google.** Clerk handles passwords, email verification and resets; we never see or store a password. Names are required at email sign-up. | Not everyone wants to use their Google account (A3, R11), and some school-managed Google accounts block third-party apps. Clerk supports both with no extra backend work. |
+| D46 | 2026-09-30 | **No separate worker service.** PDF and HEIC conversion (PDFium and libheif as WASM, plus `sharp`) and the OpenRouter call run on the Next.js server in a dedicated internal route. Uploads go straight to Supabase Storage through signed upload URLs. Parse jobs are queued in Postgres with a lease and retried by a cron sweep. Replaces the worker part of D6. | The WF-024 spike showed conversion fits comfortably in a Node function (WASM, no custom binaries), so a second service, its HMAC channel and a second deploy target aren't worth it (R8). `dispatch(jobId)` keeps it swappable. |
 
 ---
 
@@ -878,4 +873,3 @@ The **[ASSUMPTION]** markers still in this document (for example the file-size a
 | **Stale data** | Schedule data we can't trust: a source that failed to sync, hasn't synced in over 24 hours, or has passed its end date. It's flagged with ⚠️ (D25). |
 | **Source** | Where schedule data comes from: an uploaded file, manual entry, or Google Calendar. |
 | **Tier (T1/T2/T3)** | How much detail a viewer sees about your busy time. T1 is the default and the minimum (D20). |
-| **Worker** | The service hosted on Railway that handles heavy file processing and calls OpenRouter. |
