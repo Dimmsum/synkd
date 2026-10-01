@@ -23,7 +23,7 @@ export default function HelpPage() {
         </ul>
         <p className="mt-2">Your location is never shared at any level.</p>
       </section>
-      <section>
+      <section id="install" className="scroll-mt-20">
         <h2>How do I install it on iPhone?</h2>
         <p>
           Open Who&apos;s Free in Safari, tap the Share button, then “Add to Home Screen”. Open it

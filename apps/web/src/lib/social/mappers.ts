@@ -35,9 +35,8 @@ export function toPublicPerson(row: PublicProfile): PublicPerson {
 }
 
 /**
- * Status fields of a Connection until the Now data is live. TODO(WF-064): `now_for_viewer`
- * returns each connection's status, "until X" and resolved tier; until then everyone reads as
- * "No schedule yet", the same as someone who hasn't added one.
+ * Status fields of a Connection the Now data has no row for (WF-064), e.g. when it couldn't be
+ * read: they read as "No schedule yet", the same as someone who hasn't added one.
  */
 export const PENDING_PRESENCE = {
   status: 'no_schedule',
@@ -47,8 +46,9 @@ export const PENDING_PRESENCE = {
 } as const satisfies Pick<Connection, 'status' | 'until' | 'nextFreeAt' | 'stale'>;
 
 /**
- * The tier a connection shows the viewer. Every active connection shows at least T1
- * (FR-VIS-1); TODO(WF-064): the resolved tier comes back from `now_for_viewer`.
+ * The tier a connection shows the viewer before the resolved one is known. Every active
+ * connection shows at least T1 (FR-VIS-1); `withPresence` puts in the tier `now_for_viewer`
+ * resolved (FR-VIS-3).
  */
 export const MIN_VISIBLE_TIER: Tier = 1;
 
@@ -57,6 +57,28 @@ export function toConnection(
   opts: { isFriend: boolean; groupIds: string[] },
 ): Connection {
   return { ...person, ...PENDING_PRESENCE, tier: MIN_VISIBLE_TIER, ...opts };
+}
+
+/**
+ * `c` with the status, "until X" and resolved tier from the Now data for the same person
+ * (`now_for_viewer`, WF-064). Who they are, whether they're a friend and which groups they're
+ * listed under stay as `c` says. Unchanged when there's no Now row for them.
+ */
+export function withPresence<C extends Connection>(c: C, now: Connection | undefined): C {
+  if (!now || now.id !== c.id) return c;
+  const next: C = {
+    ...c,
+    tier: now.tier,
+    status: now.status,
+    until: now.until,
+    nextFreeAt: now.nextFreeAt,
+    stale: now.stale,
+    upcoming: now.upcoming ?? [],
+    refreshAt: now.refreshAt ?? null,
+  };
+  if (now.activity) next.activity = now.activity;
+  else delete next.activity;
+  return next;
 }
 
 export function friendToPerson(row: DbFriend): Person {
@@ -93,7 +115,7 @@ export function toGroupSummary(row: MyGroup): GroupSummary {
     name: row.name,
     emoji: row.emoji ?? DEFAULT_GROUP_EMOJI,
     memberCount: row.member_count,
-    // TODO(WF-064): count members who are free now, from the Now data.
+    // Filled in from the Now data where it's shown (lib/data/people.ts, freeNowByGroup).
     freeNowCount: 0,
     viewerRole: row.role,
   };

@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { BellRing, Inbox as InboxIcon, Send } from 'lucide-react';
+import { Inbox as InboxIcon, Send } from 'lucide-react';
 import { EmptyState } from '@whosfree/ui/components/misc';
 import { GroupEmoji, PersonAvatar } from '@whosfree/ui/components/person-avatar';
 import { formatAgo, formatDuration } from '@whosfree/ui/lib/time';
 import { cn } from '@whosfree/ui/lib/utils';
 import { PageHeader } from '@/components/app/page-header';
 import { PingMenu, PingReplyBox } from '@/components/inbox/ping-reply';
+import { PushInboxHint } from '@/components/push/push-permission';
 import { getInbox } from '@/lib/data/inbox';
 import { getNow } from '@/lib/data/people';
 import type { Ping } from '@/lib/types';
@@ -51,12 +52,9 @@ export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
           })}
         </nav>
 
-        {/* TODO(WF-091): ask for push permission through an explanation screen (FR-PWA-4). */}
-        <p className="flex items-start gap-2 rounded-xl border bg-card p-3 text-[13px] text-body-foreground">
-          <BellRing aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary-ink" />
-          Turn on notifications in Settings to hear about pings straight away. They&apos;ll always
-          show up here too.
-        </p>
+        {/* The inbox is the fallback for anyone without push (NFR-COMPAT-2, WF-091). The hint
+            links to the explanation screen in Settings; it never prompts (FR-PWA-4). */}
+        <PushInboxHint />
 
         {list.length ? (
           <ul className="flex flex-col gap-3">

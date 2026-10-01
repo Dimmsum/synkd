@@ -35,34 +35,68 @@ export interface Person {
 export interface Activity {
   /** T2 and up. */
   category?: EventCategory;
-  /** T3 only. */
+  /** T3 only: an event's title, or the note on a manual status (WF-063). */
   title?: string;
+  /** T2 and up: a manual "Studying/Focused" status, which T1 sees as plain busy (FR-AVL-3). */
+  focused?: boolean;
 }
 
-/** Someone the viewer can see: a friend, or a fellow group member (FR-SOC-5). */
-export interface Connection extends Person {
-  isFriend: boolean;
-  /** The tier this person shows the viewer, already resolved (FR-VIS-3). */
-  tier: Tier;
-  status: Status;
-  /** When the current status ends ("until X", D18). `null` for no_schedule and paused. */
+/**
+ * A status as screens show it: a viewer-visible status (PRD §6.6), or `unknown` when it couldn't
+ * be worked out for this person (e.g. a malformed recurrence rule), so one bad schedule never
+ * breaks the Now screen (WF-064).
+ */
+export type PresenceStatus = Status | 'unknown';
+
+/** Someone's status at one moment, with "until X" (FR-AVL-4, D18). */
+export interface Presence {
+  status: PresenceStatus;
+  /** When the status next changes ("until X", D18). `null` if not within a week (or ever). */
   until: Iso | null;
   /** When they're next free, if they aren't free now. */
   nextFreeAt: Iso | null;
-  /** Why they're busy, redacted to `tier`. */
+  /** Why they have this status, redacted to their tier for the viewer. */
   activity?: Activity;
+}
+
+/** A later moment from which someone's {@link Presence} is different (PRD §8.5 step 4). */
+export interface PresenceChange extends Presence {
+  at: Iso;
+}
+
+/** Someone the viewer can see: a friend, or a fellow group member (FR-SOC-5). */
+export interface Connection extends Person, Presence {
+  isFriend: boolean;
+  /** The tier this person shows the viewer, already resolved (FR-VIS-3). */
+  tier: Tier;
   /** Show "Schedule may be out of date" (FR-VIEW-8, D25). */
   stale: boolean;
   groupIds: GroupId[];
+  /**
+   * How their status changes after the moment it was worked out, in order, so the Now screen
+   * can move people between sections as "until X" passes without asking the server (PRD §8.5
+   * step 4). Missing or empty when nothing is known ahead.
+   */
+  upcoming?: PresenceChange[];
+  /**
+   * When `upcoming` runs out and the client must re-fetch: the first change the server knew
+   * of but didn't send. Missing or `null` when nothing more is known.
+   */
+  refreshAt?: Iso | null;
 }
 
-export interface Viewer extends Person {
+/** A manual status in effect (WF-063): what the status chip shows and pre-fills. */
+export interface ActiveOverride {
+  status: ManualStatus;
+  label: string | null;
+  endsAt: Iso | null;
+}
+
+export interface Viewer extends Person, Presence {
   timeZone: string;
   sharingPaused: boolean;
-  status: Status;
-  until: Iso | null;
-  /** Manual status override, if set (J5). */
-  manualStatus?: ManualStatus;
+  /** The viewer's own manual status in effect, if any (J5, FR-AVL-3). */
+  manual: ActiveOverride | null;
 }
 
 export interface GroupSummary {

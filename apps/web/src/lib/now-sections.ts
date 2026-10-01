@@ -24,8 +24,9 @@ export function isFreeSoon(c: Connection, now: Date, windowMinutes = FREE_SOON_M
  * Splits connections into the Now screen's sections (FR-VIEW-1):
  * - Free now: longest free time first.
  * - Free soon (within 60 min): soonest first.
- * - Busy/Away (including Do not disturb): free again soonest first.
- * - Not sharing yet: no schedule, then paused.
+ * - Busy/Away (including Do not disturb): free again soonest first. Anyone whose status
+ *   couldn't be worked out (`unknown`, WF-064) goes last here: it isn't "not sharing".
+ * - Not sharing yet: no schedule, then paused ("Sharing paused").
  */
 export function groupIntoNowSections(connections: Connection[], now: Date): NowSections {
   const s: NowSections = { freeNow: [], freeSoon: [], busyAway: [], notSharing: [] };
@@ -47,4 +48,17 @@ export function groupIntoNowSections(connections: Connection[], now: Date): NowS
 /** The Now screen's group filter (FR-VIEW-2). */
 export function filterByGroup(connections: Connection[], groupId: GroupId | null): Connection[] {
   return groupId ? connections.filter((c) => c.groupIds.includes(groupId)) : connections;
+}
+
+/**
+ * How many of the viewer's connections in each group are free right now (the groups rail and
+ * group pages). Counts other members only; the viewer has their own status chip.
+ */
+export function freeNowByGroup(connections: readonly Connection[]): Map<GroupId, number> {
+  const counts = new Map<GroupId, number>();
+  for (const c of connections) {
+    if (c.status !== 'free') continue;
+    for (const g of c.groupIds) counts.set(g, (counts.get(g) ?? 0) + 1);
+  }
+  return counts;
 }

@@ -12,7 +12,7 @@ import {
   SOURCE_TYPES,
   TIERS,
 } from '@whosfree/shared';
-import { GROUP_ERRORS, OFFLINE_FRIEND_ERRORS } from '../src/index';
+import { GROUP_ERRORS, OFFLINE_FRIEND_ERRORS, PUSH_SUBSCRIPTION_ERRORS } from '../src/index';
 import { createTestDb, migrationFiles } from './harness/db';
 import type { TestDb } from './harness/db';
 import { addSource, addUser } from './harness/seed';
@@ -47,6 +47,7 @@ describe('migrations', () => {
       'groups',
       'invites',
       'offline_friends',
+      'push_subscriptions',
       'rate_limits',
       'sources',
       'status_overrides',
@@ -96,6 +97,7 @@ describe('row-level security', () => {
       'group_members.group_members_select_own (SELECT)',
       'groups.groups_select_member (SELECT)',
       'offline_friends.offline_friends_select_own (SELECT)',
+      'push_subscriptions.push_subscriptions_select_own (SELECT)',
       'sources.sources_delete_own (DELETE)',
       'sources.sources_insert_own (INSERT)',
       'sources.sources_select_own (SELECT)',
@@ -167,6 +169,7 @@ describe('table privileges (on top of Supabase’s grant-everything defaults)', 
       availability_prefs: ['SELECT', 'UPDATE(weekly, min_gap_minutes, count_all_day_events)'],
       status_overrides: ['SELECT'],
       offline_friends: ['SELECT'],
+      push_subscriptions: ['SELECT'],
     });
   });
 });
@@ -190,6 +193,7 @@ const CLIENT_DEFINER_FUNCTIONS = [
   'decline_friend_request(uuid)',
   'delete_group(uuid)',
   'delete_offline_friend(uuid)',
+  'delete_push_subscription(text)',
   'ensure_current_user(text,text,text)',
   'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
   'find_user_by_handle(text)',
@@ -206,7 +210,9 @@ const CLIENT_DEFINER_FUNCTIONS = [
   'now_for_viewer(timestamp with time zone,timestamp with time zone)',
   'regenerate_group_invite(uuid)',
   'remove_group_member(uuid,uuid)',
+  'request_test_push()',
   'revoke_group_invite(uuid)',
+  'save_push_subscription(text,text,text,text)',
   'send_friend_request(uuid,integer)',
   'send_friend_request_by_handle(text,integer)',
   'set_group_member_permissions(uuid,uuid,boolean,boolean,boolean,boolean)',
@@ -243,6 +249,7 @@ const PRIVATE_FUNCTIONS = [
   'private.clean_group_emoji(text)',
   'private.clean_group_name(text)',
   'private.clean_offline_friend_nickname(text)',
+  'private.clean_push_device_label(text)',
   'private.clean_schedule_period(jsonb)',
   'private.close_active_status(uuid)',
   'private.connections(uuid)',
@@ -373,12 +380,16 @@ describe('functions', () => {
   });
 });
 
-describe('GROUP_ERRORS and OFFLINE_FRIEND_ERRORS (src/index.ts) match what the migrations raise', () => {
+describe('GROUP_ERRORS, OFFLINE_FRIEND_ERRORS and PUSH_SUBSCRIPTION_ERRORS (src/index.ts) match what the migrations raise', () => {
   it('every message is raised somewhere, verbatim', async () => {
     const sql = (await Promise.all((await migrationFiles()).map((f) => readFile(f, 'utf8')))).join(
       '\n',
     );
-    for (const message of [...Object.values(GROUP_ERRORS), ...Object.values(OFFLINE_FRIEND_ERRORS)])
+    for (const message of [
+      ...Object.values(GROUP_ERRORS),
+      ...Object.values(OFFLINE_FRIEND_ERRORS),
+      ...Object.values(PUSH_SUBSCRIPTION_ERRORS),
+    ])
       expect({ message, raised: sql.includes(`'${message.replaceAll("'", "''")}'`) }).toEqual({
         message,
         raised: true,

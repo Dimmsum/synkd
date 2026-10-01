@@ -2,12 +2,12 @@ import type { Route } from 'next';
 
 /**
  * Onboarding steps in order (J1, WF-068). Google Calendar turns on with WF-080 and the
- * install/notifications step with WF-111 + WF-091; until then they're skipped (the
- * pages exist so they can be built and reviewed).
+ * install/notifications step with WF-111 (its notifications half, WF-091, is built). Until then
+ * they're skipped (the pages exist so they can be built and reviewed).
  */
 export const ONBOARDING_FLAGS = {
   googleCalendar: false, // TODO(WF-080)
-  installAndPush: false, // TODO(WF-111, WF-091)
+  installAndPush: false, // TODO(WF-111)
 };
 
 export type OnboardingStep = 'hours' | 'schedule' | 'calendar' | 'sharing' | 'install';

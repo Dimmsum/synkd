@@ -373,6 +373,50 @@ export type Database = {
           },
         ];
       };
+      push_subscriptions: {
+        Row: {
+          auth: string;
+          created_at: string;
+          device_label: string | null;
+          endpoint: string;
+          id: string;
+          last_used_at: string | null;
+          p256dh: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          auth: string;
+          created_at?: string;
+          device_label?: string | null;
+          endpoint: string;
+          id?: string;
+          last_used_at?: string | null;
+          p256dh: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          auth?: string;
+          created_at?: string;
+          device_label?: string | null;
+          endpoint?: string;
+          id?: string;
+          last_used_at?: string | null;
+          p256dh?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'push_subscriptions_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       rate_limits: {
         Row: {
           action: string;
@@ -625,6 +669,7 @@ export type Database = {
       decline_friend_request: { Args: { user_id: string }; Returns: undefined };
       delete_group: { Args: { group_id: string }; Returns: undefined };
       delete_offline_friend: { Args: { offline_friend_id: string }; Returns: undefined };
+      delete_push_subscription: { Args: { endpoint: string }; Returns: boolean };
       ensure_current_user: {
         Args: { avatar_url?: string; name: string; timezone?: string };
         Returns: {
@@ -808,7 +853,12 @@ export type Database = {
         };
       };
       remove_group_member: { Args: { group_id: string; user_id: string }; Returns: undefined };
+      request_test_push: { Args: Record<PropertyKey, never>; Returns: string };
       revoke_group_invite: { Args: { invite_id: string }; Returns: undefined };
+      save_push_subscription: {
+        Args: { auth: string; device_label?: string; endpoint: string; p256dh: string };
+        Returns: string;
+      };
       send_friend_request: { Args: { tier?: number; user_id: string }; Returns: string };
       send_friend_request_by_handle: { Args: { handle: string; tier?: number }; Returns: string };
       set_day_hours: {
