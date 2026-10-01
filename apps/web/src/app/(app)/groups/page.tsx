@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: 'Groups' };
 
 // Groups (WF-043). `?new=1` opens the create dialog (used by the sidebar "+").
 export default async function GroupsPage({ searchParams }: PageProps<'/groups'>) {
-  const [groups, sp] = await Promise.all([getGroups(), searchParams]);
+  const [groups, sp] = await Promise.all([getGroups({ freeNow: true }), searchParams]);
   return (
     <>
       <PageHeader

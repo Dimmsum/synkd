@@ -6,7 +6,6 @@ import { BottomNav, SidebarNav } from '@/components/app/nav';
 import { StatusChip } from '@/components/app/status-chip';
 import { getGroups, getNow, getViewer } from '@/lib/data/people';
 import { getUnreadCount } from '@/lib/data/inbox';
-import { getMyManualStatus } from '@/lib/data/status';
 import { describeOverride } from '@/lib/manual-status';
 import { describeStatus } from '@/lib/status';
 
@@ -16,24 +15,24 @@ import { describeStatus } from '@/lib/status';
 export const dynamic = 'force-dynamic';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [viewer, groups, unread, { now, timeZone }, manual] = await Promise.all([
+  const [viewer, groups, unread, { now, timeZone }] = await Promise.all([
     getViewer(),
     getGroups(),
     getUnreadCount(),
     getNow(),
-    getMyManualStatus(),
   ]);
-  // A manual status overrides the calendar (FR-AVL-3, D5). TODO(WF-064): once getViewer's status
-  // comes from the engine, which applies overrides itself, describeStatus covers both.
-  const me = manual
-    ? describeOverride(manual.override, manual.now, viewer.timeZone)
-    : describeStatus({ ...viewer, nextFreeAt: null }, now, timeZone);
+  // The viewer's status comes from the engine, which applies a manual status over the calendar
+  // (FR-AVL-3, D5, WF-064). While one is in charge, the chip names it the way it was set
+  // ("Studying/Focused until 4:00 PM", with its note) and pre-fills the dialog with it.
+  const me = viewer.manual
+    ? describeOverride(viewer.manual, now, timeZone)
+    : describeStatus(viewer, now, timeZone);
   const chip = {
     name: viewer.name,
     tone: me.tone,
     label: me.label,
     detail: me.detail,
-    manual: manual?.override ?? null,
+    manual: viewer.manual,
     timeZone: viewer.timeZone,
   };
 

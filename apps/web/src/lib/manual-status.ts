@@ -18,6 +18,9 @@ import {
   type Instant,
 } from '@whosfree/ui/lib/time';
 import type { StatusText } from '@/lib/status';
+import type { ActiveOverride } from '@/lib/types';
+
+export type { ActiveOverride };
 
 const MAX_MS = STATUS_OVERRIDE_MAX_DAYS * 24 * 60 * 60_000;
 
@@ -96,13 +99,6 @@ export function nextLocalTime(time: string, now: Instant, timeZone: string): Dat
     : zonedTimeToInstant(addDays(today, 1), h * 60 + m, timeZone);
 }
 
-/** The viewer's own active override, as read from `status_overrides`. */
-export interface ActiveOverride {
-  status: ManualStatus;
-  label: string | null;
-  endsAt: string | null;
-}
-
 /**
  * The chip's words for an active override: "Studying/Focused until 4:00 PM", or just
  * "Do not disturb" for "until I change it". Always text next to the icon, never colour alone
@@ -115,33 +111,4 @@ export function describeOverride(o: ActiveOverride, now: Instant, timeZone: stri
     label: o.endsAt ? `${name} until ${formatUntil(o.endsAt, now, timeZone)}` : name,
     ...(o.label ? { detail: o.label } : {}),
   };
-}
-
-/**
- * Picks the override in effect at `now` from the viewer's rows, as the engine does: started,
- * not yet ended, and the latest start wins. Rows with an unknown status are ignored.
- */
-export function activeOverride(
-  rows: readonly {
-    status: string;
-    label: string | null;
-    starts_at: string;
-    ends_at: string | null;
-  }[],
-  now: Instant,
-): ActiveOverride | null {
-  const nowMs = new Date(now).getTime();
-  let best: (ActiveOverride & { start: number }) | null = null;
-  for (const row of rows) {
-    const start = Date.parse(row.starts_at);
-    const end = row.ends_at === null ? Infinity : Date.parse(row.ends_at);
-    if (!(start <= nowMs && nowMs < end)) continue;
-    const status = ManualStatus.safeParse(row.status);
-    if (!status.success) continue;
-    if (!best || start > best.start) {
-      best = { status: status.data, label: row.label, endsAt: row.ends_at, start };
-    }
-  }
-  if (!best) return null;
-  return { status: best.status, label: best.label, endsAt: best.endsAt };
 }

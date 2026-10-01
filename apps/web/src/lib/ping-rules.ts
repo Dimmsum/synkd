@@ -1,12 +1,14 @@
-import { PING_TEXT_MAX_LENGTH, type Status } from '@whosfree/shared';
+import { PING_TEXT_MAX_LENGTH } from '@whosfree/shared';
+import type { PresenceStatus } from '@/lib/types';
 
 export type PingPolicy = 'allowed' | 'confirm' | 'blocked';
 
 /**
  * FR-PING-1: free → ping straight away; busy or away (and no schedule) → ask first;
- * do not disturb or paused → blocked. The server enforces this too (WF-092).
+ * do not disturb or paused → blocked; unknown (WF-064) → ask first. The server enforces this too
+ * (WF-092).
  */
-export function pingPolicy(status: Status): PingPolicy {
+export function pingPolicy(status: PresenceStatus): PingPolicy {
   switch (status) {
     case 'free':
       return 'allowed';

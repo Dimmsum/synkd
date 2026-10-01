@@ -1,7 +1,7 @@
-import type { EventCategory, Status } from '@whosfree/shared';
+import { MANUAL_STATUS_LABELS, type EventCategory } from '@whosfree/shared';
 import type { StatusTone } from '@whosfree/ui/components/status-badge';
 import { formatUntil, type Instant } from '@whosfree/ui/lib/time';
-import type { Activity, Connection } from '@/lib/types';
+import type { Activity, Connection, PresenceStatus } from '@/lib/types';
 
 /** How a T2 viewer sees each category (PRD §6.7: "In class", "At work", "In a meeting"). */
 export const CATEGORY_PHRASES: Record<EventCategory, string> = {
@@ -40,32 +40,44 @@ export function activityLabel(activity: Activity | undefined): string {
   return 'Busy';
 }
 
+/**
+ * "Busy until 3:00 PM", or just "Busy" when the status has no end in sight (an "until I change
+ * it" manual status, or nothing changes within the engine's week-long look-ahead).
+ */
+const withUntil = (words: string, until: string) => (until ? `${words} until ${until}` : words);
+
 function busyText(activity: Activity | undefined, until: string): StatusText {
+  // A manual "Studying/Focused" (T2 and up; T1 sees plain busy, FR-AVL-3).
+  const focused = activity?.focused ? MANUAL_STATUS_LABELS.focused : undefined;
   if (activity?.title) {
     const c = activity.category;
-    return {
-      tone: 'busy',
-      label: `${activity.title} until ${until}`,
-      detail: c ? (c === 'event' ? 'Calendar event' : CATEGORY_PHRASES[c]) : undefined,
-    };
+    const detail =
+      focused ?? (c ? (c === 'event' ? 'Calendar event' : CATEGORY_PHRASES[c]) : undefined);
+    return { tone: 'busy', label: withUntil(activity.title, until), ...(detail ? { detail } : {}) };
   }
+  if (focused) return { tone: 'busy', label: withUntil(focused, until) };
   if (activity?.category === 'event') {
-    return { tone: 'busy', label: `Busy until ${until}`, detail: 'Calendar event' };
+    return { tone: 'busy', label: withUntil('Busy', until), detail: 'Calendar event' };
   }
   const phrase = activity?.category ? CATEGORY_PHRASES[activity.category] : 'Busy';
-  return { tone: 'busy', label: `${phrase} until ${until}` };
+  return { tone: 'busy', label: withUntil(phrase, until) };
 }
 
-const NOW_WORDS: Partial<Record<Status, string>> = {
+const NOW_WORDS: Partial<Record<PresenceStatus, string>> = {
   busy: 'Busy now',
   away: 'Away now',
   dnd: 'Do not disturb',
 };
 
+/** A T3 note on a manual status (WF-063), e.g. "Come say hi", as the second line. */
+const note = (activity: Activity | undefined) =>
+  activity?.title ? { detail: activity.title } : {};
+
 /**
  * The words for someone's status (D18: every status shows "until X"). The activity has
  * already been redacted to the viewer's tier by the server, so T1 never has one.
  * With `soon`, describes a Free-soon person ("Free from 3:00 PM").
+ * Always words next to the status icon, never colour alone (NFR-UX-1).
  */
 export function describeStatus(
   c: Pick<Connection, 'status' | 'until' | 'nextFreeAt' | 'activity'>,
@@ -79,27 +91,27 @@ export function describeStatus(
     const why =
       c.status === 'busy' && c.activity
         ? (c.activity.title ??
+          (c.activity.focused ? MANUAL_STATUS_LABELS.focused : undefined) ??
           (c.activity.category ? CATEGORY_PHRASES[c.activity.category] : undefined))
         : undefined;
-    return {
-      tone: 'soon',
-      label: `Free from ${fmt(c.nextFreeAt)}`,
-      detail: why ?? NOW_WORDS[c.status],
-    };
+    const detail = why ?? NOW_WORDS[c.status];
+    return { tone: 'soon', label: `Free from ${fmt(c.nextFreeAt)}`, ...(detail ? { detail } : {}) };
   }
 
   switch (c.status) {
     case 'free':
-      return { tone: 'free', label: c.until ? `Free until ${fmt(c.until)}` : 'Free' };
+      return { tone: 'free', label: withUntil('Free', fmt(c.until)), ...note(c.activity) };
     case 'busy':
       return busyText(c.activity, fmt(c.until));
     case 'dnd':
-      return { tone: 'dnd', label: `Do not disturb until ${fmt(c.until)}` };
+      return { tone: 'dnd', label: withUntil('Do not disturb', fmt(c.until)), ...note(c.activity) };
     case 'away':
-      return { tone: 'away', label: `Away until ${fmt(c.until)}` };
+      return { tone: 'away', label: withUntil('Away', fmt(c.until)), ...note(c.activity) };
     case 'no_schedule':
       return { tone: 'no_schedule', label: 'Hasn’t added a schedule yet' };
     case 'paused':
       return { tone: 'paused', label: 'Sharing paused' };
+    case 'unknown':
+      return { tone: 'unknown', label: 'Status unavailable right now' };
   }
 }
