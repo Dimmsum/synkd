@@ -255,7 +255,7 @@ Everything else at P0, which adds:
 | WF-086 | Submit Google OAuth verification | compliance | gcal | P0 | 4 | B | todo | 010, 012, 080 |
 | WF-087 | Handle Google accounts managed by an organisation | feature | gcal | P1 | 4 | stretch | todo | 080 |
 | WF-090 | PWA manifest and service worker (Serwist) | infra | pwa | P0 | 5 | A | in-review | 002 |
-| WF-091 | Web Push infrastructure | infra | pwa, backend | P0 | 5 | A | todo | 004, 090 |
+| WF-091 | Web Push infrastructure | infra | pwa, backend | P0 | 5 | A | in-review | 004, 090 |
 | WF-092 | Send pings and inbox | feature | ping | P0 | 5 | A | todo | 064, 091 |
 | WF-093 | Ping replies | feature | ping | P0 | 5 | A | todo | 092 |
 | WF-094 | Ping rate limits, mute, quiet hours | security | ping | P0 | 5 | Gate | todo | 092 |
@@ -1176,15 +1176,16 @@ Could start at any point after WF-002. It's placed here because push notificatio
 - [ ] The app can be installed on Android Chrome and iOS Safari (verified in headless Chrome only; needs a device test on a deploy)
 
 #### WF-091 · Web Push infrastructure
-- **Category:** `infra` · **Area:** `pwa`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `infra` · **Area:** `pwa`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-004, WF-090
 - **PRD:** FR-PWA-4, FR-PING-3, NFR-COMPAT-2
 
-**Acceptance criteria**
-- [ ] VAPID keys, and a `pushSubscriptions` table with one row per device
-- [ ] Permission is asked for **only after an explanation screen**, never on first load
-- [ ] The Next.js server sends pushes with `web-push`. Dead subscriptions are removed.
-- [ ] An in-app inbox as a fallback for anyone without push
+> Merged (migration `20261002500000_push_subscriptions.sql`): `push_subscriptions` (owner-only RLS, writes via `save_push_subscription`/`delete_push_subscription`, 10 devices per user, 20 new/day), `sendPushToUser(userId, payload)` in `apps/web/src/lib/push/send.ts` (web-push, removes 404/410 devices, never logs payloads), SW `push`/`notificationclick` handlers, the `PushPermission` card (explanation first; handles iOS-not-installed, blocked, unsupported) in Settings and onboarding, and a "send a test" button. Inbox data itself is WF-092. **For WF-092:** have `send_ping` authorise as the sender, then `after(() => sendPushToUser(recipientId, {v:1, kind:'ping', title, body, url:'/inbox', tag:'ping:<id>'}, {urgency:'high'}))`. **Left (owner):** VAPID keys (`npx web-push generate-vapid-keys` → root `.env` and Vercel), `SUPABASE_SECRET_KEY` in Vercel, apply the migration, device test on Android and installed iOS 16.4+.
+
+- [x] VAPID keys, and a `pushSubscriptions` table with one row per device
+- [x] Permission is asked for **only after an explanation screen**, never on first load
+- [x] The Next.js server sends pushes with `web-push`. Dead subscriptions are removed.
+- [x] An in-app inbox as a fallback for anyone without push
 
 #### WF-092 · Send pings and inbox
 - **Category:** `feature` · **Area:** `ping` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
