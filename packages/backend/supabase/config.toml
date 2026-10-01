@@ -118,6 +118,14 @@ enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
 file_size_limit = "50MiB"
 
+# Schedule uploads (WF-026, NFR-SEC-6): private, 10 MB, schedule media types only. The
+# migration 20261003100000_schedule_files_and_parse_jobs.sql creates the same bucket on a
+# hosted project.
+[storage.buckets.schedule-files]
+public = false
+file_size_limit = "10MiB"
+allowed_mime_types = ["application/pdf", "image/png", "image/jpeg", "image/webp", "image/heic", "image/heif"]
+
 # Uncomment to configure local storage buckets
 # [storage.buckets.images]
 # public = false

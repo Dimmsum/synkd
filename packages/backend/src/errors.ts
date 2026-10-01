@@ -58,6 +58,12 @@ export const DB_ERROR = {
    */
   scheduleEventOutsidePeriod: 'WF402',
   /**
+   * `confirm_parse_job` (WF-030): the parse job isn't waiting for review. `error.details` is its
+   * status: `committed` (already confirmed, e.g. a double submit), or `queued`/`processing`/
+   * `failed`.
+   */
+  parseJobNotReady: 'WF403',
+  /**
    * Rate limited (NFR-SEC-9): "Slow down". PostgREST returns HTTP 429. The error
    * `details` is JSON: `{ action, limit, retry_at }`.
    */

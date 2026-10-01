@@ -352,3 +352,26 @@ export const PING_ERRORS = {
   unknownReply: 'Unknown quick reply',
   rateLimited: 'Too many attempts',
 } as const;
+
+/**
+ * The messages the schedule upload and parse functions raise (WF-026, WF-027, WF-030, WF-032,
+ * WF-035) besides the codes in `DB_ERROR` (WF001, WF401, WF402, WF403, PT429). Match on
+ * `error.message`. SQLSTATEs: P0002 not found (also another user's), P0001 too many pending
+ * uploads, 22023 bad argument. A PT429's `details.action` says which limit: `schedule_upload`
+ * (20 new uploads a day), `parse` (5 parse attempts a day, FR-IMP-19) or `commit_schedule`.
+ */
+export const SCHEDULE_FILE_ERRORS = {
+  noAccount: 'No account for this sign-in',
+  uploadNotFound: 'Upload not found',
+  parseJobNotFound: 'Parse job not found',
+  offlineFriendNotFound: 'Offline friend not found',
+  tooManyPending: 'Too many pending uploads',
+  notReady: "This schedule isn't ready to confirm",
+  unsupportedType: 'Unsupported file type',
+  invalidSize: 'File must be 1 byte to 10 MB',
+  invalidHash: 'Invalid file hash',
+  rateLimited: 'Too many attempts',
+} as const;
+
+/** One row of `claim_parse_job` (WF-027, server only): the inputs of one parse run. */
+export type ParseRun = Fn['claim_parse_job']['Returns'][number];

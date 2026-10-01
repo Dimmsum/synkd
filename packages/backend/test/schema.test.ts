@@ -19,6 +19,7 @@ import {
   OFFLINE_FRIEND_ERRORS,
   PING_ERRORS,
   PUSH_SUBSCRIPTION_ERRORS,
+  SCHEDULE_FILE_ERRORS,
 } from '../src/index';
 import { createTestDb, migrationFiles } from './harness/db';
 import type { TestDb } from './harness/db';
@@ -54,11 +55,14 @@ describe('migrations', () => {
       'groups',
       'invites',
       'offline_friends',
+      'parse_jobs',
       'pings',
       'push_subscriptions',
       'rate_limits',
+      'schedule_files',
       'sources',
       'status_overrides',
+      'storage_removals',
       'users',
       'visibility_rules',
     ]);
@@ -105,8 +109,10 @@ describe('row-level security', () => {
       'group_members.group_members_select_own (SELECT)',
       'groups.groups_select_member (SELECT)',
       'offline_friends.offline_friends_select_own (SELECT)',
+      'parse_jobs.parse_jobs_select_own (SELECT)',
       'pings.pings_select_party (SELECT)',
       'push_subscriptions.push_subscriptions_select_own (SELECT)',
+      'schedule_files.schedule_files_select_own (SELECT)',
       'sources.sources_delete_own (DELETE)',
       'sources.sources_insert_own (INSERT)',
       'sources.sources_select_own (SELECT)',
@@ -183,6 +189,13 @@ describe('table privileges (on top of Supabase’s grant-everything defaults)', 
       pings: [
         'SELECT(id, sender_id, recipient_id, group_id, template, text, reply, reply_text, replied_at, expires_at, created_at)',
       ],
+      // WF-026/027: no hash on files; no lease, model, cost or backoff on jobs.
+      schedule_files: [
+        'SELECT(id, user_id, offline_friend_id, storage_path, file_name, mime_type, size_bytes, pages, uploaded_at, delete_at, created_at)',
+      ],
+      parse_jobs: [
+        'SELECT(id, user_id, file_id, status, draft, confidence, error, attempts, created_at, updated_at, committed_at)',
+      ],
     });
   });
 });
@@ -199,14 +212,17 @@ const CLIENT_DEFINER_FUNCTIONS = [
   'clear_status()',
   'commit_schedule(jsonb,text,uuid)',
   'confirm_age(integer)',
+  'confirm_parse_job(uuid,jsonb)',
   'create_group(text,text,integer)',
   'create_group_invite(uuid,timestamp with time zone,integer)',
   'create_offline_friend(text,text,boolean)',
+  'create_schedule_upload(text,text,integer,text,uuid)',
   'current_user_id()',
   'decline_friend_request(uuid)',
   'delete_group(uuid)',
   'delete_offline_friend(uuid)',
   'delete_push_subscription(text)',
+  'delete_schedule_upload(uuid)',
   'ensure_current_user(text,text,text)',
   'events_for_viewer(uuid,timestamp with time zone,timestamp with time zone)',
   'find_user_by_handle(text)',
@@ -235,6 +251,7 @@ const CLIENT_DEFINER_FUNCTIONS = [
   'set_group_member_permissions(uuid,uuid,boolean,boolean,boolean,boolean)',
   'set_handle(text)',
   'set_status(text,text,timestamp with time zone)',
+  'start_parse_job(uuid)',
   'transfer_group_admin(uuid,uuid)',
   'unblock_user(uuid)',
   'unfriend(uuid)',
@@ -251,6 +268,20 @@ const CLIENT_INVOKER_FUNCTIONS = [
   'set_day_hours(text,text,text)',
 ];
 
+/**
+ * Server-only functions (WF-027, D46): security definer, executable by `service_role` only. The
+ * Next.js server's parse route and sweep call them with the secret key; no user can.
+ */
+const SERVICE_FUNCTIONS = [
+  'claim_parse_job(uuid,integer)',
+  'claim_storage_removals(integer)',
+  'complete_parse_job(uuid,integer,jsonb,text,text,numeric,numeric,integer)',
+  'expire_schedule_files(integer)',
+  'fail_parse_job(uuid,integer,text,boolean,text,text,numeric)',
+  'finish_storage_removals(text[])',
+  'list_due_parse_jobs(integer)',
+];
+
 /** The only function callable without signing in: the /i/[code] invite page (FR-WEB-3). */
 const ANON_FUNCTIONS = ['get_invite_summary(text)'];
 
@@ -263,7 +294,9 @@ const PRIVATE_FUNCTIONS = [
   'private.authorize_group(uuid,uuid,text)',
   'private.authorize_invite_change(invites,uuid)',
   'private.check_event_offline_friend()',
+  'private.check_parse_draft(jsonb)',
   'private.check_tier(integer)',
+  'private.clean_file_name(text)',
   'private.clean_group_emoji(text)',
   'private.clean_group_name(text)',
   'private.clean_offline_friend_nickname(text)',
@@ -293,6 +326,7 @@ const PRIVATE_FUNCTIONS = [
   'private.purge_expired_rate_limits()',
   'private.purge_expired_status_overrides(interval)',
   'private.purge_old_pings(interval)',
+  'private.queue_schedule_file_removals()',
   'private.redacted_events(uuid,smallint,timestamp with time zone,timestamp with time zone)',
   'private.relationship(uuid,uuid)',
   'private.require_user()',
@@ -310,6 +344,7 @@ const PRIVATE_FUNCTIONS = [
   'private.signal_inbox_changed(uuid[])',
   'private.signal_now_changed(uuid[])',
   'private.signal_owner_rows_changed()',
+  'private.signal_parse_job_changed(uuid[])',
   'private.signal_user_changed()',
   'private.signal_visibility_rules_changed()',
   'private.to_group_invite(invites,uuid)',
@@ -358,7 +393,11 @@ describe('functions', () => {
        order by p.oid::regprocedure::text collate "C"`,
     );
     expect(definers.map((d) => d.fn)).toEqual(
-      [...CLIENT_DEFINER_FUNCTIONS, ...PRIVATE_DEFINER_TRIGGER_FUNCTIONS].sort(),
+      [
+        ...CLIENT_DEFINER_FUNCTIONS,
+        ...SERVICE_FUNCTIONS,
+        ...PRIVATE_DEFINER_TRIGGER_FUNCTIONS,
+      ].sort(),
     );
     for (const d of definers) expect(d.config).toEqual(['search_path=""']);
   });
@@ -372,7 +411,7 @@ describe('functions', () => {
     expect(loose).toEqual([]);
   });
 
-  it('clients can execute only CLIENT_FUNCTIONS, anon only ANON_FUNCTIONS', async () => {
+  it('clients can execute only CLIENT_FUNCTIONS, anon only ANON_FUNCTIONS, the secret key only SERVICE_FUNCTIONS', async () => {
     for (const role of CLIENT_ROLES) {
       const callable = await rows<{ fn: string }>(
         `select p.oid::regprocedure::text as fn from pg_proc p
@@ -386,7 +425,11 @@ describe('functions', () => {
       expect({ role, callable: callable.map((c) => c.fn) }).toEqual({
         role,
         callable:
-          role === 'authenticated' ? CLIENT_FUNCTIONS : role === 'anon' ? ANON_FUNCTIONS : [],
+          role === 'authenticated'
+            ? CLIENT_FUNCTIONS
+            : role === 'anon'
+              ? ANON_FUNCTIONS
+              : SERVICE_FUNCTIONS,
       });
     }
   });
@@ -402,7 +445,7 @@ describe('functions', () => {
   });
 });
 
-describe('GROUP_ERRORS, OFFLINE_FRIEND_ERRORS, PUSH_SUBSCRIPTION_ERRORS and PING_ERRORS (src/index.ts) match what the migrations raise', () => {
+describe('GROUP_ERRORS, OFFLINE_FRIEND_ERRORS, PUSH_SUBSCRIPTION_ERRORS, PING_ERRORS and SCHEDULE_FILE_ERRORS (src/index.ts) match what the migrations raise', () => {
   it('every message is raised somewhere, verbatim', async () => {
     const sql = (await Promise.all((await migrationFiles()).map((f) => readFile(f, 'utf8')))).join(
       '\n',
@@ -412,6 +455,7 @@ describe('GROUP_ERRORS, OFFLINE_FRIEND_ERRORS, PUSH_SUBSCRIPTION_ERRORS and PING
       ...Object.values(OFFLINE_FRIEND_ERRORS),
       ...Object.values(PUSH_SUBSCRIPTION_ERRORS),
       ...Object.values(PING_ERRORS),
+      ...Object.values(SCHEDULE_FILE_ERRORS),
     ])
       expect({ message, raised: sql.includes(`'${message.replaceAll("'", "''")}'`) }).toEqual({
         message,
@@ -446,6 +490,7 @@ describe('triggers', () => {
       { t: 'group_members.group_members_signal_now_delete', deferred: false },
       { t: 'group_members.group_members_signal_now_insert', deferred: false },
       { t: 'groups.groups_admin_in_sync', deferred: true },
+      { t: 'schedule_files.schedule_files_queue_removal', deferred: false },
       { t: 'sources.sources_protect_offline_friend', deferred: false },
       { t: 'sources.sources_signal_now_delete', deferred: false },
       { t: 'sources.sources_signal_now_insert', deferred: false },

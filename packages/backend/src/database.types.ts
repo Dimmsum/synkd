@@ -373,6 +373,78 @@ export type Database = {
           },
         ];
       };
+      parse_jobs: {
+        Row: {
+          attempts: number;
+          committed_at: string | null;
+          confidence: number | null;
+          cost_usd: number;
+          created_at: string;
+          draft: Json | null;
+          error: string | null;
+          file_id: string | null;
+          id: string;
+          lease_until: string | null;
+          model: string | null;
+          next_attempt_at: string;
+          parser_version: string | null;
+          status: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          attempts?: number;
+          committed_at?: string | null;
+          confidence?: number | null;
+          cost_usd?: number;
+          created_at?: string;
+          draft?: Json | null;
+          error?: string | null;
+          file_id?: string | null;
+          id?: string;
+          lease_until?: string | null;
+          model?: string | null;
+          next_attempt_at?: string;
+          parser_version?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          attempts?: number;
+          committed_at?: string | null;
+          confidence?: number | null;
+          cost_usd?: number;
+          created_at?: string;
+          draft?: Json | null;
+          error?: string | null;
+          file_id?: string | null;
+          id?: string;
+          lease_until?: string | null;
+          model?: string | null;
+          next_attempt_at?: string;
+          parser_version?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'parse_jobs_file_id_fkey';
+            columns: ['file_id'];
+            isOneToOne: true;
+            referencedRelation: 'schedule_files';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'parse_jobs_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       pings: {
         Row: {
           created_at: string;
@@ -522,6 +594,66 @@ export type Database = {
           },
         ];
       };
+      schedule_files: {
+        Row: {
+          created_at: string;
+          delete_at: string;
+          file_name: string;
+          id: string;
+          mime_type: string;
+          offline_friend_id: string | null;
+          pages: number | null;
+          sha256: string;
+          size_bytes: number;
+          storage_path: string;
+          uploaded_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          delete_at: string;
+          file_name: string;
+          id?: string;
+          mime_type: string;
+          offline_friend_id?: string | null;
+          pages?: number | null;
+          sha256: string;
+          size_bytes: number;
+          storage_path: string;
+          uploaded_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          delete_at?: string;
+          file_name?: string;
+          id?: string;
+          mime_type?: string;
+          offline_friend_id?: string | null;
+          pages?: number | null;
+          sha256?: string;
+          size_bytes?: number;
+          storage_path?: string;
+          uploaded_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'schedule_files_offline_friend_same_user';
+            columns: ['offline_friend_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'offline_friends';
+            referencedColumns: ['id', 'user_id'];
+          },
+          {
+            foreignKeyName: 'schedule_files_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       sources: {
         Row: {
           created_at: string;
@@ -613,6 +745,30 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      storage_removals: {
+        Row: {
+          attempts: number;
+          bucket: string;
+          created_at: string;
+          next_attempt_at: string;
+          storage_path: string;
+        };
+        Insert: {
+          attempts?: number;
+          bucket?: string;
+          created_at?: string;
+          next_attempt_at?: string;
+          storage_path: string;
+        };
+        Update: {
+          attempts?: number;
+          bucket?: string;
+          created_at?: string;
+          next_attempt_at?: string;
+          storage_path?: string;
+        };
+        Relationships: [];
       };
       users: {
         Row: {
@@ -713,12 +869,50 @@ export type Database = {
       };
       block_user: { Args: { user_id: string }; Returns: undefined };
       cancel_friend_request: { Args: { user_id: string }; Returns: undefined };
+      claim_parse_job: {
+        Args: { job_id: string; lease_seconds?: number };
+        Returns: {
+          attempt: number;
+          id: string;
+          mime_type: string;
+          sha256: string;
+          size_bytes: number;
+          storage_path: string;
+        }[];
+      };
+      claim_storage_removals: {
+        Args: { max_paths?: number };
+        Returns: {
+          bucket: string;
+          storage_path: string;
+        }[];
+      };
       clear_status: { Args: Record<PropertyKey, never>; Returns: undefined };
       commit_schedule: {
         Args: { draft: Json; offline_friend_id?: string; source_type?: string };
         Returns: string;
       };
+      complete_parse_job: {
+        Args: {
+          attempt: number;
+          confidence?: number;
+          cost_usd?: number;
+          draft: Json;
+          job_id: string;
+          model: string;
+          pages?: number;
+          parser_version: string;
+        };
+        Returns: boolean;
+      };
       confirm_age: { Args: { birth_year: number }; Returns: string };
+      confirm_parse_job: {
+        Args: { draft: Json; job_id: string };
+        Returns: {
+          source_id: string;
+          storage_path: string;
+        }[];
+      };
       create_group: { Args: { emoji?: string; name: string; tier?: number }; Returns: string };
       create_group_invite: {
         Args: { expires_at?: string; group_id: string; max_uses?: number };
@@ -734,12 +928,28 @@ export type Database = {
         Args: { emoji?: string; nickname: string; permission_confirmed?: boolean };
         Returns: string;
       };
+      create_schedule_upload: {
+        Args: {
+          file_name: string;
+          mime_type: string;
+          offline_friend_id?: string;
+          sha256: string;
+          size_bytes: number;
+        };
+        Returns: {
+          file_id: string;
+          job_id: string;
+          needs_upload: boolean;
+          storage_path: string;
+        }[];
+      };
       current_consent_version: { Args: Record<PropertyKey, never>; Returns: string };
       current_user_id: { Args: Record<PropertyKey, never>; Returns: string };
       decline_friend_request: { Args: { user_id: string }; Returns: undefined };
       delete_group: { Args: { group_id: string }; Returns: undefined };
       delete_offline_friend: { Args: { offline_friend_id: string }; Returns: undefined };
       delete_push_subscription: { Args: { endpoint: string }; Returns: boolean };
+      delete_schedule_upload: { Args: { file_id: string }; Returns: string };
       ensure_current_user: {
         Args: { avatar_url?: string; name: string; timezone?: string };
         Returns: {
@@ -775,6 +985,19 @@ export type Database = {
           title: string;
         }[];
       };
+      expire_schedule_files: { Args: { max_files?: number }; Returns: number };
+      fail_parse_job: {
+        Args: {
+          attempt: number;
+          cost_usd?: number;
+          error: string;
+          job_id: string;
+          model?: string;
+          parser_version?: string;
+          retryable: boolean;
+        };
+        Returns: string;
+      };
       find_user_by_handle: {
         Args: { lookup: string };
         Returns: {
@@ -785,6 +1008,7 @@ export type Database = {
           relationship: string;
         }[];
       };
+      finish_storage_removals: { Args: { paths: string[] }; Returns: number };
       get_group_members: {
         Args: { group_id: string };
         Returns: {
@@ -833,6 +1057,7 @@ export type Database = {
           user_id: string;
         }[];
       };
+      list_due_parse_jobs: { Args: { max_jobs?: number }; Returns: string[] };
       list_friend_requests: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -1002,6 +1227,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      start_parse_job: { Args: { file_id: string }; Returns: string };
       transfer_group_admin: {
         Args: { group_id: string; new_admin_id: string };
         Returns: undefined;
