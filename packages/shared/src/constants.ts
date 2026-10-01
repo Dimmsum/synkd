@@ -102,6 +102,19 @@ export const MAX_OFFLINE_FRIENDS = 20;
 /** Offline friend nickname length, in characters (PRD §9 `offlineFriends`, FR-SOC-14). */
 export const OFFLINE_FRIEND_NICKNAME_MAX_LENGTH = 40;
 
+/**
+ * Web Push devices per user (PRD §9 `pushSubscriptions`, FR-PING-3, WF-091). Saving an 11th
+ * drops the least recently used one. The database enforces the same cap in
+ * `save_push_subscription` (backend migration 20261002500000_push_subscriptions.sql).
+ */
+export const MAX_PUSH_SUBSCRIPTIONS = 10;
+
+/**
+ * Longest device label stored with a push subscription, e.g. "Chrome on Android". A coarse
+ * label instead of the raw user agent (NFR-SEC-1, PRD §9 `pushSubscriptions.userAgent`).
+ */
+export const PUSH_DEVICE_LABEL_MAX_LENGTH = 60;
+
 /** Ping templates (J3) and one-tap replies (FR-PING-4). */
 export const PING_TEMPLATES = ['Free for food?', 'Wanna study?', 'Link up?', 'Call me'] as const;
 export type PingTemplate = (typeof PING_TEMPLATES)[number];

@@ -283,3 +283,23 @@ export const OFFLINE_FRIEND_ERRORS = {
   limitReached: 'You have reached the limit of offline friends',
   rateLimited: 'Too many attempts',
 } as const;
+
+/**
+ * One row of the caller's own `push_subscriptions` (WF-091), readable under RLS. Other users'
+ * rows are never readable by clients; delivery reads them server-side (apps/web lib/push).
+ */
+export type PushSubscriptionRow = Database['public']['Tables']['push_subscriptions']['Row'];
+
+/**
+ * The messages the push subscription functions raise (WF-091), so clients can tell errors apart.
+ * Match on `error.message`. SQLSTATEs: WF001 no account and PT429 rate limited (see
+ * `DB_ERROR`), 22023 bad argument. `delete_push_subscription` never raises for an unknown or
+ * someone else's endpoint: it returns false.
+ */
+export const PUSH_SUBSCRIPTION_ERRORS = {
+  noAccount: 'No account for this sign-in',
+  invalidEndpoint: 'Invalid push endpoint',
+  invalidKeys: 'Invalid push subscription keys',
+  invalidDeviceLabel: 'Invalid device label',
+  rateLimited: 'Too many attempts',
+} as const;

@@ -76,7 +76,7 @@ export async function getNotificationSettings() {
   return {
     types: { pings: true, friendRequests: true, groupInvites: true, scheduleReminders: true },
     quietHours: { enabled: true, start: '23:00', end: '07:00' },
-    pushEnabled: false,
+    // Whether push is on is per device, so the browser works it out (WF-091, PushPermission).
   };
 }
 
