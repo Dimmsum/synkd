@@ -4,6 +4,7 @@ import { useId, useState } from 'react';
 import {
   DAYS_OF_WEEK,
   EVENT_CATEGORIES,
+  EVENT_TITLE_MAX_LENGTH,
   EventDraft,
   type DayOfWeek,
   type EventCategory,
@@ -54,7 +55,8 @@ export function describeWhen(e: Pick<DraftEvent, 'when'>): string {
 
 /**
  * Add or edit one event (FR-IMP-11). Reusable for manual entry (WF-031). No location
- * field, on purpose (D35). Validated with the shared EventDraft schema.
+ * field, on purpose (D35). Validated with the shared EventDraft schema. The name is optional:
+ * without one the event is called after its kind ("Class", "Work").
  */
 export function EventEditorDialog({
   open,
@@ -97,7 +99,7 @@ function EventForm({
 
   function save() {
     const draft = {
-      title,
+      title: title.trim() || CATEGORY_LABELS[category],
       category,
       start,
       end,
@@ -118,7 +120,7 @@ function EventForm({
       const field = issue?.path[0];
       setError(
         field === 'title'
-          ? 'Give it a name.'
+          ? `Keep the name to ${EVENT_TITLE_MAX_LENGTH} characters.`
           : field === 'when'
             ? 'Pick at least one day.'
             : field === 'end'
@@ -143,11 +145,11 @@ function EventForm({
         <DialogDescription>We only need what and when, never where.</DialogDescription>
       </DialogHeader>
       <div className="flex flex-col gap-2">
-        <Label htmlFor={`${id}-title`}>Name</Label>
+        <Label htmlFor={`${id}-title`}>Name (optional)</Label>
         <Input
           id={`${id}-title`}
           value={title}
-          maxLength={120}
+          maxLength={EVENT_TITLE_MAX_LENGTH}
           placeholder="COMP2140 Lecture"
           onChange={(e) => setTitle(e.target.value)}
         />

@@ -35,6 +35,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.117.2
         version: 2.117.2
+      '@whosfree/availability':
+        specifier: workspace:*
+        version: link:../../packages/availability
       '@whosfree/backend':
         specifier: workspace:*
         version: link:../../packages/backend

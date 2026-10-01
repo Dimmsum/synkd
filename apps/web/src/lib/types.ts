@@ -3,6 +3,7 @@
 // redacted to the viewer's tier (FR-VIS-5), so screens never decide what to hide.
 
 import type {
+  DateRange,
   DayOfWeek,
   EventCategory,
   EventDraft,
@@ -205,10 +206,14 @@ export interface VisibilityRow {
 }
 
 export interface ScheduleSource {
+  /** The `sources` row id; missing for a source that isn't connected. */
+  id?: string;
   type: SourceType;
   label: string;
   status: 'healthy' | 'failed' | 'needs_reconnect' | 'not_connected';
   detail: string;
+  /** Last date an uploaded or typed-in schedule covers (FR-IMP-7), `YYYY-MM-DD`. */
+  periodEnd?: string;
 }
 
 export interface PendingUpload {
@@ -230,5 +235,6 @@ export interface ParseJob {
   fileName: string;
   status: ParseJobStatus;
   events: DraftEvent[];
-  period: { start: string; end: string };
+  /** The dates the schedule covers, suggested by the parser or defaulted (FR-IMP-7). */
+  period: { start: string; end: string; exceptions?: DateRange[] };
 }

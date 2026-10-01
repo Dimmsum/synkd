@@ -1,5 +1,8 @@
+import { DEFAULT_TIMEZONE } from '@whosfree/shared';
+import { dateKey } from '@whosfree/ui/lib/time';
 import type { DraftEvent, ParseJob, PendingUpload } from '@/lib/types';
 import { minutesAgo } from '@/lib/mock/selectors';
+import { defaultManualPeriod, MANUAL_JOB_ID } from '@/lib/schedule-draft';
 
 const DRAFT: DraftEvent[] = [
   {
@@ -46,17 +49,18 @@ const DRAFT: DraftEvent[] = [
 
 /**
  * A parse job and its draft (FR-IMP-9). `manual` starts an empty draft for manual entry
- * (FR-IMP-12, WF-031). TODO(WF-027/WF-029): read parseJobs.draft for the viewer (RLS) and
- * a short-lived signed URL for the original file.
+ * (FR-IMP-12, WF-031), running 16 weeks from today until the user picks the dates.
+ * TODO(WF-027/WF-029): read parseJobs.draft for the viewer (RLS) and a short-lived signed URL
+ * for the original file.
  */
 export async function getParseJob(id: string): Promise<ParseJob | null> {
-  if (id === 'manual') {
+  if (id === MANUAL_JOB_ID) {
     return {
       id,
       fileName: '',
       status: 'needs_review',
       events: [],
-      period: { start: '2026-08-31', end: '2026-12-12' },
+      period: defaultManualPeriod(dateKey(new Date(), DEFAULT_TIMEZONE)),
     };
   }
   if (id !== 'job-1') return null;

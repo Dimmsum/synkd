@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CalendarDays, FileText, PenLine, TriangleAlert, Upload } from 'lucide-react';
+import { formatMonthDay } from '@whosfree/ui/lib/time';
 import type { SourceType } from '@whosfree/shared';
 import { buttonVariants } from '@whosfree/ui/components/button';
 import { Panel } from '@/components/app/page-header';
@@ -19,6 +20,7 @@ const ICONS: Record<SourceType, typeof FileText> = {
 // Outlook; the PRD's MVP has Google Calendar only (NG6), so they're left out.
 export default async function CalendarsPage() {
   const sources = await getSources();
+  const schedule = sources.find((s) => s.type === 'upload' || s.type === 'manual');
   return (
     <SettingsPage
       title="Schedules and calendars"
@@ -29,7 +31,7 @@ export default async function CalendarsPage() {
           {sources.map((s) => {
             const Icon = ICONS[s.type];
             return (
-              <li key={s.type} className="flex flex-wrap items-center gap-3 py-3">
+              <li key={s.id ?? s.type} className="flex flex-wrap items-center gap-3 py-3">
                 <span className="flex size-10 items-center justify-center rounded-xl bg-primary-soft text-primary-ink">
                   <Icon aria-hidden="true" className="size-5" />
                 </span>
@@ -39,7 +41,11 @@ export default async function CalendarsPage() {
                 </span>
                 {s.status === 'healthy' ? (
                   <span className="rounded-full bg-status-free-soft px-2.5 py-1 text-xs font-semibold text-status-free-ink">
-                    Connected
+                    {s.type === 'gcal' ? 'Connected' : 'Saved'}
+                  </span>
+                ) : s.status === 'not_connected' ? (
+                  <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+                    Not connected
                   </span>
                 ) : (
                   <span className="flex items-center gap-1 text-xs font-semibold text-status-soon-ink">
@@ -53,13 +59,27 @@ export default async function CalendarsPage() {
       </Panel>
       <Panel id="upload" title="Timetable or roster">
         <p className="text-sm text-body-foreground">
-          Your uploaded schedule ends <strong>Dec 12</strong>. Upload the new one any time; your old
-          one stops on the date you pick.
+          {schedule?.periodEnd ? (
+            <>
+              Your schedule ends <strong>{formatMonthDay(schedule.periodEnd)}</strong>. Add the new
+              one any time; it replaces this one.
+            </>
+          ) : (
+            <>You haven&apos;t added a timetable or roster yet.</>
+          )}
         </p>
+        {/* TODO(WF-033): the old schedule stops on a date the user picks and history is kept. */}
         <div className="mt-3 flex flex-wrap gap-2">
           <Link href="/import" className={buttonVariants({ size: 'sm' })}>
             <Upload aria-hidden="true" />
             Upload a new schedule
+          </Link>
+          <Link
+            href="/import/manual/review"
+            className={buttonVariants({ variant: 'outline', size: 'sm' })}
+          >
+            <PenLine aria-hidden="true" />
+            Type it in
           </Link>
           <Link href="/uploads" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
             Pending uploads
