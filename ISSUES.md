@@ -31,7 +31,7 @@ The single tracker for **everything that needs doing** on whosfree: features, se
 ### IDs
 - Every issue has a permanent ID: `WF-###`. **IDs are never reused or renumbered.**
 - Numbers are grouped by phase (Phase 0 = 001–019, Phase 1 = 020–039, and so on). That makes an ID easy to place, but the gaps aren't meaningful.
-- **New issues (including bugs) take the next free number after the highest existing ID.** The next free number is **WF-129**.
+- **New issues (including bugs) take the next free number after the highest existing ID.** The next free number is **WF-130**.
 - Use the ID in branch names and commit messages, e.g. `feat(parser): recurring extraction (WF-028)`.
 
 ### Category (the kind of work)
@@ -281,6 +281,7 @@ Everything else at P0, which adds:
 | WF-126 | Manual export/deletion request process | compliance | legal | P0 | 6 | Gate | todo | 010 |
 | WF-127 | Offline friends: add someone not on whosfree and import their timetable | feature | social, backend, web | P0 | 2 | A | in-review | 030, 031 |
 | WF-128 | Show offline friends on Now, detail page and Find a time | feature | web, availability | P0 | 3 | A | in-progress | 064, 127 |
+| WF-129 | Creating a group fails with "You don't have permission" (42501) | bug | backend | P0 | 2 | A | done | — |
 
 ---
 
@@ -1514,7 +1515,25 @@ Log bugs here using the [bug template](#bug-template). Each bug takes the next f
 
 > Any bug that could leak data above a viewer's tier, or leak location, is **automatically S1** and gets fixed before anything else.
 
-*No bugs logged yet.*
+#### WF-129 · Creating a group fails with "You don't have permission" (42501)
+- **Category:** `bug` · **Area:** `backend` · **Severity:** S2 · **Status:** `done`
+- **Found in:** prod (Railway + hosted Supabase) · 2026-10-01
+- **Related to:** WF-043, WF-044 (admin transfer hit the same path), PRD FR-SOC-7
+- **Depends on:** —
+
+**Steps to reproduce**
+1. Signed in, open Groups → New group, enter a name and an emoji.
+2. Create.
+
+**Expected:** the group is created with the creator as admin.
+**Actual:** "You don't have permission to do that any more." The Data API returned 403 on `/rpc/create_group`.
+
+**Notes:** `create_group` itself succeeded when run as the user in the SQL editor, because those scripts rolled back before commit. The admin-in-sync check (`private.group_admin_in_sync_trigger`) is a deferred constraint trigger that fires at commit, after the security definer function has returned. As security invoker, it was fired as `authenticated`, which has no USAGE on `private`. PGlite fires it as the function owner, so the tests passed. Fixed by migration `20261003600000_group_admin_check_runs_as_owner.sql` (the trigger function is now security definer); the owner applied it and confirmed groups can be created. Lesson for SQL-editor repros: add `set constraints all immediate;` before rolling back, or deferred triggers never run.
+
+**Fix criteria**
+- [x] Root cause identified
+- [x] Fix merged with a test that fails without it (`schema.test.ts` requires the trigger function to be security definer; PGlite can't reproduce the firing role itself)
+
 
 ---
 
