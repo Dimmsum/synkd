@@ -142,17 +142,22 @@ export interface StoredEventTimes {
  *
  * Times are wall-clock times in `timeZone`; an `end` before `start` runs past midnight. Week
  * numbers count from the week (Monday–Sunday) containing `period.start`, which is week 1.
- * The first occurrence is the first matching day in the period. Encodings:
- * - `every`: `FREQ=WEEKLY;WKST=MO;BYDAY=…`
+ * The first occurrence is the first matching day in the period, and every rule ends with
+ * `UNTIL` at the start of the last one, so a rule never runs past the period's end even when
+ * expanded without the period (`events_for_viewer` relies on it). Encodings:
+ * - `every`: `FREQ=WEEKLY;WKST=MO;BYDAY=…;UNTIL=…`
  * - `alternating`: the same with `INTERVAL=2`, anchored by the first occurrence, which is in
  *   a week of the right parity.
- * - `weeks`: a weekly rule with `UNTIL` at the last chosen week's last occurrence, and an
- *   EXDATE for each occurrence in a week that wasn't chosen.
+ * - `weeks`: the `every` rule up to the last chosen week, plus an EXDATE for each occurrence
+ *   in a week that wasn't chosen.
  *
- * The rule itself doesn't carry the period's end or its exceptions: always expand it with the
- * source's period (as `timeline` does), so the period can be shortened, extended or given new
- * breaks without rewriting events. Returns `null` when the draft has no occurrence in the
- * period (e.g. only weeks after it ends). A `date` draft becomes a one-off event on that date.
+ * The period's exceptions (breaks, holidays) are not written into the rule: always expand it
+ * with the source's period (as `timeline` does), so breaks can change without rewriting
+ * events. Returns `null` when the draft has no occurrence in the period (e.g. only weeks
+ * after it ends). A `date` draft becomes a one-off event on that date.
+ *
+ * `commit_schedule` (backend migration 20261002800000) computes exactly the same in SQL;
+ * the backend tests compare the two.
  */
 export function eventTimesFromDraft(
   draft: Pick<EventDraft, 'start' | 'end' | 'when'>,
@@ -193,18 +198,17 @@ export function eventTimesFromDraft(
   if (first === undefined || last === undefined) return null;
 
   const byDay = `BYDAY=${weekdays.map((d) => WEEKDAY_CODES[d]).join(',')}`;
-  if (pattern.type !== 'weeks') {
-    const interval = pattern.type === 'alternating' ? 'INTERVAL=2;' : '';
-    return { ...occurrence(first), rrule: `FREQ=WEEKLY;${interval}WKST=MO;${byDay}`, exdates: [] };
-  }
-  const exdates: number[] = [];
-  for (let day = first; day <= last; day++) {
-    if (onWeekday(day) && !inChosenWeek(day)) exdates.push(occurrence(day).start);
-  }
+  const interval = pattern.type === 'alternating' ? 'INTERVAL=2;' : '';
   const until = formatUtcDateTime(occurrence(last).start);
+  const exdates: number[] = [];
+  if (pattern.type === 'weeks') {
+    for (let day = first; day <= last; day++) {
+      if (onWeekday(day) && !inChosenWeek(day)) exdates.push(occurrence(day).start);
+    }
+  }
   return {
     ...occurrence(first),
-    rrule: `FREQ=WEEKLY;WKST=MO;${byDay};UNTIL=${until}`,
+    rrule: `FREQ=WEEKLY;${interval}WKST=MO;${byDay};UNTIL=${until}`,
     exdates,
   };
 }

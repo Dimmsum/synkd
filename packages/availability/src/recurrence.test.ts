@@ -319,12 +319,13 @@ describe('eventTimesFromDraft', () => {
     ).toMatchObject({ start: jm('2026-10-03T22:00'), end: jm('2026-10-04T06:00') });
   });
 
-  it('encodes "every week" as a weekly rule starting on the first matching day', () => {
+  it('encodes "every week" as a weekly rule from the first to the last matching day', () => {
     // The semester starts on a Monday; Wednesday's class starts on the 9th.
     expect(eventTimesFromDraft(weekly(['fri', 'wed'], { type: 'every' }), semester, JM)).toEqual({
       start: jm('2026-09-09T09:00'),
       end: jm('2026-09-09T10:00'),
-      rrule: 'FREQ=WEEKLY;WKST=MO;BYDAY=WE,FR',
+      // The last one is Friday 11 December, the period's last day.
+      rrule: 'FREQ=WEEKLY;WKST=MO;BYDAY=WE,FR;UNTIL=20261211T140000Z',
       exdates: [],
     });
   });
@@ -340,7 +341,8 @@ describe('eventTimesFromDraft', () => {
     expect(odd).toEqual({
       start: jm('2026-09-11T09:00'),
       end: jm('2026-09-11T10:00'),
-      rrule: 'FREQ=WEEKLY;INTERVAL=2;WKST=MO;BYDAY=MO,FR',
+      // Weeks 1, 3 and 5; the last one is Friday 9 October.
+      rrule: 'FREQ=WEEKLY;INTERVAL=2;WKST=MO;BYDAY=MO,FR;UNTIL=20261009T140000Z',
       exdates: [],
     });
     const even = eventTimesFromDraft(

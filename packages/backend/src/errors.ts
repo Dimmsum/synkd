@@ -28,6 +28,18 @@ export const DB_ERROR = {
   /** You have blocked this person; unblock them first. Only ever sent to the blocker. */
   blockedByYou: 'WF206',
   /**
+   * `commit_schedule` (WF-030): the draft breaks a `ScheduleCommit` rule or has an unknown
+   * field. Clients check it with zod first, so this is a bug, not something the user can fix
+   * by retrying. The message names the field (e.g. `events[3].start`), never its value.
+   */
+  scheduleInvalid: 'WF301',
+  /**
+   * `commit_schedule` (WF-030): an event never happens inside the schedule's dates (its days
+   * or weeks all fall outside them, or its date does). `error.details` is JSON
+   * `{ "event": <0-based index into draft.events> }`, so the UI can point at it.
+   */
+  scheduleEventOutsidePeriod: 'WF302',
+  /**
    * Rate limited (NFR-SEC-9): "Slow down". PostgREST returns HTTP 429. The error
    * `details` is JSON: `{ action, limit, retry_at }`.
    */

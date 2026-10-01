@@ -600,6 +600,10 @@ export type Database = {
       block_user: { Args: { user_id: string }; Returns: undefined };
       cancel_friend_request: { Args: { user_id: string }; Returns: undefined };
       clear_status: { Args: Record<PropertyKey, never>; Returns: undefined };
+      commit_schedule: {
+        Args: { draft: Json; offline_friend_id?: string; source_type?: string };
+        Returns: string;
+      };
       confirm_age: { Args: { birth_year: number }; Returns: string };
       create_group: { Args: { emoji?: string; name: string; tier?: number }; Returns: string };
       create_group_invite: {
