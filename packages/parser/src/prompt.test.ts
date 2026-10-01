@@ -1,6 +1,7 @@
+import { PARSE_PROMPT_VERSION } from '@whosfree/shared';
 import { describe, expect, it } from 'vitest';
 import { matchesMagicBytes, modelMediaType } from './media';
-import { loadPrompt, makePrompt } from './prompt';
+import { loadPrompt, makePrompt, PRODUCTION_PROMPT } from './prompt';
 
 describe('prompts', () => {
   it('loads v1 with a stable hash', async () => {
@@ -13,6 +14,24 @@ describe('prompts', () => {
 
   it('tells the model to leave out locations and personal details (D35)', async () => {
     const { text } = await loadPrompt('v1');
+    expect(text).toMatch(/Never include where something happens/);
+    expect(text).toMatch(/Never include personal details/);
+  });
+
+  it('embeds prompts/<PARSE_PROMPT_VERSION>.md unchanged as the production prompt', async () => {
+    // If this fails after editing the Markdown, regenerate src/prompt-text.ts from it (each line
+    // JSON-quoted, joined with "\n") and bump PARSER_VERSION.
+    const file = await loadPrompt(PARSE_PROMPT_VERSION);
+    expect(PRODUCTION_PROMPT).toEqual(file);
+  });
+
+  it('v2 covers the layouts and patterns of WF-028 and keeps D35', () => {
+    const { text } = PRODUCTION_PROMPT;
+    expect(text).toMatch(/days as columns and the times as rows, or the days as rows/);
+    expect(text).toMatch(/Week A or week 1 is odd/);
+    expect(text).toMatch(/"weeks", "weeks"/);
+    expect(text).toMatch(/suggestedPeriod/);
+    expect(text).toMatch(/confidence/);
     expect(text).toMatch(/Never include where something happens/);
     expect(text).toMatch(/Never include personal details/);
   });

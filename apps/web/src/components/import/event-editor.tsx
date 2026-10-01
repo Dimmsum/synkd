@@ -20,7 +20,9 @@ import {
 } from '@whosfree/ui/components/dialog';
 import { Input } from '@whosfree/ui/components/input';
 import { Label } from '@whosfree/ui/components/label';
+import { formatMonthDay } from '@whosfree/ui/lib/time';
 import { cn } from '@whosfree/ui/lib/utils';
+import { formatWeekList, parseWeekList } from '@/lib/draft-edit';
 import { CATEGORY_LABELS } from '@/lib/status';
 import type { DraftEvent } from '@/lib/types';
 
@@ -34,14 +36,15 @@ const DAY_SHORT: Record<DayOfWeek, string> = {
   sun: 'Sun',
 };
 
-type Repeat = 'every' | 'odd' | 'even';
+/** Every week, odd/even weeks (A/B), specific week numbers (FR-IMP-5), or one date (FR-IMP-6). */
+type Repeat = 'every' | 'odd' | 'even' | 'weeks' | 'date';
 
 const selectClass =
   'h-11 w-full rounded-[10px] border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:h-10';
 
 /** Human description of when a draft event happens. */
 export function describeWhen(e: Pick<DraftEvent, 'when'>): string {
-  if (e.when.kind === 'date') return e.when.date;
+  if (e.when.kind === 'date') return formatMonthDay(e.when.date);
   const days = e.when.days.map((d) => DAY_SHORT[d]).join(', ');
   const p = e.when.pattern;
   const repeat =
@@ -49,8 +52,15 @@ export function describeWhen(e: Pick<DraftEvent, 'when'>): string {
       ? 'every week'
       : p.type === 'alternating'
         ? `${p.parity} weeks`
-        : `weeks ${p.weeks.join(', ')}`;
+        : `weeks ${formatWeekList(p.weeks)}`;
   return `${days} · ${repeat}`;
+}
+
+function repeatOf(event: DraftEvent | null): Repeat {
+  if (!event) return 'every';
+  if (event.when.kind === 'date') return 'date';
+  const p = event.when.pattern;
+  return p.type === 'alternating' ? p.parity : p.type;
 }
 
 /**
@@ -92,25 +102,38 @@ function EventForm({
   const [days, setDays] = useState<DayOfWeek[]>(weeklyWhen?.days ?? []);
   const [start, setStart] = useState(event?.start ?? '09:00');
   const [end, setEnd] = useState(event?.end ?? '10:00');
-  const [repeat, setRepeat] = useState<Repeat>(
-    weeklyWhen?.pattern.type === 'alternating' ? weeklyWhen.pattern.parity : 'every',
+  const [repeat, setRepeat] = useState<Repeat>(repeatOf(event));
+  const [weeks, setWeeks] = useState(
+    weeklyWhen?.pattern.type === 'weeks' ? formatWeekList(weeklyWhen.pattern.weeks) : '',
   );
+  const [date, setDate] = useState(event?.when.kind === 'date' ? event.when.date : '');
   const [error, setError] = useState<string>();
 
   function save() {
+    const weekList = repeat === 'weeks' ? parseWeekList(weeks) : null;
+    if (repeat === 'weeks' && !weekList) {
+      setError('List the weeks as numbers from 1 to 60, like 1–6, 8–12.');
+      return;
+    }
+    const pattern =
+      repeat === 'odd' || repeat === 'even'
+        ? { type: 'alternating' as const, parity: repeat }
+        : weekList
+          ? { type: 'weeks' as const, weeks: weekList }
+          : { type: 'every' as const };
     const draft = {
       title: title.trim() || CATEGORY_LABELS[category],
       category,
       start,
       end,
-      when: {
-        kind: 'weekly' as const,
-        days: DAYS_OF_WEEK.filter((d) => days.includes(d)),
-        pattern:
-          repeat === 'every'
-            ? { type: 'every' as const }
-            : { type: 'alternating' as const, parity: repeat },
-      },
+      when:
+        repeat === 'date'
+          ? { kind: 'date' as const, date }
+          : {
+              kind: 'weekly' as const,
+              days: DAYS_OF_WEEK.filter((d) => days.includes(d)),
+              pattern,
+            },
       // Anything the user has touched is certain.
       confidence: 1,
     };
@@ -122,7 +145,9 @@ function EventForm({
         field === 'title'
           ? `Keep the name to ${EVENT_TITLE_MAX_LENGTH} characters.`
           : field === 'when'
-            ? 'Pick at least one day.'
+            ? repeat === 'date'
+              ? 'Pick the date.'
+              : 'Pick at least one day.'
             : field === 'end'
               ? 'The end time needs to be different from the start.'
               : 'Check the times.',
@@ -169,7 +194,7 @@ function EventForm({
           ))}
         </select>
       </div>
-      <fieldset>
+      <fieldset className={repeat === 'date' ? 'hidden' : undefined}>
         <legend className="mb-2 text-sm font-semibold">Days</legend>
         <div className="grid grid-cols-7 gap-1">
           {DAYS_OF_WEEK.map((d) => (
@@ -226,9 +251,37 @@ function EventForm({
           <option value="every">Every week</option>
           <option value="odd">Odd weeks (week A)</option>
           <option value="even">Even weeks (week B)</option>
+          <option value="weeks">Only some weeks</option>
+          <option value="date">Once, on one date</option>
         </select>
-        {/* TODO(WF-028): specific week numbers ("weeks 1–6, 8–12") and dated events (WF-036). */}
       </div>
+      {repeat === 'weeks' ? (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor={`${id}-weeks`}>Which weeks</Label>
+          <Input
+            id={`${id}-weeks`}
+            value={weeks}
+            inputMode="numeric"
+            placeholder="1–6, 8–12"
+            onChange={(e) => setWeeks(e.target.value)}
+            aria-describedby={`${id}-weeks-hint`}
+          />
+          <p id={`${id}-weeks-hint`} className="text-xs text-muted-foreground">
+            Week 1 is the week your schedule starts.
+          </p>
+        </div>
+      ) : null}
+      {repeat === 'date' ? (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor={`${id}-date`}>Date</Label>
+          <Input
+            id={`${id}-date`}
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </div>
+      ) : null}
       {error ? (
         <p role="alert" className="text-sm font-medium text-destructive">
           {error}

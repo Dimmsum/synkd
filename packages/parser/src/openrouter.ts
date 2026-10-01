@@ -1,13 +1,15 @@
 // Parse one schedule file with one model and one prompt through OpenRouter (D15).
 //
-// Deliberately small: no retries, fallback models or caching. The production pipeline adds those
-// (WF-027, NFR-REL-2). The API key is passed in by the caller and never read from the environment
-// here, so importing this module can't leak it. Only the worker and the eval CLI hold the key
-// (NFR-SEC-8). Nothing from the file or the model output is logged (NFR-SEC-11).
+// Deliberately small: one request, no retries or caching. The production pipeline (parse.ts)
+// adds those through the job queue (WF-027, NFR-REL-2, D46); OpenRouter's own fallback models
+// are passed with `fallbackModels`. The API key is passed in by the caller and never read from
+// the environment here, so importing this module can't leak it. Only the Next.js server and the
+// eval CLI hold the key (NFR-SEC-8). Nothing from the file or the model output is logged
+// (NFR-SEC-11).
 import { ParseDraft } from '@whosfree/shared';
 import { z } from 'zod';
 import type { ModelMediaType } from './media';
-import type { Prompt } from './prompt';
+import type { Prompt } from './prompt-core';
 
 export const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 export const DEFAULT_TIMEOUT_MS = 120_000;
@@ -24,9 +26,15 @@ export interface ScheduleFile {
 }
 
 export interface ParseRequest {
-  file: ScheduleFile;
+  /** One file, or the pages of one schedule (at most SCHEDULE_FILE_MAX_PDF_PAGES images). */
+  file: ScheduleFile | readonly ScheduleFile[];
   /** An OpenRouter model id, e.g. `google/gemini-2.5-flash`. */
   model: string;
+  /**
+   * Models OpenRouter tries, in order, when `model` fails (provider errors, rate limits,
+   * refusals): its `models` routing parameter. The response says which one answered.
+   */
+  fallbackModels?: readonly string[];
   prompt: Prompt;
 }
 
@@ -90,6 +98,8 @@ export type ParseResult =
   | { ok: false; error: ParseFailure; meta: ParseMeta };
 
 const USER_INSTRUCTION = 'Extract the schedule from the attached file.';
+const USER_INSTRUCTION_PAGES =
+  'Extract the schedule from the attached pages. They are one schedule.';
 const MAX_ERROR_MESSAGE = 200;
 
 /**
@@ -123,17 +133,23 @@ export function buildRequestBody(
   req: ParseRequest,
   opts: Pick<OpenRouterOptions, 'pdfEngine' | 'zdr' | 'strictSchema'> = {},
 ): Record<string, unknown> {
-  const dataUrl = `data:${req.file.mediaType};base64,${toBase64(req.file.bytes)}`;
-  const filePart =
-    req.file.mediaType === 'application/pdf'
-      ? { type: 'file', file: { filename: req.file.filename, file_data: dataUrl } }
+  const files: readonly ScheduleFile[] = Array.isArray(req.file)
+    ? req.file
+    : [req.file as ScheduleFile];
+  const fileParts = files.map((file) => {
+    const dataUrl = `data:${file.mediaType};base64,${toBase64(file.bytes)}`;
+    return file.mediaType === 'application/pdf'
+      ? { type: 'file', file: { filename: file.filename, file_data: dataUrl } }
       : { type: 'image_url', image_url: { url: dataUrl } };
+  });
+  const instruction = files.length > 1 ? USER_INSTRUCTION_PAGES : USER_INSTRUCTION;
   const body: Record<string, unknown> = {
     model: req.model,
+    ...(req.fallbackModels?.length ? { models: [req.model, ...req.fallbackModels] } : {}),
     temperature: 0,
     messages: [
       { role: 'system', content: req.prompt.text },
-      { role: 'user', content: [{ type: 'text', text: USER_INSTRUCTION }, filePart] },
+      { role: 'user', content: [{ type: 'text', text: instruction }, ...fileParts] },
     ],
     response_format: {
       type: 'json_schema',
@@ -147,7 +163,7 @@ export function buildRequestBody(
     // keeps requests off endpoints that would silently ignore `response_format`.
     provider: { data_collection: 'deny', zdr: opts.zdr ?? true, require_parameters: true },
   };
-  if (req.file.mediaType === 'application/pdf' && opts.pdfEngine) {
+  if (files.some((f) => f.mediaType === 'application/pdf') && opts.pdfEngine) {
     body.plugins = [{ id: 'file-parser', pdf: { engine: opts.pdfEngine } }];
   }
   return body;

@@ -6,6 +6,11 @@
 // screen so they can find it. Never log these messages.
 
 import { DB_ERROR } from '@whosfree/backend';
+import {
+  PARSE_LIMIT_MESSAGE,
+  TOO_MANY_PENDING_MESSAGE,
+  UPLOAD_LIMIT_MESSAGE,
+} from './parse-messages';
 import { outsideMessage } from './schedule-draft';
 
 export const TRY_AGAIN = 'Something went wrong on our side. Try again.';
@@ -16,7 +21,18 @@ const PG = {
   checkViolation: '23514',
   invalidParameter: '22023',
   notFound: 'P0002',
+  raised: 'P0001',
 } as const;
+
+/** The `action` of a rate-limit error's JSON details (`{ action, limit, retry_at }`). */
+export function rateLimitAction(details: string | undefined): string | undefined {
+  try {
+    const action = (JSON.parse(details ?? 'null') as { action?: unknown } | null)?.action;
+    return typeof action === 'string' ? action : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 /** `set_handle` and the profile update (FR-AUTH-2, WF-040). */
 export function profileErrorMessage(code: string | undefined): string {
@@ -95,6 +111,32 @@ export function scheduleErrorMessage(
       return 'We couldn’t find that friend. They may have been removed.';
     case DB_ERROR.rateLimited:
       return 'You’ve saved a schedule a lot today. Try again tomorrow.';
+    case DB_ERROR.parseJobNotReady:
+      return details === 'committed'
+        ? 'This schedule is already saved.'
+        : 'This schedule isn’t ready to confirm yet.';
+    case DB_ERROR.noAccount:
+      return NO_ACCOUNT;
+    default:
+      return TRY_AGAIN;
+  }
+}
+
+/**
+ * `create_schedule_upload`, `start_parse_job` and `delete_schedule_upload` (WF-026, WF-027,
+ * WF-032, WF-035). `details` tells the rate limits apart: 5 parses a day (FR-IMP-19) or 20
+ * uploads a day.
+ */
+export function uploadErrorMessage(code: string | undefined, details: string | undefined): string {
+  switch (code) {
+    case DB_ERROR.rateLimited:
+      return rateLimitAction(details) === 'parse' ? PARSE_LIMIT_MESSAGE : UPLOAD_LIMIT_MESSAGE;
+    case PG.raised:
+      return TOO_MANY_PENDING_MESSAGE;
+    case PG.notFound:
+      return 'We couldn’t find that upload, or the friend it was for. It may have been deleted.';
+    case PG.invalidParameter:
+      return 'That file won’t work. Use a PDF, PNG, JPG, HEIC or WebP up to 10 MB.';
     case DB_ERROR.noAccount:
       return NO_ACCOUNT;
     default:

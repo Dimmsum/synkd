@@ -4,18 +4,32 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { DateRange, DAYS_OF_WEEK, SCHEDULE_EXCEPTION_LABEL_MAX_LENGTH } from '@whosfree/shared';
-import { CalendarOff, FileText, Info, Pencil, Plus, Trash, TriangleAlert, X } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
+import {
+  CalendarOff,
+  ExternalLink,
+  FileText,
+  Info,
+  Merge,
+  Pencil,
+  Plus,
+  Scissors,
+  Trash,
+  TriangleAlert,
+  X,
+} from 'lucide-react';
+import { Button, buttonVariants } from '@whosfree/ui/components/button';
+import { Checkbox } from '@whosfree/ui/components/checkbox';
 import { Input } from '@whosfree/ui/components/input';
 import { Label } from '@whosfree/ui/components/label';
 import { formatClockRange } from '@whosfree/ui/lib/time';
 import { cn } from '@whosfree/ui/lib/utils';
 import { blockPosition, TimeGrid, type GridColumn } from '@/components/calendar/time-grid';
 import { confirmSchedule } from '@/lib/actions/imports';
+import { mergeEvents, splitEvent, splitKind } from '@/lib/draft-edit';
 import { formatPeriod } from '@/lib/my-schedule';
 import { formatDateRange, withHolidays, type EditableException } from '@/lib/schedule-draft';
 import { CATEGORY_LABELS } from '@/lib/status';
-import type { DraftEvent, ParseJob } from '@/lib/types';
+import type { DraftEvent, OfflineFriendRef, ParseJob } from '@/lib/types';
 import { describeWhen, EventEditorDialog } from './event-editor';
 
 /** Below this the parser wasn't sure (FR-IMP-10). */
@@ -34,20 +48,24 @@ const HOUR = 40;
  * phones). The user sets the dates the schedule covers and its breaks; Jamaican public holidays
  * are pre-filled (FR-IMP-7, FR-IMP-8).
  *
+ * Events can be edited, deleted, added, split and merged (FR-IMP-11); low-confidence ones
+ * are outlined until they're touched (FR-IMP-10).
+ *
  * `replaces` is the confirmed schedule this one replaces, if any (FR-IMP-17), so the user is
- * told before confirming. `offlineFriendId` saves it as that offline friend's schedule instead
- * of the viewer's (WF-127, D44).
+ * told before confirming. `offlineFriend` is whose schedule it becomes when it isn't the
+ * viewer's (WF-127, D44): a parse job's database row already knows it from the upload; manual
+ * entry sends it with the confirm.
  */
 export function ReviewEditor({
   job,
   doneHref,
   replaces = null,
-  offlineFriendId = null,
+  offlineFriend = null,
 }: {
   job: ParseJob;
   doneHref: Route;
   replaces?: { start: string; end: string } | null;
-  offlineFriendId?: string | null;
+  offlineFriend?: OfflineFriendRef | null;
 }) {
   const router = useRouter();
   const [events, setEvents] = useState<DraftEvent[]>(job.events);
@@ -63,8 +81,29 @@ export function ReviewEditor({
   const [showOriginal, setShowOriginal] = useState(false);
   const [error, setError] = useState<string>();
   const [pending, start] = useTransition();
+  // FR-IMP-11: events picked for merging.
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
   const unsure = events.filter((e) => e.confidence < LOW_CONFIDENCE);
   const manual = !job.fileName;
+  const whose = offlineFriend ? `${offlineFriend.nickname}’s` : 'your';
+  const picked = events.filter((e) => selected.includes(e.id));
+  const merged = picked.length >= 2 ? mergeEvents(picked) : null;
+
+  function split(e: DraftEvent) {
+    setEvents((prev) => prev.flatMap((x) => (x.id === e.id ? splitEvent(x) : [x])));
+  }
+
+  function mergeSelected() {
+    if (!merged) return;
+    const at = events.findIndex((e) => selected.includes(e.id));
+    setEvents((prev) => {
+      const rest = prev.filter((e) => !selected.includes(e.id));
+      return [...rest.slice(0, at), merged, ...rest.slice(at)];
+    });
+    setSelected([]);
+    setSelecting(false);
+  }
 
   const times = events.flatMap((e) => [toMin(e.start), toMin(e.end)]);
   const gridStart = Math.min(8 * 60, ...times.map((t) => Math.floor(t / 60) * 60));
@@ -122,7 +161,7 @@ export function ReviewEditor({
           ...period,
           exceptions: exceptions.map(({ holiday: _holiday, ...range }) => range),
         },
-        offlineFriendId,
+        offlineFriendId: offlineFriend?.id ?? null,
       });
       if (res.ok) router.push(doneHref);
       else setError(res.error);
@@ -161,31 +200,33 @@ export function ReviewEditor({
                 {showOriginal ? 'Hide file' : 'Show file'}
               </Button>
             </div>
-            {/* TODO(WF-029): show the real file from a short-lived signed URL. */}
             <div
               className={cn(
-                'aspect-[3/4] max-h-[520px] flex-col gap-2 rounded-2xl border bg-card p-5',
+                'h-[min(70dvh,560px)] flex-col gap-2 rounded-2xl border bg-card p-3',
                 showOriginal ? 'flex' : 'hidden xl:flex',
               )}
             >
-              <p className="flex items-center gap-2 text-sm font-semibold">
-                <FileText aria-hidden="true" className="size-4 text-primary-ink" />
-                {job.fileName} · page 1 of 1
-              </p>
-              <div
-                aria-hidden="true"
-                className="grid flex-1 grid-cols-6 grid-rows-8 gap-px rounded-lg bg-border p-px"
-              >
-                {Array.from({ length: 48 }, (_, i) => (
-                  <span
-                    key={i}
-                    className={cn('bg-card', [7, 9, 11, 14, 20, 26, 33].includes(i) && 'bg-muted')}
-                  />
-                ))}
+              <div className="flex items-center gap-2 px-1">
+                <FileText aria-hidden="true" className="size-4 shrink-0 text-primary-ink" />
+                <p className="min-w-0 flex-1 truncate text-sm font-semibold">
+                  {job.fileName}
+                  {job.original?.pages && job.original.pages > 1
+                    ? ` · ${job.original.pages} pages`
+                    : ''}
+                </p>
+                {job.original ? (
+                  <a
+                    href={job.original.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={buttonVariants({ variant: 'ghost', size: 'sm' })}
+                  >
+                    <ExternalLink aria-hidden="true" />
+                    Open
+                  </a>
+                ) : null}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Preview of the original, for comparing.
-              </p>
+              <OriginalFile original={job.original} name={job.fileName} />
             </div>
           </section>
         ) : null}
@@ -208,26 +249,70 @@ export function ReviewEditor({
       </div>
 
       <section aria-labelledby="events-title" className="rounded-2xl border bg-card p-4 md:p-5">
-        <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <h2 id="events-title" className="text-[15px] font-semibold">
             Events ({events.length})
           </h2>
-          <Button
-            size="sm"
-            variant="soft"
-            onClick={() => {
-              setEditing(null);
-              setEditorOpen(true);
-            }}
-          >
-            <Plus aria-hidden="true" />
-            Add event
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {events.length >= 2 ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-pressed={selecting}
+                onClick={() => {
+                  setSelecting((s) => !s);
+                  setSelected([]);
+                }}
+              >
+                <Merge aria-hidden="true" />
+                {selecting ? 'Cancel merge' : 'Merge'}
+              </Button>
+            ) : null}
+            <Button
+              size="sm"
+              variant="soft"
+              onClick={() => {
+                setEditing(null);
+                setEditorOpen(true);
+              }}
+            >
+              <Plus aria-hidden="true" />
+              Add event
+            </Button>
+          </div>
         </div>
+        {selecting ? (
+          <div
+            aria-live="polite"
+            className="mb-2 flex flex-col gap-2 rounded-xl bg-primary-soft p-3 text-sm text-primary-ink sm:flex-row sm:items-center sm:justify-between"
+          >
+            <p>
+              {picked.length < 2
+                ? 'Pick the events to merge into one.'
+                : merged
+                  ? `Merge ${picked.length} events into one.`
+                  : 'These can’t be merged. Pick events at the same time on different days, or back to back on the same days.'}
+            </p>
+            <Button size="sm" disabled={!merged} onClick={mergeSelected}>
+              Merge selected
+            </Button>
+          </div>
+        ) : null}
         {events.length ? (
           <ul className="flex flex-col divide-y divide-border-subtle">
             {events.map((e) => (
               <li key={e.id} className="flex items-center gap-3 py-2.5">
+                {selecting ? (
+                  <Checkbox
+                    aria-label={`Pick ${e.title} to merge`}
+                    checked={selected.includes(e.id)}
+                    onCheckedChange={(checked) =>
+                      setSelected((prev) =>
+                        checked === true ? [...prev, e.id] : prev.filter((x) => x !== e.id),
+                      )
+                    }
+                  />
+                ) : null}
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="flex items-center gap-2 text-sm font-semibold">
                     {e.title}
@@ -255,6 +340,21 @@ export function ReviewEditor({
                 >
                   <Pencil aria-hidden="true" />
                 </Button>
+                {splitKind(e) ? (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={
+                      splitKind(e) === 'days'
+                        ? `Split ${e.title} into one event per day`
+                        : `Split ${e.title} into two`
+                    }
+                    title={splitKind(e) === 'days' ? 'Split by day' : 'Split in two'}
+                    onClick={() => split(e)}
+                  >
+                    <Scissors aria-hidden="true" />
+                  </Button>
+                ) : null}
                 <Button
                   variant="ghost"
                   size="icon-sm"
@@ -271,7 +371,6 @@ export function ReviewEditor({
             No events yet. Add your classes, shifts or anything else that makes you busy.
           </p>
         )}
-        {/* TODO(WF-029): split and merge events (FR-IMP-11). */}
       </section>
 
       <section aria-labelledby="period-title" className="rounded-2xl border bg-card p-4 md:p-5">
@@ -279,7 +378,11 @@ export function ReviewEditor({
           When does this schedule run?
         </h2>
         <p className="mb-3 text-xs text-muted-foreground">
-          {manual ? 'Pick the dates it covers.' : 'We found these dates in your file. Check them.'}
+          {manual
+            ? 'Pick the dates it covers.'
+            : job.periodFromFile
+              ? 'We found these dates in the file. Check them.'
+              : 'We didn’t find dates in the file, so these are a guess. Set the real ones.'}
         </p>
         <div className="grid max-w-md grid-cols-2 gap-3">
           <div className="flex flex-col gap-2">
@@ -314,7 +417,7 @@ export function ReviewEditor({
       {replaces ? (
         <p className="flex items-start gap-2 rounded-xl bg-primary-soft p-3 text-sm text-primary-ink">
           <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-          Confirming replaces your current schedule ({formatPeriod(replaces)}).
+          Confirming replaces {whose} current schedule ({formatPeriod(replaces)}).
         </p>
       ) : null}
 
@@ -346,6 +449,59 @@ export function ReviewEditor({
           );
           setEditorOpen(false);
         }}
+      />
+    </div>
+  );
+}
+
+/**
+ * The uploaded file itself, for comparing (FR-IMP-10). `original.url` is a same-origin route
+ * that redirects to a 60-second signed Storage URL (the bucket is private, NFR-SEC-6). PDFs
+ * show in the browser's viewer; HEIC only where the browser can show it (Safari), with a link
+ * otherwise.
+ */
+function OriginalFile({ original, name }: { original: ParseJob['original']; name: string }) {
+  const [broken, setBroken] = useState(false);
+  if (!original) {
+    return (
+      <p className="flex flex-1 items-center justify-center rounded-lg bg-muted p-4 text-center text-sm text-muted-foreground">
+        The file has been deleted.
+      </p>
+    );
+  }
+  if (original.mimeType === 'application/pdf') {
+    return (
+      <iframe
+        src={original.url}
+        title={`Your file: ${name}`}
+        className="min-h-0 w-full flex-1 rounded-lg border bg-muted"
+      />
+    );
+  }
+  if (broken) {
+    return (
+      <p className="flex flex-1 flex-col items-center justify-center gap-2 rounded-lg bg-muted p-4 text-center text-sm text-muted-foreground">
+        This browser can&apos;t show this photo here.
+        <a
+          href={original.url}
+          target="_blank"
+          rel="noreferrer"
+          className="font-semibold text-primary-ink underline-offset-2 hover:underline"
+        >
+          Open it in a new tab
+        </a>
+      </p>
+    );
+  }
+  return (
+    <div className="min-h-0 flex-1 overflow-auto rounded-lg border bg-muted">
+      {/* A short-lived signed URL behind a redirect: nothing next/image could optimise or cache. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={original.url}
+        alt={`Your file: ${name}`}
+        className="h-auto w-full"
+        onError={() => setBroken(true)}
       />
     </div>
   );

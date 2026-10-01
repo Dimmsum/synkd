@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
     '@whosfree/shared',
     '@whosfree/backend',
     '@whosfree/availability',
+    // Server only (`@whosfree/parser/node`, the parse route, D46). Bundled like the WF-024 spike:
+    // Turbopack emits PDFium's .wasm as a traced asset and inlines libheif's; sharp stays
+    // external (a Next.js default server-external package).
+    '@whosfree/parser',
   ],
   typedRoutes: true,
   poweredByHeader: false,
