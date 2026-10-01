@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Connection } from '@/lib/types';
-import { filterByGroup, groupIntoNowSections, isFreeSoon } from './now-sections';
+import { filterByGroup, freeNowByGroup, groupIntoNowSections, isFreeSoon } from './now-sections';
 
 const now = new Date('2026-09-30T19:30:00Z');
 const inMin = (m: number) => new Date(now.getTime() + m * 60_000).toISOString();
@@ -56,6 +56,18 @@ describe('groupIntoNowSections', () => {
     expect(isFreeSoon(person('x', { status: 'busy', nextFreeAt: inMin(60) }), now)).toBe(true);
     expect(isFreeSoon(person('x', { status: 'busy', nextFreeAt: inMin(61) }), now)).toBe(false);
   });
+
+  it('puts someone whose status is unknown last in busy/away, never in not sharing (WF-064)', () => {
+    const s2 = groupIntoNowSections(
+      [
+        person('unknown', { status: 'unknown', until: null, nextFreeAt: null }),
+        person('busy', { status: 'busy', until: inMin(30), nextFreeAt: inMin(90) }),
+      ],
+      now,
+    );
+    expect(ids(s2.busyAway)).toEqual(['busy', 'unknown']);
+    expect(s2.notSharing).toEqual([]);
+  });
 });
 
 describe('filterByGroup', () => {
@@ -64,5 +76,17 @@ describe('filterByGroup', () => {
     const b = person('b', { groupIds: ['netball'] });
     expect(filterByGroup([a, b], 'flat-4')).toEqual([a]);
     expect(filterByGroup([a, b], null)).toEqual([a, b]);
+  });
+});
+
+describe('freeNowByGroup', () => {
+  it('counts free people per group', () => {
+    const counts = freeNowByGroup([
+      person('a', { status: 'free', groupIds: ['flat-4', 'netball'] }),
+      person('b', { status: 'free', groupIds: ['flat-4'] }),
+      person('c', { status: 'busy', groupIds: ['flat-4'] }),
+      person('d', { status: 'free', groupIds: [] }),
+    ]);
+    expect(Object.fromEntries(counts)).toEqual({ 'flat-4': 2, netball: 1 });
   });
 });

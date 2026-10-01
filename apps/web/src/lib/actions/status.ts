@@ -33,7 +33,7 @@ export async function setManualStatus(input: {
   }
 
   // The chip is in the app shell on every page; Now and friend pages show statuses too.
-  // TODO(WF-064): viewers pick the change up through the Realtime "changed" signal.
+  // Other viewers pick the change up through the Realtime "changed" signal (WF-064).
   revalidatePath('/', 'layout');
   return ok;
 }

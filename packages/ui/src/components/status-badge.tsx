@@ -6,6 +6,7 @@ import {
   CalendarPlus,
   CircleCheck,
   CirclePause,
+  CircleQuestionMark,
   Hourglass,
   Moon,
   type LucideIcon,
@@ -14,9 +15,10 @@ import { cn } from '@whosfree/ui/lib/utils';
 
 /**
  * A status as the UI shows it. `soon` is not a stored status: it's a `busy`/`away`/`dnd`
- * person who becomes free within the hour (the Now screen's "Free soon" section).
+ * person who becomes free within the hour (the Now screen's "Free soon" section). `unknown` is
+ * someone whose status couldn't be worked out (WF-064), e.g. from a malformed schedule.
  */
-export type StatusTone = Status | 'soon';
+export type StatusTone = Status | 'soon' | 'unknown';
 
 interface ToneStyle {
   icon: LucideIcon;
@@ -74,6 +76,13 @@ export const STATUS_TONES: Record<StatusTone, ToneStyle> = {
   paused: {
     icon: CirclePause,
     word: 'Sharing paused',
+    ink: 'text-status-off-ink',
+    soft: 'bg-status-off-soft',
+    solid: 'bg-status-off',
+  },
+  unknown: {
+    icon: CircleQuestionMark,
+    word: 'Status unavailable',
     ink: 'text-status-off-ink',
     soft: 'bg-status-off-soft',
     solid: 'bg-status-off',
