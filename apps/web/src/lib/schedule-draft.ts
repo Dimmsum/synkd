@@ -72,7 +72,7 @@ export function formatDateRange(range: { start: string; end: string }): string {
 
 /**
  * The first event that never happens in the period (its days or weeks all fall outside the
- * dates, or its date does), or -1. `commit_schedule` refuses those (WF302).
+ * dates, or its date does), or -1. `commit_schedule` refuses those (WF402).
  */
 export function firstEventOutsidePeriod(
   events: readonly Pick<EventDraft, 'start' | 'end' | 'when'>[],

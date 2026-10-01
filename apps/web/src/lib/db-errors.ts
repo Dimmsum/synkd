@@ -70,7 +70,7 @@ export function hoursErrorMessage(code: string | undefined): string {
 
 /**
  * `commit_schedule` (WF-030, WF-031). `details` is the error's detail string: for an event that
- * never happens in the period (WF302) it's `{"event": index}`, used with the draft to name it.
+ * never happens in the period (WF402) it's `{"event": index}`, used with the draft to name it.
  */
 export function scheduleErrorMessage(
   code: string | undefined,

@@ -52,8 +52,8 @@
 -- the two never replace each other.
 --
 -- Errors (DB_ERROR in packages/backend/src/errors.ts): WF001 no account for
--- this sign-in, WF301 the draft breaks a rule (a client bug: the apps check
--- it first), WF302 an event never happens in the period (`detail` is
+-- this sign-in, WF401 the draft breaks a rule (a client bug: the apps check
+-- it first), WF402 an event never happens in the period (`detail` is
 -- {"event": <0-based index>}), P0002 'Offline friend not found' (also for
 -- another user's), 22023 a bad source_type, PT429 more than 20 commits a day.
 -- Messages name the field (e.g. `events[3].start`), never what was typed, so
@@ -99,7 +99,7 @@ $$;
 revoke all on function private.local_to_utc(timestamp, text) from public;
 
 -- ---------------------------------------------------------------------------
--- Draft checks. Each raises WF301 naming the field (`what`).
+-- Draft checks. Each raises WF401 naming the field (`what`).
 -- ---------------------------------------------------------------------------
 
 -- `value` must be a JSON object whose keys are all in `allowed`.
@@ -110,10 +110,10 @@ set search_path = ''
 as $$
 begin
   if value is null or pg_catalog.jsonb_typeof(value) <> 'object' then
-    raise exception 'Invalid schedule: % must be an object', what using errcode = 'WF301';
+    raise exception 'Invalid schedule: % must be an object', what using errcode = 'WF401';
   end if;
   if exists (select 1 from pg_catalog.jsonb_object_keys(value) k where k <> all (allowed)) then
-    raise exception 'Invalid schedule: % has an unknown field', what using errcode = 'WF301';
+    raise exception 'Invalid schedule: % has an unknown field', what using errcode = 'WF401';
   end if;
 end;
 $$;
@@ -132,7 +132,7 @@ declare
 begin
   if value is null or pg_catalog.jsonb_typeof(value) <> 'string'
     or raw !~ '^\d{4}-\d{2}-\d{2}$' then
-    raise exception 'Invalid schedule: % must be a YYYY-MM-DD date', what using errcode = 'WF301';
+    raise exception 'Invalid schedule: % must be a YYYY-MM-DD date', what using errcode = 'WF401';
   end if;
   begin
     parsed := pg_catalog.to_date(raw, 'YYYY-MM-DD');
@@ -141,7 +141,7 @@ begin
   end;
   -- to_date rolls some impossible dates over (2026-02-30), so compare the round trip.
   if parsed is null or pg_catalog.to_char(parsed, 'YYYY-MM-DD') <> raw then
-    raise exception 'Invalid schedule: % is not a real date', what using errcode = 'WF301';
+    raise exception 'Invalid schedule: % is not a real date', what using errcode = 'WF401';
   end if;
   return parsed;
 end;
@@ -158,7 +158,7 @@ as $$
 begin
   if value is null or pg_catalog.jsonb_typeof(value) <> 'string'
     or (value #>> '{}') !~ '^([01]\d|2[0-3]):[0-5]\d$' then
-    raise exception 'Invalid schedule: % must be an HH:MM time', what using errcode = 'WF301';
+    raise exception 'Invalid schedule: % must be an HH:MM time', what using errcode = 'WF401';
   end if;
   return (value #>> '{}')::time;
 end;
@@ -169,7 +169,7 @@ revoke all on function private.schedule_time(jsonb, text) from public;
 -- ---------------------------------------------------------------------------
 -- private.clean_schedule_period(period): the period (SchedulePeriod plus the
 -- ScheduleCommit limits) as {"start", "end", "exceptions"}, with labels
--- trimmed and empty ones dropped. Raises WF301 when it breaks a rule.
+-- trimmed and empty ones dropped. Raises WF401 when it breaks a rule.
 -- ---------------------------------------------------------------------------
 create function private.clean_schedule_period(period jsonb) returns jsonb
 language plpgsql
@@ -198,20 +198,20 @@ begin
   p_end := private.schedule_date(period -> 'end', 'period.end');
   if p_end < p_start then
     raise exception 'Invalid schedule: period.end must be on or after period.start'
-      using errcode = 'WF301';
+      using errcode = 'WF401';
   end if;
   if p_end - p_start + 1 > max_days then
     raise exception 'Invalid schedule: period can be at most % days', max_days
-      using errcode = 'WF301';
+      using errcode = 'WF401';
   end if;
 
   raw_exceptions := coalesce(period -> 'exceptions', '[]'::jsonb);
   if pg_catalog.jsonb_typeof(raw_exceptions) <> 'array' then
-    raise exception 'Invalid schedule: period.exceptions must be an array' using errcode = 'WF301';
+    raise exception 'Invalid schedule: period.exceptions must be an array' using errcode = 'WF401';
   end if;
   if pg_catalog.jsonb_array_length(raw_exceptions) > max_exceptions then
     raise exception 'Invalid schedule: at most % exceptions', max_exceptions
-      using errcode = 'WF301';
+      using errcode = 'WF401';
   end if;
 
   for x, i in
@@ -224,17 +224,17 @@ begin
     x_end := private.schedule_date(x -> 'end', what || '.end');
     if x_end < x_start then
       raise exception 'Invalid schedule: %.end must be on or after its start', what
-        using errcode = 'WF301';
+        using errcode = 'WF401';
     end if;
     label := null;
     if x ? 'label' then
       if pg_catalog.jsonb_typeof(x -> 'label') <> 'string' then
-        raise exception 'Invalid schedule: %.label must be a string', what using errcode = 'WF301';
+        raise exception 'Invalid schedule: %.label must be a string', what using errcode = 'WF401';
       end if;
       label := pg_catalog.regexp_replace(x ->> 'label', '^\s+|\s+$', '', 'g');
       if pg_catalog.char_length(label) > max_label then
         raise exception 'Invalid schedule: %.label can be at most % characters', what, max_label
-          using errcode = 'WF301';
+          using errcode = 'WF401';
       end if;
     end if;
     cleaned := cleaned || pg_catalog.jsonb_build_array(
@@ -256,7 +256,7 @@ revoke all on function private.clean_schedule_period(jsonb) from public;
 -- private.schedule_event_row(event, n, period_start, period_end, tz): checks
 -- draft event number `n` (EventDraft in @whosfree/shared) and returns the
 -- row to store: {"n", "title", "category", "starts_at", "ends_at", "rrule",
--- "exdates"}. Raises WF301 when it breaks a rule and WF302 when it never
+-- "exdates"}. Raises WF401 when it breaks a rule and WF402 when it never
 -- happens inside the period. See the header for the encoding.
 -- ---------------------------------------------------------------------------
 create function private.schedule_event_row(
@@ -306,25 +306,25 @@ begin
   );
 
   if pg_catalog.jsonb_typeof(event -> 'title') is distinct from 'string' then
-    raise exception 'Invalid schedule: %.title must be a string', what using errcode = 'WF301';
+    raise exception 'Invalid schedule: %.title must be a string', what using errcode = 'WF401';
   end if;
   title := pg_catalog.regexp_replace(event ->> 'title', '^\s+|\s+$', '', 'g');
   if pg_catalog.char_length(title) not between 1 and max_title then
     raise exception 'Invalid schedule: %.title must be 1 to % characters', what, max_title
-      using errcode = 'WF301';
+      using errcode = 'WF401';
   end if;
 
   category := event ->> 'category';
   if pg_catalog.jsonb_typeof(event -> 'category') is distinct from 'string'
     or category <> all (categories) then
     raise exception 'Invalid schedule: %.category is not a known category', what
-      using errcode = 'WF301';
+      using errcode = 'WF401';
   end if;
 
   start_time := private.schedule_time(event -> 'start', what || '.start');
   end_time := private.schedule_time(event -> 'end', what || '.end');
   if start_time = end_time then
-    raise exception 'Invalid schedule: % must have a duration', what using errcode = 'WF301';
+    raise exception 'Invalid schedule: % must have a duration', what using errcode = 'WF401';
   end if;
   end_day := case when end_time < start_time then 1 else 0 end;
 
@@ -333,7 +333,7 @@ begin
   if pg_catalog.jsonb_typeof(confidence) is distinct from 'number'
     or (confidence #>> '{}')::numeric not between 0 and 1 then
     raise exception 'Invalid schedule: %.confidence must be a number from 0 to 1', what
-      using errcode = 'WF301';
+      using errcode = 'WF401';
   end if;
 
   w := event -> 'when';
@@ -341,7 +341,7 @@ begin
     or pg_catalog.jsonb_typeof(w -> 'kind') is distinct from 'string'
     or (w ->> 'kind') not in ('weekly', 'date') then
     raise exception 'Invalid schedule: %.when.kind must be weekly or date', what
-      using errcode = 'WF301';
+      using errcode = 'WF401';
   end if;
 
   -- A dated event (FR-IMP-6): one row, on a day inside the period.
@@ -350,7 +350,7 @@ begin
     d := private.schedule_date(w -> 'date', what || '.when.date');
     if d < period_start or d > period_end then
       raise exception 'Invalid schedule: % is outside the schedule period', what
-        using errcode = 'WF302', detail = pg_catalog.jsonb_build_object('event', n)::text;
+        using errcode = 'WF402', detail = pg_catalog.jsonb_build_object('event', n)::text;
     end if;
     return pg_catalog.jsonb_build_object(
       'n', n,
@@ -367,16 +367,16 @@ begin
   if pg_catalog.jsonb_typeof(w -> 'days') is distinct from 'array'
     or pg_catalog.jsonb_array_length(w -> 'days') = 0 then
     raise exception 'Invalid schedule: %.when.days must list at least one day', what
-      using errcode = 'WF301';
+      using errcode = 'WF401';
   end if;
   for item in select x.value from pg_catalog.jsonb_array_elements(w -> 'days') as x loop
     day_index := pg_catalog.array_position(day_names, item #>> '{}');
     if pg_catalog.jsonb_typeof(item) <> 'string' or day_index is null then
       raise exception 'Invalid schedule: %.when.days has an unknown day', what
-        using errcode = 'WF301';
+        using errcode = 'WF401';
     end if;
     if day_index = any (days) then
-      raise exception 'Invalid schedule: %.when.days must be unique', what using errcode = 'WF301';
+      raise exception 'Invalid schedule: %.when.days must be unique', what using errcode = 'WF401';
     end if;
     -- ISO weekday numbers, Monday = 1 … Sunday = 7, as extract(isodow) gives them.
     days := days || day_index;
@@ -388,7 +388,7 @@ begin
     or pg_catalog.jsonb_typeof(pattern -> 'type') is distinct from 'string'
     or pattern_type not in ('every', 'alternating', 'weeks') then
     raise exception 'Invalid schedule: %.when.pattern.type must be every, alternating or weeks',
-      what using errcode = 'WF301';
+      what using errcode = 'WF401';
   end if;
   if pattern_type = 'every' then
     perform private.schedule_check_keys(pattern, array['type'], what || '.when.pattern');
@@ -397,7 +397,7 @@ begin
     if pg_catalog.jsonb_typeof(pattern -> 'parity') is distinct from 'string'
       or (pattern ->> 'parity') not in ('odd', 'even') then
       raise exception 'Invalid schedule: %.when.pattern.parity must be odd or even', what
-        using errcode = 'WF301';
+        using errcode = 'WF401';
     end if;
     parity := case when pattern ->> 'parity' = 'odd' then 1 else 0 end;
   else
@@ -405,19 +405,19 @@ begin
     if pg_catalog.jsonb_typeof(pattern -> 'weeks') is distinct from 'array'
       or pg_catalog.jsonb_array_length(pattern -> 'weeks') = 0 then
       raise exception 'Invalid schedule: %.when.pattern.weeks must list at least one week', what
-        using errcode = 'WF301';
+        using errcode = 'WF401';
     end if;
     for item in select x.value from pg_catalog.jsonb_array_elements(pattern -> 'weeks') as x loop
       if pg_catalog.jsonb_typeof(item) <> 'number'
         or (item #>> '{}')::numeric <> pg_catalog.trunc((item #>> '{}')::numeric)
         or (item #>> '{}')::numeric not between 1 and 60 then
         raise exception 'Invalid schedule: %.when.pattern.weeks must be whole numbers from 1 to 60',
-          what using errcode = 'WF301';
+          what using errcode = 'WF401';
       end if;
       week := (item #>> '{}')::integer;
       if week = any (weeks) then
         raise exception 'Invalid schedule: %.when.pattern.weeks must be unique', what
-          using errcode = 'WF301';
+          using errcode = 'WF401';
       end if;
       weeks := weeks || week;
     end loop;
@@ -444,7 +444,7 @@ begin
 
   if first_day is null then
     raise exception 'Invalid schedule: % never happens in the schedule period', what
-      using errcode = 'WF302', detail = pg_catalog.jsonb_build_object('event', n)::text;
+      using errcode = 'WF402', detail = pg_catalog.jsonb_build_object('event', n)::text;
   end if;
   exdates := array(
     select x from pg_catalog.unnest(exdates) as x
@@ -534,7 +534,7 @@ begin
     or pg_catalog.jsonb_array_length(commit_schedule.draft -> 'events') not between 1 and max_events
   then
     raise exception 'Invalid schedule: events must list 1 to % events', max_events
-      using errcode = 'WF301';
+      using errcode = 'WF401';
   end if;
 
   -- Serialises this user's commits (two at once would otherwise each keep

@@ -13,12 +13,25 @@
 //   - Web Push (WF-091): the push handler shows what the (encrypted) payload says and nothing
 //     else. It fetches nothing, caches nothing and logs nothing; the payload format and its
 //     limits are in lib/push/payload.ts. Tapping a notification opens a path on this site only.
+//   - One-tap ping replies (WF-093): tapping a reply button on a ping notification stores only
+//     `{ pingId, reply, at }` under a random one-time key in the `whosfree-quick-replies` cache
+//     and opens the inbox, which takes it and sends the reply as the signed-in user. Nothing
+//     else is stored, and the worker still never calls the API (lib/push/quick-reply.ts).
 //   - WF-110 adds the offline cache of the last-known Now data, holding only what the
 //     redacting database functions already returned for this viewer. Nothing here does that yet.
 import type { PrecacheEntry, SerwistGlobalConfig } from 'serwist';
 import { NetworkOnly, Serwist } from 'serwist';
 // Relative, not `@/`: this file is bundled on its own by the serwist route.
 import { DEFAULT_PUSH_URL, FALLBACK_PUSH, parsePushText, safeAppPath } from '../lib/push/payload';
+import {
+  PING_QUICK_REPLIES,
+  QUICK_REPLY_CACHE,
+  QUICK_REPLY_PARAM,
+  pingIdFromTag,
+  quickReplyAction,
+  quickReplyFromAction,
+  quickReplyPath,
+} from '../lib/push/quick-reply';
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -70,26 +83,65 @@ function pushText(event: PushEvent): string | null {
   }
 }
 
+/** TypeScript's lib lacks notification action buttons (supported by Chrome; ignored elsewhere). */
+type NotificationOptionsWithActions = NotificationOptions & {
+  actions?: { action: string; title: string }[];
+};
+
 self.addEventListener('push', (event) => {
   const payload = parsePushText(pushText(event)) ?? FALLBACK_PUSH;
-  event.waitUntil(
-    self.registration.showNotification(payload.title, {
-      body: payload.body,
-      tag: payload.tag,
-      icon: '/icons/icon-192.png',
-      // Only the path to open; nothing else about the notification is kept.
-      data: { url: payload.url },
-    }),
-  );
+  // A ping gets one-tap reply buttons (FR-PING-4, WF-093); the platform shows as many as it can.
+  const pingId = payload.kind === 'ping' ? pingIdFromTag(payload.tag) : null;
+  const options: NotificationOptionsWithActions = {
+    body: payload.body,
+    tag: payload.tag,
+    icon: '/icons/icon-192.png',
+    // Only the path to open (and, for a ping, its id for a quick reply); nothing else is kept.
+    data: pingId ? { url: payload.url, pingId } : { url: payload.url },
+    ...(pingId
+      ? {
+          actions: PING_QUICK_REPLIES.map((title, i) => ({ action: quickReplyAction(i), title })),
+        }
+      : {}),
+  };
+  event.waitUntil(self.registration.showNotification(payload.title, options));
 });
+
+/**
+ * For a tap on a quick-reply button: stores the reply under a one-time key and returns the inbox
+ * path that finishes it, or null (then the notification just opens as usual).
+ */
+async function stageQuickReply(action: string, data: unknown): Promise<string | null> {
+  const reply = quickReplyFromAction(action);
+  const pingId = pingIdFromTag(`ping:${String((data as { pingId?: unknown } | null)?.pingId)}`);
+  if (!reply || !pingId) return null;
+  try {
+    const key = self.crypto.randomUUID();
+    const path = quickReplyPath(key);
+    if (!path) return null;
+    const cache = await caches.open(QUICK_REPLY_CACHE);
+    await cache.put(
+      new URL(path, self.location.origin).href,
+      new Response(JSON.stringify({ pingId, reply, at: Date.now() }), {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    return `/inbox?${QUICK_REPLY_PARAM}=${key}`;
+  } catch {
+    return null;
+  }
+}
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const data: unknown = event.notification.data;
-  const path = safeAppPath((data as { url?: unknown } | null)?.url) ?? DEFAULT_PUSH_URL;
-  const target = new URL(path, self.location.origin).href;
+  const action = event.action;
   event.waitUntil(
     (async () => {
+      const quick = action ? await stageQuickReply(action, data) : null;
+      const path =
+        quick ?? safeAppPath((data as { url?: unknown } | null)?.url) ?? DEFAULT_PUSH_URL;
+      const target = new URL(path, self.location.origin).href;
       const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       // Reuse an open window of the app if there is one, otherwise open a new one.
       const existing = windows.find((w) => new URL(w.url).origin === self.location.origin);
@@ -103,7 +155,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// TODO(WF-092/WF-093): `pushsubscriptionchange` (the browser rotated the subscription) isn't
+// TODO(WF-091 follow-up): `pushsubscriptionchange` (the browser rotated the subscription) isn't
 // handled yet; the settings card re-saves the current subscription whenever it's shown, and a
-// dead one is removed on the next send. Notification action buttons (one-tap replies) are
-// WF-093.
+// dead one is removed on the next send. (It needs an authenticated save from the worker, which
+// has no fresh session token; see lib/push/quick-reply.ts for the same constraint.)

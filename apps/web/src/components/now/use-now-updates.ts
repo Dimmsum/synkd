@@ -8,66 +8,20 @@
 // - A local timer: each person's status comes with the changes ahead, so "until X" passing
 //   moves them between sections on the client.
 
-import { startTransition, useEffect, useEffectEvent, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSession } from '@clerk/nextjs';
-import { NOW_CHANGED_EVENT, userChannel } from '@whosfree/shared';
+import { useEffect, useEffectEvent, useState } from 'react';
+import { NOW_CHANGED_EVENT } from '@whosfree/shared';
 import { nextChangeAt, needsRefetch } from '@/lib/presence/clock';
-import { debounce } from '@/lib/presence/debounce';
-import { createBrowserSupabase } from '@/lib/supabase/browser';
 import type { Connection } from '@/lib/types';
+import { useUserSignals } from '@/components/realtime/use-user-signals';
+
+export { useRefetch } from '@/components/realtime/use-user-signals';
 
 /**
- * Re-renders the current route from the server (fresh `now_for_viewer` and statuses), at most
- * once per burst of requests (see lib/presence/debounce.ts).
- */
-export function useRefetch(): () => void {
-  const router = useRouter();
-  const refetch = useMemo(() => debounce(() => startTransition(() => router.refresh())), [router]);
-  useEffect(() => () => refetch.cancel(), [refetch]);
-  return refetch;
-}
-
-/**
- * Subscribes to the viewer's private Realtime channel (`user:<users.id>`) and calls `onChange`
- * for every `now_changed` signal, and once after a reconnect (signals sent while disconnected are
- * lost). The Clerk session token is read on every Realtime heartbeat, so token refreshes are
- * picked up. If the subscription fails, the page keeps working on what it has and a code is
- * logged, never a token.
+ * Calls `onChange` for every `now_changed` signal on the viewer's private channel, and once
+ * after a reconnect (see useUserSignals).
  */
 export function useNowSignals(viewerId: string, onChange: () => void): void {
-  const { isLoaded, session } = useSession();
-  const sessionId = session?.id;
-  const getToken = useEffectEvent(async () => (session ? session.getToken() : null));
-  const changed = useEffectEvent(onChange);
-
-  useEffect(() => {
-    if (!isLoaded || !sessionId) return;
-    let supabase: ReturnType<typeof createBrowserSupabase>;
-    try {
-      supabase = createBrowserSupabase(() => getToken());
-    } catch {
-      console.warn('Now: live updates unavailable', 'no_config');
-      return;
-    }
-    let joined = false;
-    const channel = supabase
-      .channel(userChannel(viewerId), { config: { private: true } })
-      .on('broadcast', { event: NOW_CHANGED_EVENT }, () => changed())
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          // A re-join after a dropped connection: catch up on anything missed meanwhile.
-          if (joined) changed();
-          joined = true;
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          // The status only: the error itself can carry connection details.
-          console.warn('Now: live updates unavailable', status);
-        }
-      });
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [isLoaded, sessionId, viewerId]);
+  useUserSignals(viewerId, NOW_CHANGED_EVENT, onChange, 'Now');
 }
 
 /**

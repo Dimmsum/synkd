@@ -430,7 +430,7 @@ describe('commit_schedule: what it writes (FR-IMP-7, FR-IMP-8, §9)', () => {
 
   // Property: for random drafts, periods and timezones (with and without DST), the stored
   // times, RRULE and EXDATEs are exactly what eventTimesFromDraft computes, and an event the
-  // engine finds no occurrence for is refused with WF302.
+  // engine finds no occurrence for is refused with WF402.
   it('stores exactly what eventTimesFromDraft computes, for any draft (property)', async () => {
     const dayNumber = (date: string) => Date.parse(`${date}T00:00:00Z`) / DAY_MS;
     const dateOf = (day: number) => new Date(day * DAY_MS).toISOString().slice(0, 10);
@@ -583,7 +583,7 @@ describe('commit_schedule: checks the draft (ScheduleCommit, D35)', () => {
     ['a bad event date', withWhen({ kind: 'date', date: '2026-13-01' })],
   ];
 
-  it.each(invalid)('refuses %s with WF301, writing nothing', async (_name, draft) => {
+  it.each(invalid)('refuses %s with WF401, writing nothing', async (_name, draft) => {
     await setRateCount(db, alice, 'commit_schedule', SCHEDULE_COMMITS_PER_DAY - 1);
     expect(await codeOf(commit('user_alice', draft))).toBe(DB_ERROR.scheduleInvalid);
     expect(await count('sources')).toBe(0);
@@ -618,7 +618,7 @@ describe('commit_schedule: checks the draft (ScheduleCommit, D35)', () => {
     expect(located.message).not.toMatch(/Secret|location/);
   });
 
-  it('refuses an event that never happens in the period with WF302 and its index', async () => {
+  it('refuses an event that never happens in the period with WF402 and its index', async () => {
     const outside = { ...lecture, when: { kind: 'date', date: '2027-01-05' } };
     const weekAfter = {
       ...lecture,

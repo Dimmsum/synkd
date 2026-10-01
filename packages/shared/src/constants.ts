@@ -122,8 +122,21 @@ export type PingTemplate = (typeof PING_TEMPLATES)[number];
 export const PING_REPLIES = ["I'm down", 'In 10', "Can't right now"] as const;
 export type PingReply = (typeof PING_REPLIES)[number];
 
-/** Free-text ping limit, in characters (D31). */
+/** Free-text ping limit, in characters (D31). Replies use the same limit (FR-PING-4). */
 export const PING_TEXT_MAX_LENGTH = 140;
+
+/**
+ * Pings expire this many minutes after they're sent (FR-PING-9 [ASSUMPTION]). The database sets
+ * `pings.expires_at` to match (backend migration 20261003000000_pings.sql); enforcing it on
+ * replies is WF-097.
+ */
+export const PING_EXPIRY_MINUTES = 120;
+
+/**
+ * Pings one sender can send per day (FR-PING-6, NFR-SEC-9), enforced in `send_ping`. The
+ * per-recipient limit (3 an hour) is WF-094.
+ */
+export const PING_DAILY_LIMIT = 30;
 
 /** Available hours default: 08:00–22:00 every day (D24). */
 export const DEFAULT_AVAILABLE_HOURS = { start: '08:00', end: '22:00' } as const;
@@ -184,6 +197,13 @@ export type ParseJobStatus = (typeof PARSE_JOB_STATUSES)[number];
  */
 export const REALTIME_USER_CHANNEL_PREFIX = 'user:';
 export const NOW_CHANGED_EVENT = 'now_changed';
+
+/**
+ * Sent on the same private channel, with an empty payload, when a ping or a reply arrives for
+ * (or is sent by) that user (WF-092, WF-093). The inbox then re-fetches `list_inbox`. Never
+ * carries the ping, its text or who sent it (D41, NFR-SEC-11).
+ */
+export const INBOX_CHANGED_EVENT = 'inbox_changed';
 
 /** The private Realtime channel topic of the user with this `users.id`. */
 export function userChannel(userId: string): string {

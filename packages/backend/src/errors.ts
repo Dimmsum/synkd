@@ -28,17 +28,35 @@ export const DB_ERROR = {
   /** You have blocked this person; unblock them first. Only ever sent to the blocker. */
   blockedByYou: 'WF206',
   /**
+   * The recipient can't be pinged right now (FR-PING-1): they're on do not disturb or have
+   * paused sharing. `details` is their status, `dnd` or `paused`. Show "Can't ping them now".
+   */
+  pingRecipientUnavailable: 'WF301',
+  /**
+   * The recipient isn't free (FR-PING-1), so the sender must confirm first ("Ping anyway?"),
+   * then call `send_ping` again with `confirmed: true`. `details` is their status: `busy`,
+   * `away` or `no_schedule`.
+   */
+  pingNeedsConfirmation: 'WF302',
+  /**
+   * No such ping among the caller's received pings, or the sender is blocked either way, so a
+   * blocked person can't tell (FR-SOC-6). Show "This ping isn't there any more".
+   */
+  pingNotFound: 'WF303',
+  /** The ping already has a reply; a reply is final (FR-PING-4). */
+  pingAlreadyReplied: 'WF304',
+  /**
    * `commit_schedule` (WF-030): the draft breaks a `ScheduleCommit` rule or has an unknown
    * field. Clients check it with zod first, so this is a bug, not something the user can fix
    * by retrying. The message names the field (e.g. `events[3].start`), never its value.
    */
-  scheduleInvalid: 'WF301',
+  scheduleInvalid: 'WF401',
   /**
    * `commit_schedule` (WF-030): an event never happens inside the schedule's dates (its days
    * or weeks all fall outside them, or its date does). `error.details` is JSON
    * `{ "event": <0-based index into draft.events> }`, so the UI can point at it.
    */
-  scheduleEventOutsidePeriod: 'WF302',
+  scheduleEventOutsidePeriod: 'WF402',
   /**
    * Rate limited (NFR-SEC-9): "Slow down". PostgREST returns HTTP 429. The error
    * `details` is JSON: `{ action, limit, retry_at }`.

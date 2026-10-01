@@ -201,17 +201,25 @@ export interface MyEvent {
   source: SourceType;
 }
 
+/**
+ * A ping in the inbox (WF-092, WF-093), received or sent. Group pings (WF-096) aren't stored
+ * yet; they will add the group here.
+ */
 export interface Ping {
   id: string;
-  from: Person;
-  to: Person | { group: GroupSummary };
+  direction: 'received' | 'sent';
+  /** The other person: who sent a received ping, or who a sent one went to. */
+  other: Person;
   template?: PingTemplate;
   /** Plain text only, ≤ 140 characters (D31). Never rendered as HTML or linkified. */
   text?: string;
   sentAt: Iso;
+  /** FR-PING-9: 2 hours after sending. Enforcing it on replies is WF-097. */
   expiresAt: Iso;
-  reply?: { from: Person; reply?: PingReply; text?: string; at: Iso }[];
-  read: boolean;
+  /** The recipient's one reply (FR-PING-4): a quick reply or plain text. */
+  reply?: { reply?: PingReply; text?: string; at: Iso };
+  /** Received: the viewer hasn't read it. Sent: there's a reply the viewer hasn't read. */
+  unread: boolean;
 }
 
 export interface Slot {

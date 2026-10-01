@@ -2,39 +2,58 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Inbox as InboxIcon, Send } from 'lucide-react';
 import { EmptyState } from '@whosfree/ui/components/misc';
-import { GroupEmoji, PersonAvatar } from '@whosfree/ui/components/person-avatar';
+import { PersonAvatar } from '@whosfree/ui/components/person-avatar';
 import { formatAgo, formatDuration } from '@whosfree/ui/lib/time';
 import { cn } from '@whosfree/ui/lib/utils';
 import { PageHeader } from '@/components/app/page-header';
+import {
+  InboxLive,
+  MarkPingsRead,
+  QuickReplyFromNotification,
+} from '@/components/inbox/inbox-live';
 import { PingMenu, PingReplyBox } from '@/components/inbox/ping-reply';
 import { PushInboxHint } from '@/components/push/push-permission';
 import { getInbox } from '@/lib/data/inbox';
+import { getViewerRow } from '@/lib/data/now';
 import { getNow } from '@/lib/data/people';
+import { QUICK_REPLY_PARAM } from '@/lib/push/quick-reply';
 import type { Ping } from '@/lib/types';
 
 export const metadata: Metadata = { title: 'Inbox' };
 
-// Inbox (WF-092, WF-093). Pings always land here, even without push (NFR-COMPAT-2).
+// Inbox (WF-092, WF-093). Pings always land here, even without push (NFR-COMPAT-2). Live: a
+// ping or reply for the viewer re-fetches this page (InboxLive, `inbox_changed`).
 export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
-  const [{ tab }, inbox, { now }] = await Promise.all([searchParams, getInbox(), getNow()]);
-  const showSent = tab === 'sent';
+  const [params, inbox, viewer, { now }] = await Promise.all([
+    searchParams,
+    getInbox(),
+    getViewerRow(),
+    getNow(),
+  ]);
+  const showSent = params.tab === 'sent';
   const list = showSent ? inbox.sent : inbox.received;
+  const quick = params[QUICK_REPLY_PARAM];
+  const unreadIds = list.filter((p) => p.unread).map((p) => p.id);
 
   return (
     <>
       <PageHeader title="Inbox" subtitle="Pings expire after 2 hours." />
+      <InboxLive viewerId={viewer.id} />
+      <MarkPingsRead ids={unreadIds} />
       <div className="mx-auto flex max-w-2xl flex-col gap-4">
+        <QuickReplyFromNotification quickKey={typeof quick === 'string' ? quick : undefined} />
         <nav
           aria-label="Inbox"
           className="flex gap-0.5 self-start rounded-[10px] bg-segment p-[3px]"
         >
           {(
             [
-              ['received', 'Received', inbox.received.length],
-              ['sent', 'Sent', inbox.sent.length],
+              ['received', 'Received', inbox.received],
+              ['sent', 'Sent', inbox.sent],
             ] as const
-          ).map(([key, label, n]) => {
+          ).map(([key, label, pings]) => {
             const active = (key === 'sent') === showSent;
+            const unread = pings.filter((p) => p.unread).length;
             return (
               <Link
                 key={key}
@@ -46,7 +65,13 @@ export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
                 )}
               >
                 {label}
-                <span className="text-xs">{n}</span>
+                <span className="text-xs">{pings.length}</span>
+                {unread > 0 && !active ? (
+                  <span className="rounded-full bg-primary px-1.5 text-[11px] text-primary-foreground">
+                    {unread}
+                    <span className="sr-only"> new</span>
+                  </span>
+                ) : null}
               </Link>
             );
           })}
@@ -59,7 +84,7 @@ export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
         {list.length ? (
           <ul className="flex flex-col gap-3">
             {list.map((p) => (
-              <PingCard key={p.id} ping={p} now={now} sent={showSent} />
+              <PingCard key={p.id} ping={p} now={now} />
             ))}
           </ul>
         ) : (
@@ -77,45 +102,47 @@ export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
   );
 }
 
-function PingCard({ ping, now, sent }: { ping: Ping; now: string; sent: boolean }) {
+function replyText(reply: NonNullable<Ping['reply']>): string {
+  return reply.reply ?? reply.text ?? '';
+}
+
+function PingCard({ ping, now }: { ping: Ping; now: string }) {
+  const sent = ping.direction === 'sent';
   const expiresIn = Math.round((Date.parse(ping.expiresAt) - Date.parse(now)) / 60_000);
   const expired = expiresIn <= 0;
-  const other = sent ? ping.to : ping.from;
-  const otherName = 'group' in other ? other.group.name : other.name;
-  const first = otherName.split(' ')[0] ?? otherName;
+  const other = ping.other;
+  const first = other.name.split(' ')[0] || other.name;
 
   return (
     <li
       className={cn(
         'flex flex-col gap-3 rounded-2xl border bg-card p-4',
-        !ping.read && !sent && 'border-primary/40 ring-1 ring-primary/20',
+        ping.unread && 'border-primary/40 ring-1 ring-primary/20',
       )}
     >
       <div className="flex items-start gap-3">
-        {'group' in other ? (
-          <GroupEmoji emoji={other.group.emoji} />
-        ) : (
-          <PersonAvatar name={other.name} hue={other.hue} />
-        )}
+        <PersonAvatar name={other.name} hue={other.hue} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <p className="text-sm">
+          <p className="text-sm [overflow-wrap:anywhere]">
             {sent ? (
               <>
-                You pinged <span className="font-semibold">{otherName}</span>
+                You pinged <span className="font-semibold">{other.name}</span>
               </>
             ) : (
               <>
-                <span className="font-semibold">{otherName}</span> pinged you
+                <span className="font-semibold">{other.name}</span> pinged you
               </>
             )}
-            {!ping.read && !sent ? <span className="sr-only"> (new)</span> : null}
+            {ping.unread ? (
+              <span className="sr-only">{sent ? ' (new reply)' : ' (new)'}</span>
+            ) : null}
           </p>
           <p className="text-xs text-muted-foreground">
             {formatAgo(ping.sentAt, now)} ·{' '}
             {expired ? 'Expired' : `expires in ${formatDuration(Math.max(expiresIn, 1))}`}
           </p>
         </div>
-        {!sent && !('group' in other) ? (
+        {!sent ? (
           <div className="flex flex-wrap justify-end">
             <PingMenu pingId={ping.id} personId={other.id} name={first} />
           </div>
@@ -138,24 +165,26 @@ function PingCard({ ping, now, sent }: { ping: Ping; now: string; sent: boolean 
 
       <div className="pl-12">
         {sent ? (
-          ping.reply?.length ? (
-            <ul className="flex flex-col gap-1 text-sm">
-              {ping.reply.map((r) => (
-                <li key={r.from.id}>
-                  <span className="font-semibold">{r.from.name.split(' ')[0]}:</span>{' '}
-                  <span className="[overflow-wrap:anywhere]">{r.reply ?? r.text}</span>
-                </li>
-              ))}
-            </ul>
+          ping.reply ? (
+            <p className="text-sm">
+              <span className="font-semibold">{first}:</span>{' '}
+              {/* Plain text (D31), like the ping itself. */}
+              <span className="whitespace-pre-wrap [overflow-wrap:anywhere]">
+                {replyText(ping.reply)}
+              </span>
+            </p>
           ) : (
             <p className="text-sm text-muted-foreground">No reply yet.</p>
           )
-        ) : ping.reply?.length ? (
+        ) : ping.reply ? (
           <p className="text-sm text-status-free-ink">
             You replied:{' '}
-            <span className="font-semibold">{ping.reply[0]?.reply ?? ping.reply[0]?.text}</span>
+            <span className="font-semibold whitespace-pre-wrap [overflow-wrap:anywhere]">
+              {replyText(ping.reply)}
+            </span>
           </p>
         ) : expired ? (
+          // TODO(WF-097): the server doesn't refuse late replies yet; the UI stops offering them.
           <p className="text-sm text-muted-foreground">This ping has expired.</p>
         ) : (
           <PingReplyBox pingId={ping.id} />

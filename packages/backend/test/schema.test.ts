@@ -9,10 +9,17 @@ import {
   DEFAULT_MEMBER_PERMISSIONS,
   DEFAULT_TIER,
   EVENT_CATEGORIES,
+  PING_REPLIES,
+  PING_TEMPLATES,
   SOURCE_TYPES,
   TIERS,
 } from '@whosfree/shared';
-import { GROUP_ERRORS, OFFLINE_FRIEND_ERRORS, PUSH_SUBSCRIPTION_ERRORS } from '../src/index';
+import {
+  GROUP_ERRORS,
+  OFFLINE_FRIEND_ERRORS,
+  PING_ERRORS,
+  PUSH_SUBSCRIPTION_ERRORS,
+} from '../src/index';
 import { createTestDb, migrationFiles } from './harness/db';
 import type { TestDb } from './harness/db';
 import { addSource, addUser } from './harness/seed';
@@ -47,6 +54,7 @@ describe('migrations', () => {
       'groups',
       'invites',
       'offline_friends',
+      'pings',
       'push_subscriptions',
       'rate_limits',
       'sources',
@@ -97,6 +105,7 @@ describe('row-level security', () => {
       'group_members.group_members_select_own (SELECT)',
       'groups.groups_select_member (SELECT)',
       'offline_friends.offline_friends_select_own (SELECT)',
+      'pings.pings_select_party (SELECT)',
       'push_subscriptions.push_subscriptions_select_own (SELECT)',
       'sources.sources_delete_own (DELETE)',
       'sources.sources_insert_own (INSERT)',
@@ -170,6 +179,10 @@ describe('table privileges (on top of Supabase’s grant-everything defaults)', 
       status_overrides: ['SELECT'],
       offline_friends: ['SELECT'],
       push_subscriptions: ['SELECT'],
+      // WF-092: no read_at / reply_read_at (no read receipts).
+      pings: [
+        'SELECT(id, sender_id, recipient_id, group_id, template, text, reply, reply_text, replied_at, expires_at, created_at)',
+      ],
     });
   });
 });
@@ -206,21 +219,26 @@ const CLIENT_DEFINER_FUNCTIONS = [
   'list_friend_requests()',
   'list_friends()',
   'list_group_invites(uuid)',
+  'list_inbox()',
   'list_my_groups()',
+  'mark_pings_read(uuid[])',
   'now_for_viewer(timestamp with time zone,timestamp with time zone)',
   'regenerate_group_invite(uuid)',
   'remove_group_member(uuid,uuid)',
+  'reply_to_ping(uuid,text,text)',
   'request_test_push()',
   'revoke_group_invite(uuid)',
   'save_push_subscription(text,text,text,text)',
   'send_friend_request(uuid,integer)',
   'send_friend_request_by_handle(text,integer)',
+  'send_ping(uuid,text,text,boolean)',
   'set_group_member_permissions(uuid,uuid,boolean,boolean,boolean,boolean)',
   'set_handle(text)',
   'set_status(text,text,timestamp with time zone)',
   'transfer_group_admin(uuid,uuid)',
   'unblock_user(uuid)',
   'unfriend(uuid)',
+  'unread_ping_count()',
   'update_group(uuid,text,text)',
   'update_offline_friend(uuid,text,text)',
 ];
@@ -249,6 +267,7 @@ const PRIVATE_FUNCTIONS = [
   'private.clean_group_emoji(text)',
   'private.clean_group_name(text)',
   'private.clean_offline_friend_nickname(text)',
+  'private.clean_ping_text(text)',
   'private.clean_push_device_label(text)',
   'private.clean_schedule_period(jsonb)',
   'private.close_active_status(uuid)',
@@ -268,10 +287,12 @@ const PRIVATE_FUNCTIONS = [
   'private.lock_pair(uuid,uuid)',
   'private.new_invite_code()',
   'private.normalize_handle(text)',
+  'private.ping_status(uuid,timestamp with time zone)',
   'private.protect_age_confirmation()',
   'private.protect_source_offline_friend()',
   'private.purge_expired_rate_limits()',
   'private.purge_expired_status_overrides(interval)',
+  'private.purge_old_pings(interval)',
   'private.redacted_events(uuid,smallint,timestamp with time zone,timestamp with time zone)',
   'private.relationship(uuid,uuid)',
   'private.require_user()',
@@ -286,6 +307,7 @@ const PRIVATE_FUNCTIONS = [
   'private.signal_connections_of(uuid[])',
   'private.signal_friendships_changed()',
   'private.signal_group_members_changed()',
+  'private.signal_inbox_changed(uuid[])',
   'private.signal_now_changed(uuid[])',
   'private.signal_owner_rows_changed()',
   'private.signal_user_changed()',
@@ -380,7 +402,7 @@ describe('functions', () => {
   });
 });
 
-describe('GROUP_ERRORS, OFFLINE_FRIEND_ERRORS and PUSH_SUBSCRIPTION_ERRORS (src/index.ts) match what the migrations raise', () => {
+describe('GROUP_ERRORS, OFFLINE_FRIEND_ERRORS, PUSH_SUBSCRIPTION_ERRORS and PING_ERRORS (src/index.ts) match what the migrations raise', () => {
   it('every message is raised somewhere, verbatim', async () => {
     const sql = (await Promise.all((await migrationFiles()).map((f) => readFile(f, 'utf8')))).join(
       '\n',
@@ -389,6 +411,7 @@ describe('GROUP_ERRORS, OFFLINE_FRIEND_ERRORS and PUSH_SUBSCRIPTION_ERRORS (src/
       ...Object.values(GROUP_ERRORS),
       ...Object.values(OFFLINE_FRIEND_ERRORS),
       ...Object.values(PUSH_SUBSCRIPTION_ERRORS),
+      ...Object.values(PING_ERRORS),
     ])
       expect({ message, raised: sql.includes(`'${message.replaceAll("'", "''")}'`) }).toEqual({
         message,
@@ -471,7 +494,9 @@ describe('no location data anywhere (D35)', () => {
        where table_schema in ('public', 'private')
          and column_name ~* '(location|room|address|place|venue|geo|lat|lng|lon)'`,
     );
-    expect(cols).toEqual([]);
+    // Reviewed false positives: "temp-lat-e" is the ping template (WF-092), not a latitude.
+    const reviewed = new Set(['pings.template']);
+    expect(cols.filter(({ c }) => !reviewed.has(c))).toEqual([]);
   });
 });
 
@@ -487,6 +512,22 @@ describe('database constraints match @whosfree/shared', () => {
       );
     for (const c of EVENT_CATEGORIES) await insert(c);
     await expect(insert('location')).rejects.toThrow(/events_category_check/);
+  });
+
+  it('pings.template and pings.reply accept exactly PING_TEMPLATES and PING_REPLIES', async () => {
+    const a = await addUser(db, `user_ping_a_${Date.now()}`);
+    const b = await addUser(db, `user_ping_b_${Date.now()}`);
+    const insert = (template: string, reply: string | null) =>
+      db.admin.query(
+        `insert into public.pings (sender_id, recipient_id, template, reply, replied_at, expires_at)
+         values ($1, $2, $3, $4, case when $4::text is null then null else now() end,
+                 now() + interval '2 hours')`,
+        [a, b, template, reply],
+      );
+    for (const t of PING_TEMPLATES) await insert(t, null);
+    for (const r of PING_REPLIES) await insert(PING_TEMPLATES[0], r);
+    await expect(insert('Wanna fight?', null)).rejects.toThrow(/pings_template_check/);
+    await expect(insert(PING_TEMPLATES[0], 'Nah')).rejects.toThrow(/pings_reply_check/);
   });
 
   it('sources.type accepts exactly SOURCE_TYPES', async () => {

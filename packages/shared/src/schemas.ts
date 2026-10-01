@@ -151,8 +151,10 @@ export const AvailableHours = z
 export type AvailableHours = z.infer<typeof AvailableHours>;
 
 /**
- * Free-text ping (D31): trimmed, 1–140 characters, plain text. Length counts
- * Unicode code points, so an emoji counts as one character.
+ * Free-text ping or reply (D31, FR-PING-4): trimmed, 1–140 characters, plain text with no
+ * control characters except tab and newline. Length counts Unicode code points, so an emoji
+ * counts as one character. The database applies the same rules (`private.clean_ping_text`,
+ * which also turns CRLF into LF first).
  */
 export const PingText = z
   .string()
@@ -160,6 +162,10 @@ export const PingText = z
   .min(1)
   .refine((t) => [...t].length <= PING_TEXT_MAX_LENGTH, {
     message: `At most ${PING_TEXT_MAX_LENGTH} characters`,
+  })
+  // eslint-disable-next-line no-control-regex
+  .refine((t) => !/[\u0000-\u0008\u000B-\u001F\u007F]/.test(t), {
+    message: 'No control characters',
   });
 
 /**
