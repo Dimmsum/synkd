@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"><style>body{margin:0;font-family:'Onest',system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:oklch(0.52 0.2 280)}a:hover{color:oklch(0.42 0.2 280)}button,input{font-family:inherit}</style></helmet>
+<div style="width:410px;height:864px;padding:10px;box-sizing:border-box;border-radius:56px;background:#141320;box-shadow:0 30px 60px rgba(23,21,42,0.18),inset 0 0 0 1.5px #2A2838;font-family:'Onest',system-ui,sans-serif;color:#17152A">
+<div style="position:relative;width:390px;height:844px;border-radius:46px;overflow:hidden;background:#F6F5FA">
+
+<div style="position:absolute;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 36px;box-sizing:border-box;z-index:20;background:{{ statusBg }}">
+<span style="font-size:16px;font-weight:600">2:30</span>
+<div style="position:absolute;left:50%;top:11px;transform:translateX(-50%);width:122px;height:34px;border-radius:20px;background:#0B0A12"></div>
+<div style="display:flex;align-items:center;gap:6px"><div style="display:flex;align-items:flex-end;gap:2px;height:11px"><span style="width:3px;height:4px;border-radius:1px;background:#17152A"></span><span style="width:3px;height:6px;border-radius:1px;background:#17152A"></span><span style="width:3px;height:8px;border-radius:1px;background:#17152A"></span><span style="width:3px;height:11px;border-radius:1px;background:#17152A"></span></div><div style="width:24px;height:12px;border-radius:4px;border:1.5px solid rgba(23,21,42,0.4);padding:1.5px;box-sizing:border-box"><div style="width:70%;height:100%;border-radius:2px;background:#17152A"></div></div></div>
+</div>
+
+<div style="position:absolute;top:50px;left:0;right:0;bottom:84px;overflow-y:auto;overflow-x:hidden;scrollbar-width:none">
+
+<sc-if value="{{ isCal }}" hint-placeholder-val="{{ true }}">
+<div style="background:#fff;padding:8px 0 14px;border-bottom:1px solid #ECEAF2;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px;padding:0 20px">
+<button onClick="{{ openSheet }}" style="display:flex;align-items:center;gap:10px;border:0;background:none;padding:0;cursor:pointer;min-height:44px;min-width:0">
+<div style="width:36px;height:36px;border-radius:11px;background:{{ gColor }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;flex:none">{{ gIni }}</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0"><span style="display:flex;align-items:center;gap:4px;font-size:19px;font-weight:700;letter-spacing:-0.01em;color:#17152A">{{ gName }}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B6880" stroke-width="2.2"><path d="m6 9 6 6 6-6"></path></svg></span><span style="font-size:13px;color:#6B6880">{{ gCount }} members · <span style="color:oklch(0.47 0.13 155);font-weight:600">{{ freeNow }} free now</span></span></div>
+</button>
+<button style="margin-left:auto;width:44px;height:44px;border-radius:50%;border:0;background:oklch(0.52 0.2 280);color:#fff;font-size:24px;line-height:1;cursor:pointer;flex:none">+</button>
+</div>
+<div style="display:flex;gap:14px;overflow-x:auto;padding:0 20px;scrollbar-width:none">
+<sc-for list="{{ nowPeople }}" as="np" hint-placeholder-count="6">
+<div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:58px;flex:none">
+<div style="width:52px;height:52px;border-radius:50%;padding:3px;box-sizing:border-box;border:2.5px solid {{ np.ring }}"><div style="width:100%;height:100%;border-radius:50%;background:{{ np.solid }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700">{{ np.ini }}</div></div>
+<span style="font-size:13px;font-weight:600">{{ np.short }}</span>
+<span style="font-size:11.5px;font-weight:500;color:{{ np.color }};white-space:nowrap">{{ np.until }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:8px;padding:0 20px">
+<div style="flex:1;display:flex;padding:3px;background:#ECEAF2;border-radius:12px;gap:2px">
+<sc-for list="{{ viewTabs }}" as="t" hint-placeholder-count="3">
+<button onClick="{{ t.onClick }}" style="flex:1;height:38px;border:0;border-radius:9px;font-size:14.5px;font-weight:600;cursor:pointer;background:{{ t.bg }};color:{{ t.color }};box-shadow:{{ t.shadow }}">{{ t.label }}</button>
+</sc-for>
+</div>
+<button onClick="{{ toggleDisplay }}" style="width:44px;height:44px;border:0;border-radius:12px;background:#ECEAF2;color:#17152A;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none">
+<sc-if value="{{ isCalDisplay }}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"></path></svg></sc-if>
+<sc-if value="{{ isListDisplay }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M3 10h18M9 10v11M15 10v11"></path></svg></sc-if>
+</button>
+</div>
+<div style="display:flex;align-items:center;padding:0 12px">
+<button onClick="{{ prev }}" style="width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17152A" stroke-width="2.2"><path d="m15 6-6 6 6 6"></path></svg></button>
+<span style="flex:1;text-align:center;font-size:16px;font-weight:600">{{ rangeLabel }}</span>
+<button onClick="{{ next }}" style="width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17152A" stroke-width="2.2"><path d="m9 6 6 6-6 6"></path></svg></button>
+</div>
+</div>
+
+<sc-if value="{{ isDay }}" hint-placeholder-val="{{ true }}">
+<div style="background:#fff">
+<div style="display:flex;padding:10px 4px 8px 0;border-bottom:1px solid #F1EFF5;position:sticky;top:0;background:#fff;z-index:5">
+<div style="width:44px;flex:none"></div>
+<sc-for list="{{ dayCols }}" as="c" hint-placeholder-count="6">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px">
+<div style="position:relative;width:32px;height:32px;border-radius:50%;background:{{ c.solid }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">{{ c.ini }}<div style="position:absolute;right:-2px;bottom:-2px;width:11px;height:11px;border-radius:50%;border:2px solid #fff;background:{{ c.dot }}"></div></div>
+<span style="font-size:12px;font-weight:600">{{ c.short }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;padding:10px 4px 20px 0">
+<div style="width:44px;flex:none;position:relative;height:{{ gridH }}px">
+<sc-for list="{{ hours }}" as="h" hint-placeholder-count="14"><div style="position:absolute;right:6px;top:{{ h.top }}px;transform:translateY(-50%);font-size:11px;font-weight:500;color:#8A879C;white-space:nowrap">{{ h.label }}</div></sc-for>
+</div>
+<div style="flex:1;position:relative;height:{{ gridH }}px">
+<sc-for list="{{ hours }}" as="h" hint-placeholder-count="14"><div style="position:absolute;left:0;right:0;top:{{ h.top }}px;border-top:1px solid #F1EFF5"></div></sc-for>
+<sc-for list="{{ allFree }}" as="a" hint-placeholder-count="1"><div style="position:absolute;left:0;right:0;top:{{ a.top }}px;height:{{ a.h }}px;background:oklch(0.96 0.045 155);border-top:1.5px dashed oklch(0.7 0.13 155);border-bottom:1.5px dashed oklch(0.7 0.13 155);box-sizing:border-box"></div></sc-for>
+<div style="position:absolute;inset:0;display:flex">
+<sc-for list="{{ dayCols }}" as="c" hint-placeholder-count="6">
+<div style="flex:1;min-width:0;position:relative;border-left:1px solid #F1EFF5">
+<sc-for list="{{ c.blocks }}" as="b" hint-placeholder-count="2">
+<div style="position:absolute;left:2px;right:2px;top:{{ b.top }}px;height:{{ b.h }}px;background:{{ b.bg }};border:1px solid {{ b.bd }};border-radius:7px;padding:4px 5px;box-sizing:border-box;overflow:hidden;z-index:1"><span style="display:block;font-size:12px;font-weight:600;line-height:1.2;color:{{ b.ink }};overflow-wrap:anywhere">{{ b.label }}</span></div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+<sc-for list="{{ allFree }}" as="a" hint-placeholder-count="1"><div style="position:absolute;left:50%;top:{{ a.mid }}px;transform:translate(-50%,-50%);background:oklch(0.55 0.15 155);color:#fff;font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:20px;z-index:3;white-space:nowrap">Everyone free · {{ a.range }}</div></sc-for>
+<sc-if value="{{ showNow }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:-44px;right:0;top:{{ nowTop }}px;display:flex;align-items:center;z-index:4;pointer-events:none"><div style="width:44px;display:flex;justify-content:flex-end;padding-right:3px;box-sizing:border-box"><span style="background:#E5484D;color:#fff;font-size:10.5px;font-weight:700;padding:2px 4px;border-radius:5px">2:30</span></div><div style="flex:1;height:2px;background:#E5484D"></div></div>
+</sc-if>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isWeek }}" hint-placeholder-val="{{ false }}">
+<div style="background:#fff">
+<div style="display:flex;align-items:center;gap:8px;padding:12px 16px;overflow-x:auto;scrollbar-width:none">
+<span style="font-size:13.5px;color:#6B6880;white-space:nowrap">Show when</span>
+<sc-for list="{{ minChips }}" as="mc" hint-placeholder-count="4">
+<button onClick="{{ mc.onClick }}" style="height:36px;padding:0 14px;border-radius:20px;font-size:14px;font-weight:600;cursor:pointer;flex:none;border:1px solid {{ mc.bd }};background:{{ mc.bg }};color:{{ mc.color }}">{{ mc.label }}</button>
+</sc-for>
+</div>
+<div style="display:flex;padding:0 4px 8px 0;border-bottom:1px solid #F1EFF5;position:sticky;top:0;background:#fff;z-index:5">
+<div style="width:40px;flex:none"></div>
+<sc-for list="{{ weekDays }}" as="d" hint-placeholder-count="7">
+<div onClick="{{ d.onClick }}" style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding-top:4px">
+<span style="font-size:11.5px;font-weight:600;color:{{ d.labelColor }}">{{ d.dow }}</span>
+<span style="font-size:15px;font-weight:700;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ d.numBg }};color:{{ d.numColor }}">{{ d.num }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;padding:10px 4px 16px 0">
+<div style="width:40px;flex:none;position:relative;height:{{ wGridH }}px">
+<sc-for list="{{ wHours }}" as="h" hint-placeholder-count="14"><div style="position:absolute;right:5px;top:{{ h.top }}px;transform:translateY(-50%);font-size:11px;font-weight:500;color:#8A879C;white-space:nowrap">{{ h.label }}</div></sc-for>
+</div>
+<div style="flex:1;position:relative;height:{{ wGridH }}px">
+<sc-for list="{{ wHours }}" as="h" hint-placeholder-count="14"><div style="position:absolute;left:0;right:0;top:{{ h.top }}px;border-top:1px solid #F1EFF5"></div></sc-for>
+<div style="position:absolute;inset:0;display:flex">
+<sc-for list="{{ weekCols }}" as="wc" hint-placeholder-count="7">
+<div style="flex:1;min-width:0;position:relative;border-left:1px solid #F1EFF5;background:{{ wc.bg }}">
+<sc-for list="{{ wc.blocks }}" as="b" hint-placeholder-count="2">
+<div onClick="{{ b.onClick }}" style="position:absolute;left:2px;right:2px;top:{{ b.top }}px;height:{{ b.h }}px;background:{{ b.bg }};border:1px solid {{ b.bd }};border-radius:6px;box-sizing:border-box;display:flex;align-items:flex-start;justify-content:center;padding-top:{{ b.pt }}px;cursor:pointer;overflow:hidden"><span style="font-size:12.5px;font-weight:700;color:{{ b.ink }}">{{ b.count }}</span></div>
+</sc-for>
+<sc-if value="{{ wc.isToday }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:0;right:0;top:{{ wNowTop }}px;height:2px;background:#E5484D;z-index:3"></div></sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:14px;padding:0 16px 20px;font-size:13px;color:#4A475C">
+<span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:4px;background:oklch(0.62 0.15 155)"></span>All free</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:4px;background:oklch(0.9 0.07 155)"></span>5 of 6</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:4px;background:oklch(0.955 0.035 155);border:1px solid oklch(0.85 0.07 155);box-sizing:border-box"></span>Fewer</span>
+<span style="width:100%;font-size:12.5px;color:#8A879C">Tap a block to open that day</span>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isMonth }}" hint-placeholder-val="{{ false }}">
+<div style="background:#fff;padding:10px 10px 18px">
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));padding-bottom:6px">
+<sc-for list="{{ dowLetters }}" as="w" hint-placeholder-count="7"><span style="text-align:center;font-size:12px;font-weight:600;color:#8A879C">{{ w }}</span></sc-for>
+</div>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px">
+<sc-for list="{{ monthCells }}" as="m" hint-placeholder-count="35">
+<div onClick="{{ m.onClick }}" style="height:64px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;background:{{ m.bg }};opacity:{{ m.opacity }}">
+<span style="font-size:15px;font-weight:700;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ m.numBg }};color:{{ m.numColor }}">{{ m.num }}</span>
+<span style="font-size:11.5px;font-weight:700;color:{{ m.countColor }}">{{ m.countText }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;padding:14px 6px 0;font-size:13px;color:#4A475C">
+<span style="display:flex;align-items:center;gap:8px"><span style="width:16px;height:16px;border-radius:5px;background:oklch(0.9 0.08 155)"></span>Number of people free 2+ hours in the evening</span>
+<span style="font-size:12.5px;color:#8A879C">Tap a day to open it</span>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDayList }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px;padding:14px 16px 20px">
+<sc-for list="{{ dayList }}" as="w" hint-placeholder-count="8">
+<div style="background:#fff;border:1px solid {{ w.bd }};border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:16px;font-weight:700">{{ w.range }}</span><span style="font-size:13px;color:#6B6880">{{ w.dur }}</span><span style="margin-left:auto;font-size:11.5px;font-weight:700;letter-spacing:0.05em;color:{{ w.tagColor }}">{{ w.tag }}</span></div>
+<div style="display:flex;align-items:center;gap:10px">
+<div style="display:flex;padding-left:8px"><sc-for list="{{ w.avatars }}" as="av" hint-placeholder-count="3"><div style="width:30px;height:30px;border-radius:50%;background:{{ av.solid }};border:2px solid #fff;margin-left:-8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700">{{ av.ini }}</div></sc-for></div>
+<span style="font-size:14.5px;font-weight:600;color:{{ w.countColor }}">{{ w.countText }}</span>
+</div>
+<sc-if value="{{ w.hasBusy }}" hint-placeholder-val="{{ true }}"><span style="font-size:13px;color:#6B6880">{{ w.busy }}</span></sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isRangeList }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px;padding:14px 16px 20px">
+<sc-for list="{{ rangeList }}" as="rl" hint-placeholder-count="7">
+<div onClick="{{ rl.onClick }}" style="background:#fff;border:1px solid {{ rl.bd }};border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;cursor:pointer">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px;font-weight:700">{{ rl.label }}</span><svg style="margin-left:auto" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A879C" stroke-width="2"><path d="m9 6 6 6-6 6"></path></svg></div>
+<sc-for list="{{ rl.wins }}" as="wn" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:{{ wn.bg }}">
+<div style="display:flex;padding-left:7px"><sc-for list="{{ wn.avatars }}" as="av" hint-placeholder-count="3"><div style="width:24px;height:24px;border-radius:50%;background:{{ av.solid }};border:2px solid {{ wn.bg }};margin-left:-7px"></div></sc-for></div>
+<span style="font-size:14.5px;font-weight:600">{{ wn.range }}</span><span style="margin-left:auto;font-size:13px;color:#4A475C;white-space:nowrap">{{ wn.count }}</span>
+</div>
+</sc-for>
+<sc-if value="{{ rl.none }}" hint-placeholder-val="{{ false }}"><span style="font-size:13.5px;color:#8A879C">No good overlap this day</span></sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</sc-if>
+
+<sc-if value="{{ isFriendList }}" hint-placeholder-val="{{ false }}">
+<div style="padding:10px 20px 20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;justify-content:space-between;min-height:44px"><h1 style="margin:0;font-size:30px;font-weight:700;letter-spacing:-0.02em">Friends</h1><button style="width:44px;height:44px;border-radius:50%;border:0;background:oklch(0.52 0.2 280);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="10" cy="8" r="4"></circle><path d="M2.5 20c.8-3.6 3.6-5.5 7.5-5.5M19 14v6M16 17h6"></path></svg></button></div>
+<div style="display:flex;align-items:center;gap:10px;height:46px;padding:0 14px;background:#fff;border:1px solid #ECEAF2;border-radius:12px;font-size:16px;color:#8A879C"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Search friends</div>
+<div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -20px;padding:0 20px">
+<sc-for list="{{ friendTabs }}" as="t" hint-placeholder-count="3">
+<button onClick="{{ t.onClick }}" style="height:38px;padding:0 10px 0 16px;border-radius:20px;border:1px solid {{ t.bd }};background:{{ t.bg }};color:{{ t.color }};font-size:14.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;flex:none">{{ t.label }}<span style="min-width:22px;height:22px;padding:0 6px;box-sizing:border-box;border-radius:11px;background:{{ t.nBg }};font-size:12.5px;display:flex;align-items:center;justify-content:center">{{ t.n }}</span></button>
+</sc-for>
+</div>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;overflow:hidden">
+<sc-for list="{{ friendRows }}" as="r" hint-placeholder-count="8">
+<div onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #F1EFF5;cursor:pointer;min-height:68px;box-sizing:border-box" style-active="background:#F6F5FA">
+<div style="position:relative;width:44px;height:44px;border-radius:50%;background:{{ r.solid }};flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700">{{ r.ini }}<div style="position:absolute;right:-1px;bottom:-1px;width:13px;height:13px;border-radius:50%;border:2.5px solid #fff;background:{{ r.dot }}"></div></div>
+<div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><span style="font-size:16px;font-weight:600;display:flex;gap:6px">{{ r.name }}<span style="color:oklch(0.68 0.14 75)">{{ r.star }}</span></span><span style="font-size:13.5px;color:{{ r.statusColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.status }}</span></div>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B5B2C4" stroke-width="2"><path d="m9 6 6 6-6 6"></path></svg>
+</div>
+</sc-for>
+<sc-if value="{{ noFriendRows }}" hint-placeholder-val="{{ false }}"><div style="padding:32px 20px;text-align:center;font-size:15px;color:#6B6880">Nobody here yet.</div></sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isFriendDetail }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:16px;padding:4px 20px 24px">
+<button onClick="{{ closeFriend }}" style="align-self:flex-start;display:flex;align-items:center;gap:4px;min-height:44px;border:0;background:none;padding:0 8px 0 0;margin-left:-6px;font-size:16px;font-weight:500;color:oklch(0.52 0.2 280);cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m15 6-6 6 6 6"></path></svg>Friends</button>
+<div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+<div style="position:relative;width:88px;height:88px;border-radius:50%;background:{{ fd.solid }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;font-weight:700">{{ fd.ini }}<div style="position:absolute;right:3px;bottom:3px;width:20px;height:20px;border-radius:50%;border:3.5px solid #F6F5FA;background:{{ fd.dot }}"></div></div>
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:23px;font-weight:700;letter-spacing:-0.01em">{{ fd.name }}</span><span style="font-size:14px;color:#8A879C">{{ fd.handle }}</span></div>
+<span style="font-size:15px;font-weight:600;color:{{ fd.statusColor }}">{{ fd.status }}</span>
+</div>
+<div style="display:flex;gap:10px">
+<button style="flex:1;height:48px;border:0;border-radius:12px;background:oklch(0.52 0.2 280);color:#fff;font-size:16px;font-weight:600;cursor:pointer">Propose plan</button>
+<button onClick="{{ fd.toggleClose }}" style="flex:1;height:48px;border:1px solid {{ fd.closeBd }};border-radius:12px;background:{{ fd.closeBg }};color:{{ fd.closeColor }};font-size:15px;font-weight:600;cursor:pointer">{{ fd.closeLabel }}</button>
+</div>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<span style="font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#6B6880">Today</span>
+<div style="position:relative;height:18px;border-radius:6px;background:oklch(0.9 0.07 155);overflow:hidden">
+<sc-for list="{{ fd.segs }}" as="s" hint-placeholder-count="3"><div style="position:absolute;top:0;bottom:0;left:{{ s.left }}%;width:{{ s.w }}%;background:#9A96AE"></div></sc-for>
+<div style="position:absolute;top:0;bottom:0;left:{{ fd.nowLeft }}%;width:2px;background:#E5484D"></div>
+</div>
+<div style="display:flex;justify-content:space-between;font-size:12px;color:#8A879C"><span>8 AM</span><span>3 PM</span><span>10 PM</span></div>
+<sc-for list="{{ fd.blocks }}" as="b" hint-placeholder-count="3">
+<div style="display:flex;justify-content:space-between;gap:12px;font-size:15px;padding-top:2px"><span style="font-weight:600">{{ b.label }}</span><span style="color:#6B6880">{{ b.time }}</span></div>
+</sc-for>
+</div>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px">
+<span style="font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#6B6880">You're both free</span>
+<sc-for list="{{ fd.together }}" as="w" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:oklch(0.97 0.03 155)">
+<div style="display:flex;flex-direction:column;gap:2px;flex:1"><span style="font-size:15.5px;font-weight:600">{{ w.day }} · {{ w.range }}</span><span style="font-size:13px;color:#4A475C">{{ w.date }} · {{ w.dur }}</span></div>
+<button style="height:36px;padding:0 14px;border:0;border-radius:18px;background:#fff;color:oklch(0.45 0.2 280);font-size:14px;font-weight:600;cursor:pointer">Plan</button>
+</div>
+</sc-for>
+</div>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:6px 16px">
+<sc-for list="{{ fd.share }}" as="t" hint-placeholder-count="2">
+<div onClick="{{ t.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:60px;cursor:pointer;border-bottom:1px solid #F1EFF5">
+<div style="display:flex;flex-direction:column;gap:2px;flex:1"><span style="font-size:15.5px;font-weight:500">{{ t.label }}</span><span style="font-size:13px;color:#6B6880">{{ t.sub }}</span></div>
+<div style="width:51px;height:31px;border-radius:20px;background:{{ t.trackBg }};position:relative;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ t.knobLeft }}px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.2);transition:left .15s"></div></div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isInvites }}" hint-placeholder-val="{{ false }}">
+<div style="padding:10px 20px 24px;display:flex;flex-direction:column;gap:14px">
+<div style="min-height:44px;display:flex;align-items:center"><h1 style="margin:0;font-size:30px;font-weight:700;letter-spacing:-0.02em">Invites</h1></div>
+<span style="font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#6B6880">Plans · {{ pendingPlans }} waiting</span>
+<sc-for list="{{ plans }}" as="p" hint-placeholder-count="3">
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:32px;height:32px;border-radius:50%;background:{{ p.fromSolid }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex:none">{{ p.fromIni }}</div>
+<span style="font-size:14px;color:#4A475C;line-height:1.3"><b style="color:#17152A;font-weight:600">{{ p.fromName }}</b> · {{ p.groupName }}</span>
+<span style="margin-left:auto;font-size:13px;color:#8A879C;white-space:nowrap">{{ p.ago }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:5px">
+<span style="font-size:19px;font-weight:700;letter-spacing:-0.01em">{{ p.title }}</span>
+<span style="font-size:15px">{{ p.when }}</span>
+<span style="display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600;color:{{ p.fitColor }}"><span style="width:9px;height:9px;border-radius:50%;background:{{ p.fitDot }}"></span>{{ p.fit }}</span>
+</div>
+<div style="display:flex;align-items:center;gap:8px"><div style="display:flex;padding-left:7px"><sc-for list="{{ p.goingAv }}" as="av" hint-placeholder-count="3"><div style="width:28px;height:28px;border-radius:50%;background:{{ av.solid }};border:2px solid #fff;margin-left:-7px"></div></sc-for></div><span style="font-size:14px;color:#4A475C">{{ p.goingText }}</span></div>
+<sc-if value="{{ p.pending }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:8px">
+<button onClick="{{ p.accept }}" style="flex:1.3;height:46px;border:0;border-radius:12px;background:oklch(0.52 0.2 280);color:#fff;font-size:15.5px;font-weight:600;cursor:pointer">I'm in</button>
+<button onClick="{{ p.maybe }}" style="flex:1;height:46px;border:1px solid #ECEAF2;border-radius:12px;background:#fff;color:#17152A;font-size:15.5px;font-weight:600;cursor:pointer">Maybe</button>
+<button onClick="{{ p.decline }}" style="flex:1;height:46px;border:1px solid #ECEAF2;border-radius:12px;background:#fff;color:#6B6880;font-size:15.5px;font-weight:600;cursor:pointer">Can't</button>
+</div>
+</sc-if>
+<sc-if value="{{ p.done }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="padding:9px 14px;border-radius:20px;background:{{ p.respBg }};color:{{ p.respColor }};font-size:14.5px;font-weight:600">{{ p.respText }}</span>
+<button onClick="{{ p.undo }}" style="min-height:44px;border:0;background:none;color:oklch(0.45 0.2 280);font-size:15px;font-weight:600;cursor:pointer">Change</button>
+</div>
+</sc-if>
+</div>
+</sc-for>
+<span style="font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#6B6880;padding-top:8px">Friend requests</span>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:4px 16px">
+<sc-for list="{{ requests }}" as="q" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #F1EFF5">
+<div style="width:44px;height:44px;border-radius:50%;background:{{ q.solid }};flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700">{{ q.ini }}</div>
+<div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><span style="font-size:15.5px;font-weight:600">{{ q.name }}</span><span style="font-size:13px;color:#6B6880">{{ q.mutual }}</span></div>
+<sc-if value="{{ q.pending }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:6px"><button onClick="{{ q.ignore }}" style="width:44px;height:44px;border:1px solid #ECEAF2;border-radius:50%;background:#fff;color:#6B6880;font-size:16px;cursor:pointer">✕</button><button onClick="{{ q.accept }}" style="width:44px;height:44px;border:0;border-radius:50%;background:oklch(0.52 0.2 280);color:#fff;font-size:17px;cursor:pointer">✓</button></div></sc-if>
+<sc-if value="{{ q.done }}" hint-placeholder-val="{{ false }}"><span style="font-size:13.5px;font-weight:600;color:#6B6880">{{ q.respText }}</span></sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+<div style="padding:10px 20px 24px;display:flex;flex-direction:column;gap:16px">
+<div style="min-height:44px;display:flex;align-items:center"><h1 style="margin:0;font-size:30px;font-weight:700;letter-spacing:-0.02em">Profile</h1></div>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px">
+<div style="width:64px;height:64px;border-radius:50%;background:#E4E2EA;flex:none"></div>
+<div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><span style="font-size:19px;font-weight:700">Maya Chen</span><span style="font-size:14px;color:#6B6880">@mayac · San Francisco</span></div>
+<button style="height:40px;padding:0 14px;border:1px solid #ECEAF2;border-radius:10px;background:#fff;font-size:14.5px;font-weight:600;color:#17152A;cursor:pointer">Edit</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#6B6880">Your status</span>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+<sc-for list="{{ statusOpts }}" as="o" hint-placeholder-count="4">
+<button onClick="{{ o.onClick }}" style="height:48px;border-radius:12px;font-size:15.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px solid {{ o.bd }};background:{{ o.bg }};color:#17152A"><span style="width:10px;height:10px;border-radius:50%;background:{{ o.dot }}"></span>{{ o.label }}</button>
+</sc-for>
+</div>
+<span style="font-size:13.5px;color:#6B6880">{{ statusHelp }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#6B6880">Usual free hours</span>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:0 16px">
+<sc-for list="{{ hourRows }}" as="h" hint-placeholder-count="7">
+<div onClick="{{ h.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:56px;border-bottom:1px solid #F1EFF5;cursor:pointer">
+<div style="display:flex;flex-direction:column;gap:1px;flex:1"><span style="font-size:15.5px;font-weight:500">{{ h.label }}</span><span style="font-size:13px;color:{{ h.rangeColor }}">{{ h.range }}</span></div>
+<div style="width:51px;height:31px;border-radius:20px;background:{{ h.trackBg }};position:relative;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ h.knobLeft }}px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.2);transition:left .15s"></div></div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#6B6880">Connected calendars</span>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:0 16px">
+<sc-for list="{{ calendars }}" as="c" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:12px;min-height:64px;border-bottom:1px solid #F1EFF5">
+<div style="width:36px;height:36px;border-radius:50%;background:#E4E2EA;flex:none"></div>
+<div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0"><span style="font-size:15.5px;font-weight:600">{{ c.label }}</span><span style="font-size:13px;color:#6B6880;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.sub }}</span></div>
+<button onClick="{{ c.onClick }}" style="height:36px;padding:0 14px;border-radius:18px;border:1px solid {{ c.btnBd }};background:{{ c.btnBg }};color:{{ c.btnColor }};font-size:14px;font-weight:600;cursor:pointer">{{ c.btn }}</button>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#6B6880">Who sees event titles</span>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:0 16px">
+<sc-for list="{{ titleOpts }}" as="o" hint-placeholder-count="3">
+<div onClick="{{ o.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:60px;border-bottom:1px solid #F1EFF5;cursor:pointer">
+<div style="display:flex;flex-direction:column;gap:1px;flex:1"><span style="font-size:15.5px;font-weight:500">{{ o.label }}</span><span style="font-size:13px;color:#6B6880">{{ o.sub }}</span></div>
+<span style="font-size:18px;font-weight:700;color:oklch(0.52 0.2 280)">{{ o.check }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<button style="height:48px;border:1px solid #ECEAF2;border-radius:12px;background:#fff;color:oklch(0.52 0.18 25);font-size:15.5px;font-weight:600;cursor:pointer">Log out</button>
+</div>
+</sc-if>
+
+</div>
+
+<div style="position:absolute;left:0;right:0;bottom:0;height:84px;background:rgba(255,255,255,0.96);border-top:1px solid #ECEAF2;display:flex;padding:6px 8px 0;box-sizing:border-box;z-index:10">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+<button onClick="{{ t.onClick }}" style="flex:1;height:52px;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:{{ t.color }};position:relative">
+<sc-if value="{{ t.isCal }}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></sc-if>
+<sc-if value="{{ t.isFr }}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18.5 14.8c1.6.8 2.6 2.5 3 5.2"></path></svg></sc-if>
+<sc-if value="{{ t.isInv }}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 6h16v12H4z"></path><path d="m4 7 8 6 8-6"></path></svg></sc-if>
+<sc-if value="{{ t.isPro }}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1-4.2 4-6.5 8-6.5s7 2.3 8 6.5"></path></svg></sc-if>
+<span style="font-size:12px;font-weight:600">{{ t.label }}</span>
+<sc-if value="{{ t.badge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:2px;left:calc(50% + 6px);min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:10px;background:#E5484D;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff">{{ t.badge }}</span></sc-if>
+</button>
+</sc-for>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#17152A"></div>
+</div>
+
+<sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:rgba(23,21,42,0.4);z-index:30;display:flex;align-items:flex-end">
+<div onClick="{{ stop }}" style="width:100%;background:#fff;border-radius:24px 24px 0 0;padding:10px 20px 34px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px">
+<div style="width:40px;height:5px;border-radius:3px;background:#D9D6E3;align-self:center;margin-bottom:10px"></div>
+<span style="font-size:19px;font-weight:700;padding-bottom:6px">Your groups</span>
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+<div onClick="{{ g.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:60px;border-radius:12px;padding:0 12px;margin:0 -12px;cursor:pointer;background:{{ g.bg }}">
+<div style="width:40px;height:40px;border-radius:12px;background:{{ g.color }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;flex:none">{{ g.ini }}</div>
+<div style="display:flex;flex-direction:column;gap:1px;flex:1"><span style="font-size:16px;font-weight:600">{{ g.name }}</span><span style="font-size:13px;color:#6B6880">{{ g.count }} members</span></div>
+<span style="font-size:18px;font-weight:700;color:oklch(0.52 0.2 280)">{{ g.check }}</span>
+</div>
+</sc-for>
+<button style="margin-top:8px;height:50px;border:1.5px dashed #D9D6E3;border-radius:12px;background:#fff;color:#17152A;font-size:15.5px;font-weight:600;cursor:pointer">+ New group</button>
+</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:410,&quot;height&quot;:864},&quot;tab&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;calendar&quot;,&quot;friends&quot;,&quot;invites&quot;,&quot;profile&quot;],&quot;default&quot;:&quot;calendar&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;view&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;day&quot;,&quot;week&quot;,&quot;month&quot;],&quot;default&quot;:&quot;day&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;display&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;cal&quot;,&quot;list&quot;],&quot;default&quot;:&quot;cal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;friend&quot;:{&quot;editor&quot;:null,&quot;default&quot;:null,&quot;tsType&quot;:&quot;number|null&quot;},&quot;showEventTitles&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const P=[{name:'You',short:'You',ini:'MC',hue:285},{name:'Jordan Lee',short:'Jordan',ini:'JL',hue:220},{name:'Priya Patel',short:'Priya',ini:'PP',hue:35},{name:'Sam Rivera',short:'Sam',ini:'SR',hue:175},{name:'Leo Park',short:'Leo',ini:'LP',hue:350},{name:'Ava Brooks',short:'Ava',ini:'AB',hue:80}];
+const EXTRA=[{name:'Noah Kim',ini:'NK',hue:255},{name:'Zoe Martin',ini:'ZM',hue:130},{name:'Eli Okafor',ini:'EO',hue:15},{name:'Hana Sato',ini:'HS',hue:315},{name:'Marco Diaz',ini:'MD',hue:100},{name:'Lily Tran',ini:'LT',hue:195}];
+const REQ=[{id:'r1',name:'Riley Quinn',ini:'RQ',hue:240,mutual:'3 mutual friends'},{id:'r2',name:'Theo Grant',ini:'TG',hue:20,mutual:'Knows Jordan and Sam'}];
+const ALL=P.concat(EXTRA);
+ALL.concat(REQ).forEach(p=>{p.solid=`oklch(0.62 0.13 ${p.hue})`;p.bg=`oklch(0.955 0.035 ${p.hue})`;p.bd=`oklch(0.85 0.07 ${p.hue})`;p.ink=`oklch(0.38 0.12 ${p.hue})`;});
+const LABELS=['Gym','Class','Meeting','Lunch','Dentist','Study group','Call','Commute','Dinner','Errands','Practice'];
+const TODAY=new Date(2026,8,30,12),NOW=14.5,START=8,END=22,H=48,WH=40;
+const GREEN='oklch(0.62 0.15 155)',GREEN_INK='oklch(0.45 0.13 155)',MUTED='#6B6880';
+const ACC='oklch(0.52 0.2 280)';
+const OVERRIDE={0:[[9,12,'Work'],[13,14,'Team lunch'],[15,17,'Work'],[19,20,'Gym']],1:[[8.5,14,'Shift'],[16,17.5,'Class']],2:[[10,15.5,'Studio'],[20,21.5,'Dinner']],3:[[9,11,'Class'],[12,13,'Study group'],[18.5,19,'Call']],4:[[11,17,'Work']],5:[[8,9.5,'Gym'],[13.5,15,'Dentist'],[21,22,'Call']]};
+const key=d=>d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+const same=(a,b)=>key(a)===key(b);
+const addDays=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n,12);
+const monday=d=>addDays(d,-((d.getDay()+6)%7));
+function rng(s){let a=s>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const cache={};
+function busy(pi,d){const k=key(d);if(k===key(TODAY)&&OVERRIDE[pi])return OVERRIDE[pi];const ck=k+'-'+pi;if(cache[ck])return cache[ck];
+const r=rng(k*7+pi*131);r();const wd=d.getDay(),weekend=wd===0||wd===6,out=[];
+if(!weekend&&r()<0.75){const s=8.5+Math.floor(r()*4)*0.5;const e=Math.min(19,s+6+Math.floor(r()*5)*0.5);out.push([s,e,pi===1?'Shift':pi===3?'Class':'Work']);}
+const n=weekend?1+Math.floor(r()*2):Math.floor(r()*3);
+for(let i=0;i<n;i++){const s=8+Math.floor(r()*26)*0.5;const e=Math.min(22,s+1+Math.floor(r()*4)*0.5);if(out.some(b=>s<b[1]+0.5&&e>b[0]-0.5))continue;out.push([s,e,LABELS[Math.floor(r()*LABELS.length)]]);}
+out.sort((a,b)=>a[0]-b[0]);return cache[ck]=out;}
+const isFree=(b,t)=>!b.some(x=>t>=x[0]&&t<x[1]);
+function fmt(h,ap=true){const hh=Math.floor(h),m=h%1?':30':'';const a=hh>=12?'PM':'AM';return (hh%12||12)+m+(ap?' '+a:'');}
+function fmtR(s,e){const sm=(s>=12)===(e>=12);return fmt(s,!sm)+' – '+fmt(e);}
+const fmtShort=h=>{const hh=Math.floor(h);return (hh%12||12)+(h%1?':30':'')+(hh>=12?'p':'a');};
+function windows(d){const w=[];for(let t=START;t<END;t+=0.5){const f=P.map((_,i)=>i).filter(i=>isFree(busy(i,d),t));const k=f.join(',');const l=w[w.length-1];if(l&&l.k===k)l.e=t+0.5;else w.push({s:t,e:t+0.5,k,free:f});}return w;}
+function ranked(d,minDur=1){return windows(d).filter(w=>w.e-w.s>=minDur&&w.free.length>=2).sort((a,b)=>b.free.length-a.free.length||(b.e-b.s)-(a.e-a.s));}
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'],DOWL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const dur=h=>h>=1?(h%1?h.toFixed(1):h)+' hr':'30 min';
+const avs=idx=>idx.map(i=>({solid:ALL[i].solid,ini:ALL[i].ini}));
+function nowStatus(i){const b=busy(i,TODAY);const cur=b.find(x=>NOW>=x[0]&&NOW<x[1]);if(cur)return{free:false,text:'Busy until '+fmt(cur[1]),short:'til '+fmtShort(cur[1]),label:cur[2]};const nx=b.find(x=>x[0]>NOW);return{free:true,text:nx?'Free until '+fmt(nx[0]):'Free rest of day',short:nx?'til '+fmtShort(nx[0]):'all day'};}
+const seg=a=>({bg:a?'#fff':'transparent',color:a?'#17152A':'#4A475C',shadow:a?'0 1px 3px rgba(23,21,42,0.14)':'none'});
+const GROUPS=[{name:'Weekend Crew',ini:'WC',hue:285,members:[0,1,2,3,4,5]},{name:'Roommates',ini:'RM',hue:220,members:[0,1,3,7]},{name:'Climbing Club',ini:'CC',hue:35,members:[0,2,4,6,8,9,10,11]},{name:'Study Group',ini:'SG',hue:175,members:[0,3,5,6,11]}];
+
+class Component extends DCLogic {
+  state={};
+  g(k,d){return this.state[k]!==undefined?this.state[k]:(this.props[k]!==undefined?this.props[k]:d);}
+  renderVals(){
+    const tab=this.g('tab','calendar'),view=this.g('view','day'),display=this.g('display','cal'),date=this.g('date',TODAY),group=this.g('group',0),minFree=this.g('minFree',4);
+    const friendSel=this.g('friend',null),fTab=this.g('fTab','all'),close=this.g('close',[1,3]),toggles=this.g('toggles',{}),R=this.g('resp',{}),status=this.g('status','auto'),titlesWho=this.g('titlesWho','close'),sheet=this.g('sheet',false);
+    const titles=this.props.showEventTitles??true;
+    const set=o=>()=>this.setState(o);const isToday=same(date,TODAY);const openDay=d=>()=>this.setState({date:d,view:'day',display:'cal'});
+    const T=(k,label,sub,def=false)=>{const on=toggles[k]??def;return{label,sub,on,onClick:()=>this.setState({toggles:{...toggles,[k]:!on}}),trackBg:on?GREEN:'#E4E2EA',knobLeft:on?22:2};};
+    const nowS=ALL.map((_,i)=>nowStatus(i));
+    const stat=i=>{const s=nowS[i];return{dot:s.free?GREEN:'#C9C6D4',status:s.free?s.text:(titles?s.label+' · ':'')+s.text,statusColor:s.free?GREEN_INK:MUTED};};
+    const gr=GROUPS[group];
+    // calendar header
+    const nowPeople=P.map((p,i)=>{const s=nowS[i];return{short:p.short,ini:p.ini,solid:p.solid,ring:s.free?GREEN:'#E4E2EA',color:s.free?GREEN_INK:MUTED,until:(s.free?'Free ':'Busy ')+s.short.replace('til ','–')};});
+    const viewTabs=['day','week','month'].map(v=>({label:v[0].toUpperCase()+v.slice(1),onClick:set({view:v}),...seg(view===v)}));
+    const shift=dir=>()=>{if(view==='day')this.setState({date:addDays(date,dir)});else if(view==='week')this.setState({date:addDays(date,7*dir)});else this.setState({date:new Date(date.getFullYear(),date.getMonth()+dir,1,12)});};
+    const wk=monday(date),days=[0,1,2,3,4,5,6].map(i=>addDays(wk,i)),ws=days[0],we=days[6];
+    const rangeLabel=view==='day'?(isToday?'Today, ':DOW[date.getDay()]+', ')+MON[date.getMonth()]+' '+date.getDate():view==='week'?`${MON[ws.getMonth()]} ${ws.getDate()} – ${ws.getMonth()===we.getMonth()?'':MON[we.getMonth()]+' '}${we.getDate()}`:`${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+    // day
+    const hours=[];for(let h=START;h<=END;h++)hours.push({top:(h-START)*H,label:h===END||h===START?'':fmtShort(h).replace('a',' AM').replace('p',' PM').replace(':30','')});
+    const dayCols=P.map((p,i)=>({short:p.short,ini:p.ini,solid:p.solid,dot:isToday?(nowS[i].free?GREEN:'#C9C6D4'):'transparent',blocks:busy(i,date).map(x=>{const h=(x[1]-x[0])*H-3;return{top:(x[0]-START)*H+1.5,h,bg:p.bg,bd:p.bd,ink:p.ink,label:h>=24?(titles?x[2]:'Busy'):''};})}));
+    const allFree=windows(date).filter(w=>w.free.length===P.length&&w.e-w.s>=0.5).map(w=>({top:(w.s-START)*H,h:(w.e-w.s)*H,mid:((w.s+w.e)/2-START)*H,range:fmtR(w.s,w.e)}));
+    // week
+    const minChips=[[6,'Everyone'],[5,'5+'],[4,'4+'],[3,'3+']].map(([n,l])=>{const a=n===minFree;return{label:l,onClick:set({minFree:n}),bg:a?ACC:'#fff',color:a?'#fff':'#17152A',bd:a?ACC:'#D9D6E3'};});
+    const weekDays=days.map(d=>{const t=same(d,TODAY);return{dow:DOW[d.getDay()],num:d.getDate(),onClick:openDay(d),labelColor:t?ACC:MUTED,numBg:t?ACC:'transparent',numColor:t?'#fff':'#17152A'};});
+    const wHours=[];for(let h=START;h<=END;h+=2)wHours.push({top:(h-START)*WH,label:h===END||h===START?'':fmtShort(h).replace('a',' AM').replace('p',' PM')});
+    const tone=n=>n===P.length?{bg:GREEN,bd:GREEN,ink:'#fff'}:n===P.length-1?{bg:'oklch(0.9 0.07 155)',bd:'oklch(0.8 0.1 155)',ink:'oklch(0.3 0.1 155)'}:{bg:'oklch(0.955 0.035 155)',bd:'oklch(0.85 0.07 155)',ink:'oklch(0.36 0.1 155)'};
+    const weekCols=days.map(d=>({isToday:same(d,TODAY),bg:same(d,TODAY)?'oklch(0.98 0.012 280)':'transparent',blocks:windows(d).filter(w=>w.free.length>=minFree).map(w=>{const h=(w.e-w.s)*WH-2,n=w.free.length;return{...tone(n),top:(w.s-START)*WH+1,h,pt:h>=26?5:1,count:h>=18?(n===P.length?'All':n):'',onClick:openDay(d)};})}));
+    // month
+    const first=new Date(date.getFullYear(),date.getMonth(),1,12),gs=monday(first),last=new Date(date.getFullYear(),date.getMonth()+1,0,12);
+    const nCells=Math.ceil(((last-gs)/864e5+1)/7)*7;const monthCells=[];
+    for(let i=0;i<nCells;i++){const d=addDays(gs,i),inM=d.getMonth()===date.getMonth(),t=same(d,TODAY);
+      const fc=P.filter((_,pi)=>{const b=busy(pi,d);let run=0,mx=0;for(let s=17;s<22;s+=0.5){if(isFree(b,s)){run++;mx=Math.max(mx,run);}else run=0;}return mx>=4;}).length;
+      monthCells.push({num:d.getDate(),onClick:openDay(d),countText:fc===6?'All':fc+' free',countColor:fc>=5?'oklch(0.36 0.11 155)':'#4A475C',bg:`oklch(${0.985-fc*0.017} ${0.005+fc*0.014} 155)`,opacity:inM?1:0.35,numBg:t?ACC:'transparent',numColor:t?'#fff':'#17152A'});}
+    // lists
+    const dayList=windows(date).filter(w=>w.free.length>0).map(w=>{const n=w.free.length,isNow=isToday&&NOW>=w.s&&NOW<w.e,busyIdx=P.map((_,i)=>i).filter(i=>!w.free.includes(i));
+      return{range:fmtR(w.s,w.e),dur:dur(w.e-w.s),avatars:avs(w.free),countText:n===P.length?'Everyone free':`${n} of ${P.length} free`,countColor:n===P.length?GREEN_INK:'#17152A',hasBusy:busyIdx.length>0,busy:'Busy: '+busyIdx.map(i=>P[i].short).join(', '),bd:isNow?ACC:n===P.length?'oklch(0.8 0.1 155)':'#ECEAF2',tag:isNow?'NOW':n===P.length?'BEST':'',tagColor:isNow?'#E5484D':GREEN_INK};});
+    const listDays=view==='month'?Array.from({length:last.getDate()},(_,i)=>addDays(first,i)):days;
+    const rangeList=listDays.map(d=>{const wins=ranked(d).slice(0,2);return{label:(same(d,TODAY)?'Today':DOWL[d.getDay()])+', '+MON[d.getMonth()]+' '+d.getDate(),onClick:openDay(d),bd:same(d,TODAY)?ACC:'#ECEAF2',none:wins.length===0,
+      wins:wins.map((w,j)=>({range:fmtR(w.s,w.e),count:w.free.length===P.length?'Everyone':w.free.length+' free',avatars:avs(w.free),bg:j===0?'oklch(0.965 0.035 155)':'#F6F5FA'}))};});
+    // friends
+    let fIdx=ALL.map((_,i)=>i).slice(1);if(fTab==='free')fIdx=fIdx.filter(i=>nowS[i].free);if(fTab==='close')fIdx=fIdx.filter(i=>close.includes(i));
+    const friendTabs=[['all','All',ALL.length-1],['free','Free now',ALL.slice(1).filter((_,j)=>nowS[j+1].free).length],['close','Close',close.length]].map(([k,l,n])=>{const a=k===fTab;return{label:l,n,onClick:set({fTab:k}),bg:a?'#17152A':'#fff',color:a?'#fff':'#17152A',bd:a?'#17152A':'#D9D6E3',nBg:a?'rgba(255,255,255,0.2)':'#F1EFF5'};});
+    const handle=p=>'@'+p.name.toLowerCase().replace(/[^a-z ]/g,'').split(' ').map((w,j)=>j?w[0]:w).join('');
+    const friendRows=fIdx.map(i=>({...stat(i),onClick:set({friend:i}),name:ALL[i].name,ini:ALL[i].ini,solid:ALL[i].solid,star:close.includes(i)?'★':''}));
+    const together=i=>{const out=[];for(let k=0;k<7;k++){const d=addDays(TODAY,k);let best=null,run=null;for(let t=9;t<22;t+=0.5){const ok=isFree(busy(0,d),t)&&isFree(busy(i,d),t)&&(k>0||t>=NOW);if(ok){run=run||{s:t};run.e=t+0.5;if(!best||run.e-run.s>best.e-best.s)best={...run};}else run=null;}if(best&&best.e-best.s>=1)out.push({d,k,...best});}return out;};
+    const sel=friendSel??1,fp=ALL[sel],fb=busy(sel,TODAY),isClose=close.includes(sel);
+    const fd={...stat(sel),name:fp.name,ini:fp.ini,solid:fp.solid,handle:handle(fp),segs:fb.map(x=>({left:(x[0]-START)/(END-START)*100,w:(x[1]-x[0])/(END-START)*100})),nowLeft:(NOW-START)/(END-START)*100,
+      blocks:fb.map(x=>({time:fmtR(x[0],x[1]),label:titles?x[2]:'Busy'})),together:together(sel).slice(0,3).map(w=>({day:w.k===0?'Today':w.k===1?'Tomorrow':DOW[w.d.getDay()],date:MON[w.d.getMonth()]+' '+w.d.getDate(),range:fmtR(w.s,w.e),dur:dur(w.e-w.s)})),
+      closeLabel:isClose?'★ Close friend':'☆ Close friend',closeBg:isClose?'oklch(0.96 0.05 80)':'#fff',closeColor:isClose?'oklch(0.4 0.1 70)':'#17152A',closeBd:isClose?'oklch(0.84 0.09 80)':'#D9D6E3',
+      toggleClose:()=>this.setState({close:isClose?close.filter(x=>x!==sel):close.concat(sel)}),share:[T('share-'+sel,'Sees my event titles','Otherwise they see “Busy”',isClose),T('ping-'+sel,'Tell me when they’re free','At most once a day',false)]};
+    // invites
+    const PLANS=[{id:'p1',from:1,title:'Tacos at La Palma',when:'Today · 5:30 – 6:30 PM',group:0,going:[1,3,5],fit:'You’re free then',ok:true,ago:'12m'},{id:'p2',from:2,title:'Bouldering session',when:'Sat, Oct 3 · 10 AM – 12 PM',group:2,going:[2,4,8,9],fit:'You’re free then',ok:true,ago:'1h'},{id:'p3',from:3,title:'Midterm study night',when:'Thu, Oct 1 · 7 – 9 PM',group:3,going:[3,6],fit:'Overlaps with Gym, 7 – 8 PM',ok:false,ago:'1d'}];
+    const respond=(id,v)=>()=>this.setState({resp:{...R,[id]:v}});
+    const plans=PLANS.map(p=>{const r=R[p.id],f=ALL[p.from],going=r==='yes'?[0].concat(p.going):p.going;return{title:p.title,when:p.when,ago:p.ago,fromName:f.name.split(' ')[0],fromIni:f.ini,fromSolid:f.solid,groupName:GROUPS[p.group].name,goingAv:avs(going),goingText:going.length+' going',fit:p.fit,fitColor:p.ok?GREEN_INK:'oklch(0.5 0.15 45)',fitDot:p.ok?GREEN:'oklch(0.72 0.16 60)',pending:!r,done:!!r,respText:r==='yes'?'You’re going':r==='maybe'?'You said maybe':'You declined',respColor:r==='yes'?GREEN_INK:'#4A475C',respBg:r==='yes'?'oklch(0.95 0.045 155)':'#F1EFF5',accept:respond(p.id,'yes'),maybe:respond(p.id,'maybe'),decline:respond(p.id,'no'),undo:respond(p.id,undefined)};});
+    const requests=REQ.map(q=>{const r=R[q.id];return{name:q.name,ini:q.ini,solid:q.solid,mutual:q.mutual,pending:!r,done:!!r,respText:r==='yes'?'Added':'Ignored',accept:respond(q.id,'yes'),ignore:respond(q.id,'no')};});
+    const inviteCount=['p1','p2','p3','r1','r2'].filter(k=>!R[k]).length;
+    // profile
+    const statusOpts=[['auto','Automatic','oklch(0.52 0.2 280)'],['free','Free',GREEN],['busy','Busy','#9A96AE'],['hidden','Invisible','#D9D6E3']].map(([k,l,dot])=>{const a=status===k;return{label:l,dot,onClick:set({status:k}),bd:a?ACC:'#ECEAF2',bg:a?'oklch(0.97 0.02 280)':'#fff'};});
+    const statusHelp={auto:'Follows your connected calendars.',free:'Friends see you as free until you change this.',busy:'Friends see you as busy until you change this.',hidden:'Friends can’t see your availability.'}[status];
+    const hourRows=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((d,i)=>{const t=T('h'+i,d,'',i!==3);return{...t,range:t.on?(i<5?'5 PM – 11 PM':'10 AM – 11 PM'):'Not available',rangeColor:t.on?'#4A475C':'#8A879C'};});
+    const calendars=[['Google Calendar','maya.chen@gmail.com',true],['Apple Calendar','iCloud',false],['Outlook','maya@studio.co',true]].map(([n,a,def],i)=>{const t=T('cal'+i,n,a,def);return{...t,btn:t.on?'Connected':'Connect',btnBg:t.on?'oklch(0.95 0.045 155)':ACC,btnColor:t.on?GREEN_INK:'#fff',btnBd:t.on?'oklch(0.86 0.07 155)':ACC};});
+    const titleOpts=[['everyone','Everyone','All friends see what you’re doing'],['close','Close friends only','Others see “Busy”'],['nobody','Nobody','Everyone sees “Busy”']].map(([k,l,s])=>({label:l,sub:s,onClick:set({titlesWho:k}),check:titlesWho===k?'✓':''}));
+    // groups sheet
+    const groups=GROUPS.map((x,i)=>({name:x.name,ini:x.ini,color:`oklch(0.6 0.14 ${x.hue})`,count:x.members.length,bg:i===group?'#F6F5FA':'transparent',check:i===group?'✓':'',onClick:set({group:i,sheet:false})}));
+    const tabs=[['calendar','Calendar'],['friends','Friends'],['invites','Invites'],['profile','Profile']].map(([k,l])=>({label:l,color:tab===k?ACC:'#6B6880',isCal:k==='calendar',isFr:k==='friends',isInv:k==='invites',isPro:k==='profile',badge:k==='invites'&&inviteCount?inviteCount:0,onClick:()=>this.setState(k==='friends'?{tab:k,friend:null}:{tab:k})}));
+    const cal=display==='cal',isCal=tab==='calendar';
+    return{statusBg:isCal?'#fff':'#F6F5FA',isCal,isDay:isCal&&cal&&view==='day',isWeek:isCal&&cal&&view==='week',isMonth:isCal&&cal&&view==='month',isDayList:isCal&&!cal&&view==='day',isRangeList:isCal&&!cal&&view!=='day',isCalDisplay:cal,isListDisplay:!cal,
+      toggleDisplay:set({display:cal?'list':'cal'}),gName:gr.name,gIni:gr.ini,gColor:`oklch(0.6 0.14 ${gr.hue})`,gCount:gr.members.length,freeNow:P.filter((_,i)=>nowS[i].free).length,openSheet:set({sheet:true}),closeSheet:set({sheet:false}),stop:e=>e.stopPropagation(),sheetOpen:sheet,groups,
+      nowPeople,viewTabs,prev:shift(-1),next:shift(1),rangeLabel,gridH:(END-START)*H,hours,dayCols,allFree,showNow:isToday,nowTop:(NOW-START)*H,
+      minChips,weekDays,wHours,weekCols,wGridH:(END-START)*WH,wNowTop:(NOW-START)*WH,dowLetters:['M','T','W','T','F','S','S'],monthCells,dayList,rangeList,
+      isFriendList:tab==='friends'&&friendSel==null,isFriendDetail:tab==='friends'&&friendSel!=null,friendTabs,friendRows,noFriendRows:friendRows.length===0,fd,closeFriend:set({friend:null}),
+      isInvites:tab==='invites',plans,requests,pendingPlans:PLANS.filter(p=>!R[p.id]).length,
+      isProfile:tab==='profile',statusOpts,statusHelp,hourRows,calendars,titleOpts,tabs};
+  }
+}
+</script>
+</body>
+</html>

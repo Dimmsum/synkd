@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"><style>body{margin:0;background:#F6F5FA;font-family:'Onest',system-ui,sans-serif;color:#17152A;-webkit-font-smoothing:antialiased}a{color:oklch(0.52 0.2 280)}a:hover{color:oklch(0.42 0.2 280)}button{font-family:inherit}</style></helmet>
+<div style="display:flex;width:1440px;min-height:980px;background:#F6F5FA;font-family:'Onest',system-ui,sans-serif;color:#17152A">
+
+<aside style="width:232px;flex:none;background:#fff;border-right:1px solid #ECEAF2;display:flex;flex-direction:column;padding:22px 16px 18px;box-sizing:border-box;gap:26px">
+<div style="display:flex;align-items:center;gap:10px;padding:0 6px">
+<div style="width:32px;height:32px;border-radius:10px;background:oklch(0.52 0.2 280);display:flex;align-items:center;justify-content:center"><div style="width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px oklch(0.72 0.15 155)"></div></div>
+<div style="font-weight:700;font-size:19px;letter-spacing:-0.02em">Who's Free</div>
+</div>
+<nav style="display:flex;flex-direction:column;gap:2px">
+<div onClick="{{ goCal }}" style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:9px;cursor:pointer;background:{{ navCalBg }};color:{{ navCalColor }};font-weight:{{ navCalWeight }};font-size:14px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>Calendar</div>
+<div onClick="{{ goFriends }}" style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:9px;cursor:pointer;background:{{ navFrBg }};color:{{ navFrColor }};font-weight:{{ navFrWeight }};font-size:14px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18.5 14.8c1.6.8 2.6 2.5 3 5.2"></path></svg>Friends<span style="margin-left:auto;font-size:12px;color:#8A879C">{{ friendCount }}</span></div>
+<div onClick="{{ goInvites }}" style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:9px;cursor:pointer;background:{{ navInvBg }};color:{{ navInvColor }};font-weight:{{ navInvWeight }};font-size:14px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v12H4z"></path><path d="m4 7 8 6 8-6"></path></svg>Invites<sc-if value="{{ hasInvites }}" hint-placeholder-val="{{ true }}"><span style="margin-left:auto;font-size:11px;font-weight:600;color:#fff;background:oklch(0.52 0.2 280);border-radius:10px;padding:1px 7px">{{ inviteCount }}</span></sc-if></div>
+</nav>
+<div style="display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:0 10px 6px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#8A879C"><span>Groups</span><span onClick="{{ openNewGroup }}" style="font-size:16px;font-weight:500;color:#8A879C;cursor:pointer;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center" style-hover="background:#F1EFF5;color:#17152A">+</span></div>
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+<div onClick="{{ g.onClick }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;font-size:14px;cursor:pointer;background:{{ g.bg }};font-weight:{{ g.weight }}" style-hover="background:#F6F5FA">
+<div style="width:26px;height:26px;border-radius:8px;background:{{ g.color }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">{{ g.ini }}</div>
+<span>{{ g.name }}</span><span style="margin-left:auto;font-size:12px;color:#8A879C">{{ g.count }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<div style="padding:0 10px 6px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#8A879C">Friends</div>
+<sc-for list="{{ friends }}" as="f" hint-placeholder-count="5">
+<div onClick="{{ f.onClick }}" style="display:flex;align-items:center;gap:10px;padding:6px 10px;font-size:13.5px;border-radius:9px;cursor:pointer" style-hover="background:#F6F5FA">
+<div style="position:relative;width:26px;height:26px;border-radius:50%;background:#E4E2EA;flex:none"><div style="position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;border-radius:50%;border:2px solid #fff;background:{{ f.dot }}"></div></div>
+<span>{{ f.name }}</span><span style="margin-left:auto;font-size:11.5px;color:{{ f.statusColor }}">{{ f.status }}</span>
+</div>
+</sc-for>
+</div>
+<div onClick="{{ goProfile }}" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px;border:1px solid {{ profileBd }};background:{{ profileBg }};border-radius:12px;cursor:pointer" style-hover="background:#F6F5FA">
+<div style="width:34px;height:34px;border-radius:50%;background:#E4E2EA;flex:none"></div>
+<div style="display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font-size:13.5px;font-weight:600">Maya Chen</span><span style="font-size:12px;color:oklch(0.5 0.14 155)">{{ meStatus }}</span></div>
+<svg style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A879C" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg>
+</div>
+</aside>
+
+<sc-if value="{{ isCalendarPage }}" hint-placeholder-val="{{ true }}">
+<main style="flex:1;min-width:0;display:flex;flex-direction:column;padding:22px 24px 24px;gap:18px;box-sizing:border-box">
+<header style="display:flex;align-items:center;gap:16px">
+<div style="display:flex;flex-direction:column;gap:3px">
+<div style="display:flex;align-items:center;gap:10px"><h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-0.02em">{{ groupName }}</h1><button onClick="{{ goGroup }}" style="height:28px;padding:0 10px;border:1px solid #ECEAF2;border-radius:8px;background:#fff;font-size:12.5px;font-weight:600;color:#4A475C;cursor:pointer;display:flex;align-items:center;gap:5px" style-hover="background:#F6F5FA"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>Manage</button></div>
+<div style="font-size:13.5px;color:#6B6880">{{ memberCount }} members · <span style="color:oklch(0.5 0.14 155);font-weight:600">{{ freeNowCount }} free right now</span></div>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px;width:280px;height:40px;padding:0 12px;background:#fff;border:1px solid #ECEAF2;border-radius:10px;font-size:13.5px;color:#8A879C;box-sizing:border-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Search friends or groups</div>
+<button style="height:40px;padding:0 16px;border:0;border-radius:10px;background:oklch(0.52 0.2 280);color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer" style-hover="background:oklch(0.46 0.2 280)"><span style="font-size:18px;line-height:1">+</span>Propose a plan</button>
+</header>
+
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ goToday }}" style="height:38px;padding:0 14px;border:1px solid #ECEAF2;border-radius:9px;background:#fff;font-size:13.5px;font-weight:600;cursor:pointer;color:#17152A">Today</button>
+<div style="display:flex;border:1px solid #ECEAF2;border-radius:9px;background:#fff;overflow:hidden">
+<button onClick="{{ prev }}" style="width:36px;height:36px;border:0;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17152A" stroke-width="2"><path d="m15 6-6 6 6 6"></path></svg></button>
+<button onClick="{{ next }}" style="width:36px;height:36px;border:0;border-left:1px solid #ECEAF2;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17152A" stroke-width="2"><path d="m9 6 6 6-6 6"></path></svg></button>
+</div>
+<div style="font-size:16px;font-weight:600;padding:0 6px">{{ rangeLabel }}</div>
+<div style="margin-left:auto;display:flex;padding:3px;background:#ECEAF2;border-radius:10px;gap:2px">
+<sc-for list="{{ viewTabs }}" as="t" hint-placeholder-count="3">
+<button onClick="{{ t.onClick }}" style="height:32px;padding:0 16px;border:0;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;background:{{ t.bg }};color:{{ t.color }};box-shadow:{{ t.shadow }}">{{ t.label }}</button>
+</sc-for>
+</div>
+<div style="display:flex;padding:3px;background:#ECEAF2;border-radius:10px;gap:2px">
+<button onClick="{{ setCal }}" style="height:32px;padding:0 12px;border:0;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;background:{{ calBg }};color:{{ calColor }};box-shadow:{{ calShadow }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M3 10h18M9 10v11M15 10v11"></path></svg>Calendar</button>
+<button onClick="{{ setList }}" style="height:32px;padding:0 12px;border:0;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;background:{{ listBg }};color:{{ listColor }};box-shadow:{{ listShadow }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"></path></svg>List</button>
+</div>
+</div>
+
+<div style="display:flex;gap:18px;align-items:flex-start">
+<section style="flex:1;min-width:0;background:#fff;border:1px solid #ECEAF2;border-radius:16px;overflow:hidden">
+
+<sc-if value="{{ isDayCal }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;border-bottom:1px solid #ECEAF2">
+<div style="width:64px;flex:none"></div>
+<sc-for list="{{ dayCols }}" as="c" hint-placeholder-count="6">
+<div style="flex:1;min-width:0;display:flex;align-items:center;gap:9px;padding:14px 10px;border-left:1px solid #F1EFF5">
+<div style="width:32px;height:32px;border-radius:50%;background:{{ c.solid }};flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">{{ c.ini }}</div>
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.name }}</span><span style="font-size:11px;font-weight:600;color:{{ c.statusColor }}">{{ c.status }}</span></div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;position:relative;padding:10px 0 14px">
+<div style="width:64px;flex:none;position:relative;height:{{ gridH }}px">
+<sc-for list="{{ hours }}" as="h" hint-placeholder-count="14"><div style="position:absolute;right:10px;top:{{ h.top }}px;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#8A879C">{{ h.label }}</div></sc-for>
+</div>
+<div style="flex:1;position:relative;height:{{ gridH }}px">
+<sc-for list="{{ hours }}" as="h" hint-placeholder-count="14"><div style="position:absolute;left:0;right:0;top:{{ h.top }}px;border-top:1px solid #F1EFF5"></div></sc-for>
+<sc-for list="{{ allFree }}" as="a" hint-placeholder-count="1">
+<div style="position:absolute;left:0;right:0;top:{{ a.top }}px;height:{{ a.h }}px;background:oklch(0.96 0.045 155);border-top:1.5px dashed oklch(0.7 0.13 155);border-bottom:1.5px dashed oklch(0.7 0.13 155);box-sizing:border-box;z-index:0"></div>
+</sc-for>
+<div style="position:absolute;inset:0;display:flex">
+<sc-for list="{{ dayCols }}" as="c" hint-placeholder-count="6">
+<div style="flex:1;position:relative;border-left:1px solid #F1EFF5">
+<sc-for list="{{ c.blocks }}" as="b" hint-placeholder-count="3">
+<div style="position:absolute;left:5px;right:5px;top:{{ b.top }}px;height:{{ b.h }}px;background:{{ b.bg }};border:1px solid {{ b.bd }};border-radius:8px;padding:6px 8px;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;gap:2px;z-index:1">
+<span style="font-size:10.5px;font-weight:600;color:{{ b.ink }};font-family:'JetBrains Mono',monospace;white-space:nowrap">{{ b.time }}</span>
+<span style="font-size:12.5px;font-weight:600;color:#17152A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ b.label }}</span>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+<sc-for list="{{ allFree }}" as="a" hint-placeholder-count="1">
+<div style="position:absolute;right:8px;top:{{ a.top }}px;transform:translateY(-50%);background:oklch(0.62 0.15 155);color:#fff;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;z-index:3;white-space:nowrap">Everyone free · {{ a.range }}</div>
+</sc-for>
+<sc-if value="{{ showNow }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:-64px;right:0;top:{{ nowTop }}px;display:flex;align-items:center;z-index:4;pointer-events:none">
+<div style="width:58px;display:flex;justify-content:flex-end;padding-right:4px;box-sizing:border-box"><span style="background:#E5484D;color:#fff;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace;padding:2px 5px;border-radius:5px">2:30 PM</span></div>
+<div style="flex:1;height:1.5px;background:#E5484D"></div>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isWeekOverlap }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #ECEAF2">
+<span style="font-size:13px;color:#6B6880">Show times when</span>
+<div style="display:flex;gap:6px">
+<sc-for list="{{ minChips }}" as="mc" hint-placeholder-count="4">
+<button onClick="{{ mc.onClick }}" style="height:30px;padding:0 12px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid {{ mc.bd }};background:{{ mc.bg }};color:{{ mc.color }}">{{ mc.label }}</button>
+</sc-for>
+</div>
+<span style="font-size:13px;color:#6B6880">are free</span>
+<div style="margin-left:auto;display:flex;align-items:center;gap:12px;font-size:11.5px;color:#6B6880">
+<span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:oklch(0.62 0.15 155)"></span>Everyone</span>
+<span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:oklch(0.9 0.07 155)"></span>5 of 6</span>
+<span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:oklch(0.955 0.035 155);border:1px solid oklch(0.88 0.06 155);box-sizing:border-box"></span>Fewer</span>
+</div>
+</div>
+<div style="display:flex;border-bottom:1px solid #ECEAF2">
+<div style="width:64px;flex:none"></div>
+<sc-for list="{{ weekDays }}" as="d" hint-placeholder-count="7">
+<div onClick="{{ d.onClick }}" style="flex:1;min-width:0;padding:10px 6px;border-left:1px solid #F1EFF5;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;background:{{ d.headBg }}" style-hover="background:#F6F5FA">
+<span style="font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:{{ d.labelColor }}">{{ d.dow }}</span>
+<span style="font-size:15px;font-weight:700;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ d.numBg }};color:{{ d.numColor }}">{{ d.num }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;padding:10px 0 14px">
+<div style="width:64px;flex:none;position:relative;height:{{ wGridH }}px">
+<sc-for list="{{ wHours }}" as="h" hint-placeholder-count="14"><div style="position:absolute;right:10px;top:{{ h.top }}px;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#8A879C">{{ h.label }}</div></sc-for>
+</div>
+<div style="flex:1;position:relative;height:{{ wGridH }}px">
+<sc-for list="{{ wHours }}" as="h" hint-placeholder-count="14"><div style="position:absolute;left:0;right:0;top:{{ h.top }}px;border-top:1px solid #F1EFF5"></div></sc-for>
+<div style="position:absolute;inset:0;display:flex">
+<sc-for list="{{ weekCols }}" as="wc" hint-placeholder-count="7">
+<div style="flex:1;min-width:0;position:relative;border-left:1px solid #F1EFF5;background:{{ wc.bg }}">
+<sc-for list="{{ wc.blocks }}" as="b" hint-placeholder-count="2">
+<div onClick="{{ b.onClick }}" style="position:absolute;left:4px;right:4px;top:{{ b.top }}px;height:{{ b.h }}px;background:{{ b.bg }};border:1px solid {{ b.bd }};border-radius:7px;padding:{{ b.pad }};box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;gap:4px;cursor:pointer" style-hover="box-shadow:0 0 0 2px oklch(0.52 0.2 280)">
+<span style="font-size:11px;font-weight:700;color:{{ b.ink }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ b.count }}</span>
+<sc-if value="{{ b.tall }}" hint-placeholder-val="{{ true }}">
+<span style="font-size:10.5px;font-family:'JetBrains Mono',monospace;color:{{ b.ink }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ b.range }}</span>
+</sc-if>
+<sc-if value="{{ b.showAv }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;padding-left:5px"><sc-for list="{{ b.avatars }}" as="av" hint-placeholder-count="4"><div style="width:18px;height:18px;border-radius:50%;background:{{ av.solid }};border:1.5px solid {{ b.ring }};margin-left:-5px;flex:none"></div></sc-for></div>
+</sc-if>
+</div>
+</sc-for>
+<sc-if value="{{ wc.isToday }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:0;right:0;top:{{ wNowTop }}px;height:2px;background:#E5484D;z-index:3"><div style="position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:#E5484D"></div></div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isMonthCal }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-bottom:1px solid #ECEAF2">
+<sc-for list="{{ dowLabels }}" as="w" hint-placeholder-count="7"><div style="padding:12px;font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#8A879C">{{ w }}</div></sc-for>
+</div>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr))">
+<sc-for list="{{ monthCells }}" as="m" hint-placeholder-count="35">
+<div onClick="{{ m.onClick }}" style="min-height:118px;padding:10px;border-right:1px solid #F1EFF5;border-bottom:1px solid #F1EFF5;display:flex;flex-direction:column;gap:8px;cursor:pointer;background:{{ m.bg }};opacity:{{ m.opacity }}" style-hover="background:#F6F5FA">
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:700;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ m.numBg }};color:{{ m.numColor }}">{{ m.num }}</span><span style="font-size:11px;font-weight:600;color:oklch(0.45 0.13 155)">{{ m.countText }}</span></div>
+<div style="display:flex;gap:3px"><sc-for list="{{ m.dots }}" as="dot" hint-placeholder-count="6"><span style="width:12px;height:12px;border-radius:50%;background:{{ dot.bg }}"></span></sc-for></div>
+<span style="margin-top:auto;font-size:11px;color:#4A475C;line-height:1.3">{{ m.best }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:18px;padding:12px 16px;font-size:11.5px;color:#6B6880"><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:oklch(0.62 0.15 155)"></span>Free 2+ hours in the evening</span><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:#E4E2EA"></span>Mostly busy</span></div>
+</sc-if>
+
+<sc-if value="{{ isDayList }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:170px 70px 1fr 200px;padding:12px 20px;border-bottom:1px solid #ECEAF2;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#8A879C"><span>Time</span><span>Length</span><span>Free</span><span>Busy</span></div>
+<sc-for list="{{ dayList }}" as="w" hint-placeholder-count="10">
+<div style="display:grid;grid-template-columns:170px 70px 1fr 200px;align-items:center;padding:13px 20px;border-bottom:1px solid #F1EFF5;background:{{ w.bg }}">
+<div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14px;font-weight:600">{{ w.range }}</span><span style="font-size:10.5px;font-weight:700;letter-spacing:0.05em;color:{{ w.tagColor }}">{{ w.tag }}</span></div>
+<span style="font-size:13px;color:#6B6880">{{ w.dur }}</span>
+<div style="display:flex;align-items:center;gap:12px">
+<div style="display:flex"><sc-for list="{{ w.avatars }}" as="av" hint-placeholder-count="3"><div style="width:28px;height:28px;border-radius:50%;background:{{ av.solid }};border:2px solid #fff;margin-left:-7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9.5px;font-weight:700">{{ av.ini }}</div></sc-for></div>
+<span style="font-size:13px;font-weight:600;color:{{ w.countColor }}">{{ w.countText }}</span>
+</div>
+<span style="font-size:12.5px;color:#8A879C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ w.busy }}</span>
+</div>
+</sc-for>
+</sc-if>
+
+<sc-if value="{{ isRangeList }}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{ rangeList }}" as="rl" hint-placeholder-count="7">
+<div onClick="{{ rl.onClick }}" style="display:grid;grid-template-columns:120px 1fr auto;gap:18px;align-items:center;padding:14px 20px;border-bottom:1px solid #F1EFF5;cursor:pointer;background:{{ rl.bg }}" style-hover="background:#F6F5FA">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px;font-weight:700;width:34px">{{ rl.num }}</span><div style="display:flex;flex-direction:column"><span style="font-size:13px;font-weight:600">{{ rl.dow }}</span><span style="font-size:11px;color:#8A879C">{{ rl.month }}</span></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ rl.wins }}" as="wn" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:10px;padding:7px 12px 7px 8px;border-radius:10px;background:{{ wn.bg }};border:1px solid {{ wn.bd }}">
+<div style="display:flex;padding-left:7px"><sc-for list="{{ wn.avatars }}" as="av" hint-placeholder-count="3"><div style="width:22px;height:22px;border-radius:50%;background:{{ av.solid }};border:2px solid #fff;margin-left:-7px"></div></sc-for></div>
+<span style="font-size:13px;font-weight:600">{{ wn.range }}</span><span style="font-size:12px;color:#6B6880">{{ wn.count }}</span>
+</div>
+</sc-for>
+</div>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A879C" stroke-width="2"><path d="m9 6 6 6-6 6"></path></svg>
+</div>
+</sc-for>
+</sc-if>
+
+</section>
+
+<aside style="width:288px;flex:none;display:flex;flex-direction:column;gap:16px">
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:15px;font-weight:700">Right now</span><span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6B6880"><span style="width:7px;height:7px;border-radius:50%;background:#E5484D"></span>Live · 2:30 PM</span></div>
+<sc-for list="{{ nowPeople }}" as="np" hint-placeholder-count="6">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="position:relative;width:34px;height:34px;border-radius:50%;background:{{ np.solid }};flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">{{ np.ini }}<div style="position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;border:2px solid #fff;background:{{ np.dot }}"></div></div>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:13.5px;font-weight:600">{{ np.name }}</span><span style="font-size:12px;color:{{ np.color }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ np.status }}</span></div>
+</div>
+</sc-for>
+</div>
+<div style="background:oklch(0.97 0.03 155);border:1px solid oklch(0.88 0.07 155);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+<span style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:oklch(0.45 0.13 155)">Next time everyone's free</span>
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:20px;font-weight:700;letter-spacing:-0.01em">{{ nextAllRange }}</span><span style="font-size:13px;color:#4A475C">{{ nextAllDay }}</span></div>
+<div style="display:flex;padding-left:7px"><sc-for list="{{ allAvatars }}" as="av" hint-placeholder-count="6"><div style="width:28px;height:28px;border-radius:50%;background:{{ av.solid }};border:2px solid oklch(0.97 0.03 155);margin-left:-7px"></div></sc-for></div>
+<button style="height:38px;border:0;border-radius:10px;background:oklch(0.52 0.2 280);color:#fff;font-size:13.5px;font-weight:600;cursor:pointer" style-hover="background:oklch(0.46 0.2 280)">Propose plan for this time</button>
+</div>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+<span style="font-size:15px;font-weight:700">Best times this week</span>
+<sc-for list="{{ bestWeek }}" as="bw" hint-placeholder-count="3">
+<div onClick="{{ bw.onClick }}" style="display:flex;align-items:center;gap:12px;cursor:pointer">
+<div style="width:42px;height:42px;border-radius:10px;background:#F6F5FA;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none"><span style="font-size:9.5px;font-weight:700;color:#8A879C;text-transform:uppercase">{{ bw.dow }}</span><span style="font-size:15px;font-weight:700">{{ bw.num }}</span></div>
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13.5px;font-weight:600">{{ bw.range }}</span><span style="font-size:12px;color:#6B6880">{{ bw.count }}</span></div>
+</div>
+</sc-for>
+</div>
+</aside>
+</div>
+</main>
+</sc-if>
+
+<sc-if value="{{ isFriendsPage }}" hint-placeholder-val="{{ false }}">
+<main style="flex:1;min-width:0;display:flex;flex-direction:column;padding:22px 24px 24px;gap:18px;box-sizing:border-box">
+<header style="display:flex;align-items:center;gap:16px">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-0.02em">Friends</h1>
+<div style="font-size:13.5px;color:#6B6880">{{ friendCount }} friends · <span style="color:oklch(0.5 0.14 155);font-weight:600">{{ freeFriends }} free right now</span></div>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px;width:280px;height:40px;padding:0 12px;background:#fff;border:1px solid #ECEAF2;border-radius:10px;font-size:13.5px;color:#8A879C;box-sizing:border-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Search friends</div>
+<button style="height:40px;padding:0 16px;border:0;border-radius:10px;background:oklch(0.52 0.2 280);color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer" style-hover="background:oklch(0.46 0.2 280)"><span style="font-size:18px;line-height:1">+</span>Add friend</button>
+</header>
+<div style="display:flex;gap:8px">
+<sc-for list="{{ friendTabs }}" as="t" hint-placeholder-count="3">
+<button onClick="{{ t.onClick }}" style="height:34px;padding:0 8px 0 14px;border-radius:20px;border:1px solid {{ t.bd }};background:{{ t.bg }};color:{{ t.color }};font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px">{{ t.label }}<span style="min-width:20px;height:20px;padding:0 6px;box-sizing:border-box;border-radius:10px;background:{{ t.nBg }};font-size:11.5px;display:flex;align-items:center;justify-content:center">{{ t.n }}</span></button>
+</sc-for>
+</div>
+<div style="display:flex;gap:18px;align-items:flex-start">
+<section style="flex:1;min-width:0;background:#fff;border:1px solid #ECEAF2;border-radius:16px;overflow:hidden">
+<div style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,1fr);gap:16px;padding:12px 20px;border-bottom:1px solid #ECEAF2;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#8A879C"><span>Name</span><span>Right now</span><span>Next free together</span><span>Shared groups</span></div>
+<sc-for list="{{ friendRows }}" as="r" hint-placeholder-count="8">
+<div onClick="{{ r.onClick }}" style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,1fr);gap:16px;align-items:center;padding:12px 20px;border-bottom:1px solid #F1EFF5;cursor:pointer;background:{{ r.bg }}" style-hover="background:#F6F5FA">
+<div style="display:flex;align-items:center;gap:11px;min-width:0">
+<div style="position:relative;width:36px;height:36px;border-radius:50%;background:{{ r.solid }};flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11.5px;font-weight:700">{{ r.ini }}<div style="position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;border:2px solid #fff;background:{{ r.dot }}"></div></div>
+<div style="display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font-size:14px;font-weight:600;display:flex;gap:6px">{{ r.name }}<span style="color:oklch(0.7 0.14 75)">{{ r.star }}</span></span><span style="font-size:12px;color:#8A879C">{{ r.handle }}</span></div>
+</div>
+<span style="font-size:13px;font-weight:500;color:{{ r.statusColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.status }}</span>
+<span style="font-size:13px;color:#17152A">{{ r.together }}</span>
+<span style="font-size:12.5px;color:#6B6880;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.groups }}</span>
+</div>
+</sc-for>
+<sc-if value="{{ noFriendRows }}" hint-placeholder-val="{{ false }}"><div style="padding:40px 20px;text-align:center;font-size:14px;color:#6B6880">No friends here yet. Star a friend to add them to close friends.</div></sc-if>
+</section>
+<aside style="width:340px;flex:none;background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:20px;box-sizing:border-box">
+<div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+<div style="position:relative;width:72px;height:72px;border-radius:50%;background:{{ fd.solid }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:700">{{ fd.ini }}<div style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;border-radius:50%;border:3px solid #fff;background:{{ fd.dot }}"></div></div>
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:19px;font-weight:700;letter-spacing:-0.01em">{{ fd.name }}</span><span style="font-size:13px;color:#8A879C">{{ fd.handle }}</span></div>
+<span style="font-size:13px;font-weight:600;color:{{ fd.statusColor }}">{{ fd.status }}</span>
+<div style="display:flex;gap:8px;width:100%">
+<button style="flex:1;height:38px;border:0;border-radius:10px;background:oklch(0.52 0.2 280);color:#fff;font-size:13.5px;font-weight:600;cursor:pointer" style-hover="background:oklch(0.46 0.2 280)">Propose plan</button>
+<button onClick="{{ fd.toggleClose }}" style="flex:1;height:38px;border:1px solid {{ fd.closeBd }};border-radius:10px;background:{{ fd.closeBg }};color:{{ fd.closeColor }};font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">{{ fd.closeLabel }}</button>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#8A879C">Today</span>
+<div style="position:relative;height:16px;border-radius:5px;background:oklch(0.9 0.07 155);overflow:hidden">
+<sc-for list="{{ fd.segs }}" as="s" hint-placeholder-count="3"><div style="position:absolute;top:0;bottom:0;left:{{ s.left }}%;width:{{ s.w }}%;background:#9A96AE"></div></sc-for>
+<div style="position:absolute;top:0;bottom:0;left:{{ fd.nowLeft }}%;width:2px;background:#E5484D"></div>
+</div>
+<div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;color:#8A879C"><span>8 AM</span><span>3 PM</span><span>10 PM</span></div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ fd.blocks }}" as="b" hint-placeholder-count="3">
+<div style="display:flex;gap:10px;font-size:13px"><span style="width:118px;flex:none;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#6B6880;padding-top:1px">{{ b.time }}</span><span style="font-weight:500">{{ b.label }}</span></div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#8A879C">You're both free</span>
+<sc-for list="{{ fd.together }}" as="w" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;background:oklch(0.97 0.03 155);border:1px solid oklch(0.9 0.06 155)">
+<div style="display:flex;flex-direction:column;gap:1px;flex:1"><span style="font-size:13.5px;font-weight:600">{{ w.day }} · {{ w.range }}</span><span style="font-size:11.5px;color:#6B6880">{{ w.date }} · {{ w.dur }}</span></div>
+<span style="font-size:12px;font-weight:600;color:oklch(0.45 0.2 280);cursor:pointer">Plan</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#8A879C">Shared groups</span>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<sc-for list="{{ fd.groups }}" as="g" hint-placeholder-count="2">
+<span style="display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border:1px solid #ECEAF2;border-radius:20px;font-size:12.5px;font-weight:500"><span style="width:20px;height:20px;border-radius:6px;background:{{ g.color }};color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ g.ini }}</span>{{ g.name }}</span>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;padding-top:16px;border-top:1px solid #F1EFF5">
+<sc-for list="{{ fd.share }}" as="t" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="display:flex;flex-direction:column;gap:1px;flex:1"><span style="font-size:13.5px;font-weight:500">{{ t.label }}</span><span style="font-size:11.5px;color:#8A879C">{{ t.sub }}</span></div>
+<div onClick="{{ t.onClick }}" style="width:36px;height:20px;border-radius:20px;background:{{ t.trackBg }};position:relative;cursor:pointer;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ t.knobLeft }}px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.2);transition:left .15s"></div></div>
+</div>
+</sc-for>
+</div>
+</aside>
+</div>
+</main>
+</sc-if>
+
+<sc-if value="{{ isInvitesPage }}" hint-placeholder-val="{{ false }}">
+<main style="flex:1;min-width:0;display:flex;flex-direction:column;padding:22px 24px 24px;gap:18px;box-sizing:border-box">
+<header style="display:flex;flex-direction:column;gap:3px">
+<h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-0.02em">Invites</h1>
+<div style="font-size:13.5px;color:#6B6880">Plans friends proposed, friend requests and group invites</div>
+</header>
+<div style="display:flex;gap:18px;align-items:flex-start">
+<section style="flex:1;min-width:0;display:flex;flex-direction:column;gap:12px">
+<div style="font-size:15px;font-weight:700">Plans <span style="font-weight:500;color:#8A879C">· {{ pendingPlans }} waiting on you</span></div>
+<sc-for list="{{ plans }}" as="p" hint-placeholder-count="3">
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:30px;height:30px;border-radius:50%;background:{{ p.fromSolid }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:10.5px;font-weight:700">{{ p.fromIni }}</div>
+<span style="font-size:13px;color:#4A475C"><b style="color:#17152A;font-weight:600">{{ p.fromName }}</b> proposed a plan in</span>
+<span style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600"><span style="width:10px;height:10px;border-radius:3px;background:{{ p.groupColor }}"></span>{{ p.groupName }}</span>
+<span style="margin-left:auto;font-size:12px;color:#8A879C">{{ p.ago }}</span>
+</div>
+<div style="display:flex;align-items:flex-end;gap:20px">
+<div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0">
+<span style="font-size:19px;font-weight:700;letter-spacing:-0.01em">{{ p.title }}</span>
+<span style="font-size:14px;color:#17152A">{{ p.when }}</span>
+<span style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:{{ p.fitColor }}"><span style="width:8px;height:8px;border-radius:50%;background:{{ p.fitDot }}"></span>{{ p.fit }}</span>
+</div>
+<div style="display:flex;align-items:center;gap:8px"><div style="display:flex;padding-left:7px"><sc-for list="{{ p.goingAv }}" as="av" hint-placeholder-count="3"><div style="width:26px;height:26px;border-radius:50%;background:{{ av.solid }};border:2px solid #fff;margin-left:-7px"></div></sc-for></div><span style="font-size:12.5px;color:#6B6880">{{ p.goingText }}</span></div>
+</div>
+<sc-if value="{{ p.pending }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:8px;padding-top:14px;border-top:1px solid #F1EFF5">
+<button onClick="{{ p.accept }}" style="height:36px;padding:0 18px;border:0;border-radius:9px;background:oklch(0.52 0.2 280);color:#fff;font-size:13.5px;font-weight:600;cursor:pointer" style-hover="background:oklch(0.46 0.2 280)">I'm in</button>
+<button onClick="{{ p.maybe }}" style="height:36px;padding:0 16px;border:1px solid #ECEAF2;border-radius:9px;background:#fff;color:#17152A;font-size:13.5px;font-weight:600;cursor:pointer" style-hover="background:#F6F5FA">Maybe</button>
+<button onClick="{{ p.decline }}" style="height:36px;padding:0 16px;border:0;border-radius:9px;background:transparent;color:#6B6880;font-size:13.5px;font-weight:600;cursor:pointer" style-hover="background:#F6F5FA">Can't make it</button>
+</div>
+</sc-if>
+<sc-if value="{{ p.done }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:10px;padding-top:14px;border-top:1px solid #F1EFF5">
+<span style="padding:6px 12px;border-radius:20px;background:{{ p.respBg }};color:{{ p.respColor }};font-size:12.5px;font-weight:600">{{ p.respText }}</span>
+<button onClick="{{ p.undo }}" style="border:0;background:none;color:oklch(0.45 0.2 280);font-size:13px;font-weight:600;cursor:pointer">Change</button>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</section>
+<aside style="width:340px;flex:none;display:flex;flex-direction:column;gap:16px">
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
+<span style="font-size:15px;font-weight:700">Friend requests</span>
+<sc-for list="{{ requests }}" as="q" hint-placeholder-count="2">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:38px;height:38px;border-radius:50%;background:{{ q.solid }};flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700">{{ q.ini }}</div>
+<div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:13.5px;font-weight:600">{{ q.name }}</span><span style="font-size:12px;color:#8A879C">{{ q.mutual }}</span></div>
+</div>
+<sc-if value="{{ q.pending }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:8px;padding-left:48px"><button onClick="{{ q.accept }}" style="height:32px;padding:0 14px;border:0;border-radius:8px;background:oklch(0.52 0.2 280);color:#fff;font-size:12.5px;font-weight:600;cursor:pointer">Accept</button><button onClick="{{ q.ignore }}" style="height:32px;padding:0 14px;border:1px solid #ECEAF2;border-radius:8px;background:#fff;color:#4A475C;font-size:12.5px;font-weight:600;cursor:pointer">Ignore</button></div>
+</sc-if>
+<sc-if value="{{ q.done }}" hint-placeholder-val="{{ false }}"><span style="padding-left:48px;font-size:12.5px;font-weight:600;color:#6B6880">{{ q.respText }}</span></sc-if>
+</div>
+</sc-for>
+</div>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
+<span style="font-size:15px;font-weight:700">Group invites</span>
+<sc-for list="{{ gInv }}" as="gi" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:38px;height:38px;border-radius:10px;background:{{ gi.color }};flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700">{{ gi.ini }}</div>
+<div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:13.5px;font-weight:600">{{ gi.name }}</span><span style="font-size:12px;color:#8A879C">From {{ gi.from }} · {{ gi.members }} members</span></div>
+</div>
+<sc-if value="{{ gi.pending }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:8px;padding-left:48px"><button onClick="{{ gi.accept }}" style="height:32px;padding:0 14px;border:0;border-radius:8px;background:oklch(0.52 0.2 280);color:#fff;font-size:12.5px;font-weight:600;cursor:pointer">Join group</button><button onClick="{{ gi.ignore }}" style="height:32px;padding:0 14px;border:1px solid #ECEAF2;border-radius:8px;background:#fff;color:#4A475C;font-size:12.5px;font-weight:600;cursor:pointer">Decline</button></div>
+</sc-if>
+<sc-if value="{{ gi.done }}" hint-placeholder-val="{{ false }}"><span style="padding-left:48px;font-size:12.5px;font-weight:600;color:#6B6880">{{ gi.respText }}</span></sc-if>
+</div>
+</sc-for>
+</div>
+</aside>
+</div>
+</main>
+</sc-if>
+
+<sc-if value="{{ isProfilePage }}" hint-placeholder-val="{{ false }}">
+<main style="flex:1;min-width:0;display:flex;flex-direction:column;padding:22px 24px 24px;gap:18px;box-sizing:border-box">
+<header style="display:flex;flex-direction:column;gap:3px">
+<h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-0.02em">Profile</h1>
+<div style="font-size:13.5px;color:#6B6880">How friends see you, and what they can see</div>
+</header>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:18px">
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:center;gap:16px">
+<div style="width:72px;height:72px;border-radius:50%;background:#E4E2EA;flex:none"></div>
+<div style="display:flex;flex-direction:column;gap:2px;flex:1"><span style="font-size:20px;font-weight:700;letter-spacing:-0.01em">Maya Chen</span><span style="font-size:13px;color:#8A879C">@mayac · San Francisco · PT</span></div>
+<button style="height:36px;padding:0 14px;border:1px solid #ECEAF2;border-radius:9px;background:#fff;font-size:13px;font-weight:600;color:#17152A;cursor:pointer" style-hover="background:#F6F5FA">Edit profile</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;padding-top:18px;border-top:1px solid #F1EFF5">
+<span style="font-size:14px;font-weight:700">Your status</span>
+<div style="display:flex;padding:3px;background:#ECEAF2;border-radius:10px;gap:2px">
+<sc-for list="{{ statusOpts }}" as="o" hint-placeholder-count="4">
+<button onClick="{{ o.onClick }}" style="flex:1;height:34px;border:0;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:{{ o.bg }};color:{{ o.color }};box-shadow:{{ o.shadow }}">{{ o.label }}</button>
+</sc-for>
+</div>
+<span style="font-size:12.5px;color:#6B6880">{{ statusHelp }}</span>
+</div>
+</div>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:6px">
+<span style="font-size:14px;font-weight:700">Usual free hours</span>
+<span style="font-size:12.5px;color:#6B6880;margin-bottom:8px">Friends only see you as free inside these hours, even when your calendar is empty.</span>
+<sc-for list="{{ hourRows }}" as="h" hint-placeholder-count="7">
+<div style="display:flex;align-items:center;gap:14px;padding:6px 0">
+<div onClick="{{ h.onClick }}" style="width:36px;height:20px;border-radius:20px;background:{{ h.trackBg }};position:relative;cursor:pointer;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ h.knobLeft }}px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.2);transition:left .15s"></div></div>
+<span style="width:100px;font-size:13.5px;font-weight:500">{{ h.label }}</span>
+<span style="padding:6px 12px;border-radius:8px;background:{{ h.rangeBg }};font-size:13px;color:{{ h.rangeColor }}">{{ h.range }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:18px">
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:14px">
+<span style="font-size:14px;font-weight:700">Connected calendars</span>
+<sc-for list="{{ calendars }}" as="c" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:36px;height:36px;border-radius:50%;background:#E4E2EA;flex:none"></div>
+<div style="display:flex;flex-direction:column;gap:1px;flex:1"><span style="font-size:13.5px;font-weight:600">{{ c.label }}</span><span style="font-size:12px;color:#8A879C">{{ c.sub }}</span></div>
+<button onClick="{{ c.onClick }}" style="height:32px;padding:0 14px;border-radius:8px;border:1px solid {{ c.btnBd }};background:{{ c.btnBg }};color:{{ c.btnColor }};font-size:12.5px;font-weight:600;cursor:pointer">{{ c.btn }}</button>
+</div>
+</sc-for>
+</div>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:10px">
+<span style="font-size:14px;font-weight:700">Who can see event titles</span>
+<sc-for list="{{ titleOpts }}" as="o" hint-placeholder-count="3">
+<div onClick="{{ o.onClick }}" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid {{ o.bd }};background:{{ o.bg }};border-radius:11px;cursor:pointer">
+<div style="width:18px;height:18px;border-radius:50%;border:2px solid {{ o.ring }};box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex:none"><div style="width:8px;height:8px;border-radius:50%;background:{{ o.inner }}"></div></div>
+<div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:13.5px;font-weight:600">{{ o.label }}</span><span style="font-size:12px;color:#6B6880">{{ o.sub }}</span></div>
+</div>
+</sc-for>
+</div>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:14px">
+<span style="font-size:14px;font-weight:700">Notify me when</span>
+<sc-for list="{{ notifs }}" as="t" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="display:flex;flex-direction:column;gap:1px;flex:1"><span style="font-size:13.5px;font-weight:500">{{ t.label }}</span><span style="font-size:11.5px;color:#8A879C">{{ t.sub }}</span></div>
+<div onClick="{{ t.onClick }}" style="width:36px;height:20px;border-radius:20px;background:{{ t.trackBg }};position:relative;cursor:pointer;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ t.knobLeft }}px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.2);transition:left .15s"></div></div>
+</div>
+</sc-for>
+</div>
+<button style="align-self:flex-start;height:36px;padding:0 4px;border:0;background:none;color:#6B6880;font-size:13px;font-weight:600;cursor:pointer">Log out</button>
+</div>
+</div>
+</main>
+</sc-if>
+
+<sc-if value="{{ isGroupPage }}" hint-placeholder-val="{{ false }}">
+<main style="flex:1;min-width:0;display:flex;flex-direction:column;padding:22px 24px 24px;gap:18px;box-sizing:border-box">
+<button onClick="{{ goCal }}" style="align-self:flex-start;display:flex;align-items:center;gap:6px;border:0;background:none;padding:0;font-size:13px;font-weight:600;color:#6B6880;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 6-6 6 6 6"></path></svg>Back to calendar</button>
+<header style="display:flex;align-items:center;gap:14px">
+<div style="width:52px;height:52px;border-radius:14px;background:{{ gColor }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;font-weight:700">{{ gIni }}</div>
+<div style="display:flex;flex-direction:column;gap:3px"><h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-0.02em">{{ gName }}</h1><div style="font-size:13.5px;color:#6B6880">{{ gCount }} members · You're an admin</div></div>
+<button style="margin-left:auto;height:40px;padding:0 16px;border:0;border-radius:10px;background:oklch(0.52 0.2 280);color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer" style-hover="background:oklch(0.46 0.2 280)"><span style="font-size:18px;line-height:1">+</span>Add members</button>
+</header>
+<div style="display:flex;gap:18px;align-items:flex-start">
+<section style="flex:1;min-width:0;background:#fff;border:1px solid #ECEAF2;border-radius:16px;overflow:hidden">
+<div style="padding:16px 20px;border-bottom:1px solid #ECEAF2;font-size:15px;font-weight:700">Members</div>
+<sc-for list="{{ members }}" as="m" hint-placeholder-count="6">
+<div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1.2fr) 90px 28px;gap:16px;align-items:center;padding:12px 20px;border-bottom:1px solid #F1EFF5">
+<div style="display:flex;align-items:center;gap:11px;min-width:0">
+<div style="position:relative;width:36px;height:36px;border-radius:50%;background:{{ m.solid }};flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11.5px;font-weight:700">{{ m.ini }}<div style="position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;border:2px solid #fff;background:{{ m.dot }}"></div></div>
+<div style="display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font-size:14px;font-weight:600">{{ m.name }}</span><span style="font-size:12px;color:#8A879C">{{ m.handle }}</span></div>
+</div>
+<span style="font-size:13px;color:{{ m.statusColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.status }}</span>
+<span style="justify-self:start;padding:4px 10px;border-radius:20px;background:{{ m.roleBg }};color:{{ m.roleColor }};font-size:12px;font-weight:600">{{ m.role }}</span>
+<span style="font-size:18px;color:#8A879C;cursor:pointer;text-align:center;line-height:1">⋯</span>
+</div>
+</sc-for>
+</section>
+<aside style="width:340px;flex:none;display:flex;flex-direction:column;gap:16px">
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+<span style="font-size:15px;font-weight:700">Invite link</span>
+<span style="font-size:12.5px;color:#6B6880">Anyone with the link can ask to join. You approve each request.</span>
+<div style="display:flex;gap:8px">
+<div style="flex:1;min-width:0;height:38px;padding:0 12px;border:1px solid #ECEAF2;border-radius:9px;background:#FBFAFD;display:flex;align-items:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:#4A475C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ gLink }}</div>
+<button onClick="{{ copyLink }}" style="height:38px;padding:0 14px;border:0;border-radius:9px;background:#17152A;color:#fff;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">{{ copyLabel }}</button>
+</div>
+</div>
+<div style="background:#fff;border:1px solid #ECEAF2;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
+<span style="font-size:15px;font-weight:700">Settings</span>
+<sc-for list="{{ gSettings }}" as="t" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="display:flex;flex-direction:column;gap:1px;flex:1"><span style="font-size:13.5px;font-weight:500">{{ t.label }}</span><span style="font-size:11.5px;color:#8A879C">{{ t.sub }}</span></div>
+<div onClick="{{ t.onClick }}" style="width:36px;height:20px;border-radius:20px;background:{{ t.trackBg }};position:relative;cursor:pointer;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ t.knobLeft }}px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.2);transition:left .15s"></div></div>
+</div>
+</sc-for>
+</div>
+<button style="height:40px;border:1px solid oklch(0.88 0.06 25);border-radius:10px;background:#fff;color:oklch(0.52 0.18 25);font-size:13.5px;font-weight:600;cursor:pointer" style-hover="background:oklch(0.97 0.02 25)">Leave group</button>
+</aside>
+</div>
+</main>
+</sc-if>
+
+<sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(23,21,42,0.4);display:flex;align-items:center;justify-content:center;z-index:50">
+<div onClick="{{ stop }}" style="width:520px;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(23,21,42,0.25);padding:24px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:center"><span style="font-size:19px;font-weight:700;letter-spacing:-0.01em">New group</span><button onClick="{{ closeModal }}" style="margin-left:auto;width:32px;height:32px;border:0;border-radius:8px;background:#F6F5FA;cursor:pointer;font-size:16px;color:#4A475C">✕</button></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:13px;font-weight:600">Name</span>
+<input value="{{ newName }}" onChange="{{ onName }}" placeholder="e.g. Brunch Club" style="height:42px;padding:0 14px;border:1px solid #ECEAF2;border-radius:10px;font-family:inherit;font-size:14px;color:#17152A;outline:none" style-focus="border-color:oklch(0.52 0.2 280);box-shadow:0 0 0 3px oklch(0.92 0.05 280)"></input>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font-size:13px;font-weight:600">Color</span>
+<div style="display:flex;gap:12px"><sc-for list="{{ hueOpts }}" as="h" hint-placeholder-count="6"><div onClick="{{ h.onClick }}" style="width:28px;height:28px;border-radius:8px;background:{{ h.bg }};box-shadow:{{ h.ring }};cursor:pointer"></div></sc-for></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font-size:13px;font-weight:600">Add friends <span style="font-weight:500;color:#8A879C">· {{ newCount }} members including you</span></span>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+<sc-for list="{{ pickFriends }}" as="f" hint-placeholder-count="8">
+<div onClick="{{ f.onClick }}" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px 10px;border:1px solid {{ f.bd }};background:{{ f.bg }};border-radius:11px;cursor:pointer">
+<div style="width:34px;height:34px;border-radius:50%;background:{{ f.solid }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">{{ f.ini }}</div>
+<span style="font-size:12.5px;font-weight:500">{{ f.name }}</span>
+<span style="position:absolute;top:6px;right:8px;font-size:12px;font-weight:700;color:oklch(0.52 0.2 280)">{{ f.check }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;justify-content:flex-end;gap:8px">
+<button onClick="{{ closeModal }}" style="height:40px;padding:0 16px;border:1px solid #ECEAF2;border-radius:10px;background:#fff;color:#17152A;font-size:14px;font-weight:600;cursor:pointer">Cancel</button>
+<button onClick="{{ createGroup }}" style="height:40px;padding:0 18px;border:0;border-radius:10px;background:oklch(0.52 0.2 280);color:#fff;font-size:14px;font-weight:600;cursor:pointer;opacity:{{ createOpacity }}">Create group</button>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:980},&quot;weekStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;overlap&quot;,&quot;heatmap&quot;,&quot;timelines&quot;],&quot;default&quot;:&quot;overlap&quot;,&quot;tsType&quot;:&quot;'overlap'|'heatmap'|'timelines'&quot;,&quot;section&quot;:&quot;Calendar&quot;},&quot;showEventTitles&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Privacy&quot;}}">
+const P=[
+{name:'You',ini:'MC',hue:285},{name:'Jordan Lee',ini:'JL',hue:220},{name:'Priya Patel',ini:'PP',hue:35},
+{name:'Sam Rivera',ini:'SR',hue:175},{name:'Leo Park',ini:'LP',hue:350},{name:'Ava Brooks',ini:'AB',hue:80}];
+const EXTRA=[{name:'Noah Kim',ini:'NK',hue:255},{name:'Zoe Martin',ini:'ZM',hue:130},{name:'Eli Okafor',ini:'EO',hue:15},{name:'Hana Sato',ini:'HS',hue:315},{name:'Marco Diaz',ini:'MD',hue:100},{name:'Lily Tran',ini:'LT',hue:195}];
+const REQ=[{id:'r1',name:'Riley Quinn',ini:'RQ',hue:240,mutual:'3 mutual friends'},{id:'r2',name:'Theo Grant',ini:'TG',hue:20,mutual:'Friends with Jordan and Sam'}];
+const ALL=P.concat(EXTRA);
+ALL.concat(REQ).forEach(p=>{p.solid=`oklch(0.66 0.13 ${p.hue})`;p.bg=`oklch(0.965 0.03 ${p.hue})`;p.bd=`oklch(0.86 0.07 ${p.hue})`;p.ink=`oklch(0.45 0.12 ${p.hue})`;});
+const LABELS=['Gym','Class','Meeting','Lunch','Dentist','Study group','Call','Commute','Dinner','Errands','Practice'];
+const TODAY=new Date(2026,8,30,12),NOW=14.5,START=8,END=22,H=52;
+const GREEN='oklch(0.62 0.15 155)',GREEN_INK='oklch(0.47 0.13 155)',MUTED='#8A879C';
+const OVERRIDE={0:[[9,12,'Work'],[13,14,'Team lunch'],[15,17,'Work'],[19,20,'Gym']],1:[[8.5,14,'Shift'],[16,17.5,'Class']],2:[[10,15.5,'Studio'],[20,21.5,'Dinner']],3:[[9,11,'Class'],[12,13,'Study group'],[18.5,19,'Call']],4:[[11,17,'Work']],5:[[8,9.5,'Gym'],[13.5,15,'Dentist'],[21,22,'Call']]};
+const key=d=>d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+const same=(a,b)=>key(a)===key(b);
+const addDays=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n,12);
+const monday=d=>addDays(d,-((d.getDay()+6)%7));
+function rng(s){let a=s>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const cache={};
+function busy(pi,d){const k=key(d);if(k===key(TODAY)&&OVERRIDE[pi])return OVERRIDE[pi];const ck=k+'-'+pi;if(cache[ck])return cache[ck];
+const r=rng(k*7+pi*131);r();const wd=d.getDay(),weekend=wd===0||wd===6,out=[];
+if(!weekend&&r()<0.75){const s=8.5+Math.floor(r()*4)*0.5;const e=Math.min(19,s+6+Math.floor(r()*5)*0.5);out.push([s,e,pi===1?'Shift':pi===3?'Class':'Work']);}
+const n=weekend?1+Math.floor(r()*2):Math.floor(r()*3);
+for(let i=0;i<n;i++){const s=8+Math.floor(r()*26)*0.5;const e=Math.min(22,s+1+Math.floor(r()*4)*0.5);if(out.some(b=>s<b[1]+0.5&&e>b[0]-0.5))continue;out.push([s,e,LABELS[Math.floor(r()*LABELS.length)]]);}
+out.sort((a,b)=>a[0]-b[0]);return cache[ck]=out;}
+const isFree=(b,t)=>!b.some(x=>t>=x[0]&&t<x[1]);
+function fmt(h,ap=true){const hh=Math.floor(h),m=h%1?':30':'';const a=hh>=12?'PM':'AM';const h12=hh%12||12;return h12+(m||'')+(ap?' '+a:'');}
+function fmtR(s,e){const same=(s>=12)===(e>=12);return fmt(s,!same)+' – '+fmt(e);}
+function windows(d){const w=[];for(let t=START;t<END;t+=0.5){const f=P.map((_,i)=>i).filter(i=>isFree(busy(i,d),t));const k=f.join(',');const l=w[w.length-1];if(l&&l.k===k)l.e=t+0.5;else w.push({s:t,e:t+0.5,k,free:f});}return w;}
+function ranked(d,minDur=1){return windows(d).filter(w=>w.e-w.s>=minDur&&w.free.length>=2).sort((a,b)=>b.free.length-a.free.length||(b.e-b.s)-(a.e-a.s));}
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOWL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const dur=h=>h>=1?(h%1?h.toFixed(1):h)+' hr':'30 min';
+const avs=idx=>idx.map(i=>({solid:P[i].solid,ini:P[i].ini}));
+function nowStatus(i){const b=busy(i,TODAY);const cur=b.find(x=>NOW>=x[0]&&NOW<x[1]);if(cur)return{free:false,text:'Busy until '+fmt(cur[1]),label:cur[2]};const nx=b.find(x=>x[0]>NOW);return{free:true,text:nx?'Free until '+fmt(nx[0]):'Free rest of day'};}
+const seg=(active)=>({bg:active?'#fff':'transparent',color:active?'#17152A':'#6B6880',shadow:active?'0 1px 2px rgba(23,21,42,0.12)':'none'});
+
+class Component extends DCLogic {
+  state={view:'day',display:'cal',date:TODAY,group:0,page:'calendar',friendSel:1,friendTab:'all',close:[1,3],toggles:{},resp:{},status:'auto',titlesWho:'close',copied:false,modal:false,newName:'',newHue:130,newMembers:[],
+    groups:[{name:'Weekend Crew',ini:'WC',hue:285,members:[0,1,2,3,4,5]},{name:'Roommates',ini:'RM',hue:220,members:[0,1,3,7]},{name:'Climbing Club',ini:'CC',hue:35,members:[0,2,4,6,8,9,10,11]},{name:'Study Group',ini:'SG',hue:175,members:[0,3,5,6,11]}]};
+  pageVals(titles,group){
+    const st=this.state;const page=st.page;const set=o=>()=>this.setState(o);
+    const T=(k,label,sub,def=false)=>{const on=st.toggles[k]??def;return{label,sub,on,onClick:()=>this.setState(s=>({toggles:{...s.toggles,[k]:!on}})),trackBg:on?'oklch(0.52 0.2 280)':'#D9D6E3',knobLeft:on?18:2};};
+    const navA=a=>({bg:a?'oklch(0.96 0.03 280)':'transparent',color:a?'oklch(0.45 0.2 280)':'#4A475C',weight:a?600:500});
+    const handle=p=>'@'+p.name.toLowerCase().replace(/[^a-z ]/g,'').split(' ').map((w,j)=>j?w[0]:w).join('');
+    const avsA=idx=>idx.map(i=>({solid:ALL[i].solid,ini:ALL[i].ini}));
+    const dayName=(d,k)=>k===0?'Today':k===1?'Tomorrow':DOWL[d.getDay()];
+    const groupsOf=i=>st.groups.filter(g=>g.members.includes(i));
+    const together=i=>{const out=[];for(let k=0;k<7;k++){const d=addDays(TODAY,k);let best=null,run=null;for(let t=9;t<22;t+=0.5){const ok=isFree(busy(0,d),t)&&isFree(busy(i,d),t)&&(k>0||t>=NOW);if(ok){run=run||{s:t};run.e=t+0.5;if(!best||run.e-run.s>best.e-best.s)best={...run};}else run=null;}if(best&&best.e-best.s>=1)out.push({d,k,...best});}return out;};
+    const stat=i=>{const s=nowStatus(i);return{dot:s.free?GREEN:'#C9C6D4',status:s.free?s.text:(titles?s.label+' · ':'')+s.text,statusColor:s.free?GREEN_INK:'#6B6880'};};
+    // friends
+    const fTab=st.friendTab;let fIdx=ALL.map((_,i)=>i).slice(1);
+    if(fTab==='free')fIdx=fIdx.filter(i=>nowStatus(i).free);if(fTab==='close')fIdx=fIdx.filter(i=>st.close.includes(i));
+    const sel=st.friendSel;
+    const friendTabs=[['all','All',ALL.length-1],['free','Free now',ALL.slice(1).filter((_,j)=>nowStatus(j+1).free).length],['close','Close friends',st.close.length]].map(([k,l,n])=>{const a=k===fTab;return{label:l,n,onClick:set({friendTab:k}),bg:a?'#17152A':'#fff',color:a?'#fff':'#4A475C',bd:a?'#17152A':'#ECEAF2',nBg:a?'rgba(255,255,255,0.18)':'#F1EFF5'};});
+    const friendRows=fIdx.map(i=>{const p=ALL[i],tw=together(i)[0],gs=groupsOf(i);return{...stat(i),onClick:set({friendSel:i}),name:p.name,ini:p.ini,solid:p.solid,handle:handle(p),together:tw?`${dayName(tw.d,tw.k)}, ${fmtR(tw.s,tw.e)}`:'No overlap this week',groups:gs.length?gs.map(g=>g.name).join(', '):'—',bg:i===sel?'oklch(0.975 0.015 280)':'#fff',star:st.close.includes(i)?'★':''};});
+    const fp=ALL[sel],fb=busy(sel,TODAY),isClose=st.close.includes(sel);
+    const fd={...stat(sel),name:fp.name,ini:fp.ini,solid:fp.solid,handle:handle(fp),
+      segs:fb.map(x=>({left:(x[0]-START)/(END-START)*100,w:(x[1]-x[0])/(END-START)*100})),nowLeft:(NOW-START)/(END-START)*100,
+      blocks:fb.map(x=>({time:fmtR(x[0],x[1]),label:titles?x[2]:'Busy'})),
+      together:together(sel).slice(0,3).map(w=>({day:dayName(w.d,w.k),date:MON[w.d.getMonth()]+' '+w.d.getDate(),range:fmtR(w.s,w.e),dur:dur(w.e-w.s)})),
+      groups:groupsOf(sel).map(g=>({name:g.name,ini:g.ini,color:`oklch(0.62 0.14 ${g.hue})`})),
+      closeLabel:isClose?'★ Close friend':'☆ Add to close friends',closeBg:isClose?'oklch(0.96 0.05 80)':'#fff',closeColor:isClose?'oklch(0.45 0.11 70)':'#4A475C',closeBd:isClose?'oklch(0.86 0.09 80)':'#ECEAF2',
+      toggleClose:()=>this.setState(s=>({close:s.close.includes(sel)?s.close.filter(x=>x!==sel):s.close.concat(sel)})),
+      share:[T('share-'+sel,'Can see my event titles','Otherwise they only see “Busy”',isClose),T('ping-'+sel,'Tell me when they’re free','One notification per day, max',false)]};
+    // invites
+    const PLANS=[{id:'p1',from:1,title:'Tacos at La Palma',when:'Today · 5:30 – 6:30 PM',group:0,going:[1,3,5],fit:'You’re free then',ok:true,ago:'12 min ago'},{id:'p2',from:2,title:'Bouldering session',when:'Sat, Oct 3 · 10 AM – 12 PM',group:2,going:[2,4,8,9],fit:'You’re free then',ok:true,ago:'1 hr ago'},{id:'p3',from:3,title:'Midterm study night',when:'Thu, Oct 1 · 7 – 9 PM',group:3,going:[3,6],fit:'Overlaps with Gym, 7 – 8 PM',ok:false,ago:'Yesterday'}];
+    const R=st.resp;const respond=(id,v)=>()=>this.setState(s=>({resp:{...s.resp,[id]:v}}));
+    const plans=PLANS.map(p=>{const r=R[p.id],g=st.groups[p.group],f=ALL[p.from];const going=r==='yes'?[0].concat(p.going):p.going;return{title:p.title,when:p.when,ago:p.ago,fromName:f.name.split(' ')[0],fromIni:f.ini,fromSolid:f.solid,groupName:g.name,groupColor:`oklch(0.62 0.14 ${g.hue})`,goingAv:avsA(going),goingText:going.length+' going',fit:p.fit,fitColor:p.ok?GREEN_INK:'oklch(0.55 0.16 45)',fitDot:p.ok?GREEN:'oklch(0.72 0.16 60)',pending:!r,done:!!r,respText:r==='yes'?'You’re going':r==='maybe'?'You said maybe':'You declined',respColor:r==='yes'?GREEN_INK:'#6B6880',respBg:r==='yes'?'oklch(0.96 0.04 155)':'#F1EFF5',accept:respond(p.id,'yes'),maybe:respond(p.id,'maybe'),decline:respond(p.id,'no'),undo:respond(p.id,undefined)};});
+    const requests=REQ.map(q=>{const r=R[q.id];return{name:q.name,ini:q.ini,solid:q.solid,mutual:q.mutual,pending:!r,done:!!r,respText:r==='yes'?'Added to friends':'Request ignored',accept:respond(q.id,'yes'),ignore:respond(q.id,'no')};});
+    const gInv=[{id:'g1',name:'Book Club',ini:'BC',hue:10,from:'Ava Brooks',members:7}].map(g=>{const r=R[g.id];return{...g,color:`oklch(0.62 0.14 ${g.hue})`,pending:!r,done:!!r,respText:r==='yes'?'Joined':'Declined',accept:respond(g.id,'yes'),ignore:respond(g.id,'no')};});
+    const inviteCount=['p1','p2','p3','r1','r2','g1'].filter(k=>!R[k]).length;
+    // profile
+    const statusOpts=[['auto','Automatic'],['free','Free'],['busy','Busy'],['hidden','Invisible']].map(([k,l])=>{const a=st.status===k;return{label:l,onClick:set({status:k}),bg:a?'#fff':'transparent',color:a?'#17152A':'#6B6880',shadow:a?'0 1px 2px rgba(23,21,42,0.12)':'none'};});
+    const statusHelp={auto:'Your status follows your connected calendars.',free:'Friends see you as free until you change this.',busy:'Friends see you as busy until you change this.',hidden:'Friends can’t see your availability at all.'}[st.status];
+    const hourRows=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((d,i)=>{const t=T('h'+i,d,'',i!==3);return{...t,range:t.on?(i<5?'5:00 PM – 11:00 PM':'10:00 AM – 11:00 PM'):'Not available',rangeColor:t.on?'#17152A':'#8A879C',rangeBg:t.on?'#F6F5FA':'transparent'};});
+    const calendars=[['Google Calendar','maya.chen@gmail.com',true],['Apple Calendar','iCloud',false],['Outlook','maya@studio.co',true]].map(([n,a,def],i)=>{const t=T('cal'+i,n,a,def);return{...t,btn:t.on?'Connected':'Connect',btnBg:t.on?'oklch(0.96 0.04 155)':'oklch(0.52 0.2 280)',btnColor:t.on?GREEN_INK:'#fff',btnBd:t.on?'oklch(0.88 0.07 155)':'oklch(0.52 0.2 280)'};});
+    const titleOpts=[['everyone','Everyone','All friends see what you’re doing'],['close','Close friends only','Others just see “Busy”'],['nobody','Nobody','Everyone just sees “Busy”']].map(([k,l,s])=>{const a=st.titlesWho===k;return{label:l,sub:s,onClick:set({titlesWho:k}),bd:a?'oklch(0.52 0.2 280)':'#ECEAF2',bg:a?'oklch(0.975 0.015 280)':'#fff',ring:a?'oklch(0.52 0.2 280)':'#C9C6D4',inner:a?'oklch(0.52 0.2 280)':'transparent'};});
+    const notifs=[T('n1','A close friend becomes free','',true),T('n2','Everyone in a group is free','',true),T('n3','Plan invites and replies','',true),T('n4','Weekly availability digest','Sundays at 6 PM',false)];
+    // group settings
+    const g=st.groups[group];
+    const members=g.members.map(i=>({...stat(i),name:ALL[i].name,ini:ALL[i].ini,solid:ALL[i].solid,handle:handle(ALL[i]),role:i===0?'Admin':'Member',roleBg:i===0?'oklch(0.95 0.04 280)':'#F1EFF5',roleColor:i===0?'oklch(0.45 0.2 280)':'#6B6880'}));
+    const gSettings=[T('g'+group+'a','Anyone can propose plans','Otherwise only admins',true),T('g'+group+'b','Notify me when everyone is free','',true),T('g'+group+'c','Share event titles with this group','Overrides your profile setting',false),T('g'+group+'d','Hide my availability from this group','',false)];
+    // new group modal
+    const hueOpts=[285,220,35,175,350,130].map(h=>({bg:`oklch(0.62 0.14 ${h})`,ring:h===st.newHue?`0 0 0 2px #fff, 0 0 0 4px oklch(0.62 0.14 ${h})`:'none',onClick:set({newHue:h})}));
+    const pickFriends=ALL.slice(1).map((p,j)=>{const i=j+1,on=st.newMembers.includes(i);return{name:p.name.split(' ')[0],solid:p.solid,ini:p.ini,onClick:()=>this.setState(s=>({newMembers:on?s.newMembers.filter(x=>x!==i):s.newMembers.concat(i)})),bd:on?'oklch(0.52 0.2 280)':'#ECEAF2',bg:on?'oklch(0.975 0.015 280)':'#fff',check:on?'✓':''};});
+    const canCreate=st.newName.trim().length>0;
+    const nav={cal:navA(page==='calendar'||page==='group'),fr:navA(page==='friends'),inv:navA(page==='invites')};
+    return{page,isCalendarPage:page==='calendar',isFriendsPage:page==='friends',isInvitesPage:page==='invites',isProfilePage:page==='profile',isGroupPage:page==='group',
+      navCalBg:nav.cal.bg,navCalColor:nav.cal.color,navCalWeight:nav.cal.weight,navFrBg:nav.fr.bg,navFrColor:nav.fr.color,navFrWeight:nav.fr.weight,navInvBg:nav.inv.bg,navInvColor:nav.inv.color,navInvWeight:nav.inv.weight,
+      goCal:set({page:'calendar'}),goFriends:set({page:'friends'}),goInvites:set({page:'invites'}),goProfile:set({page:'profile'}),goGroup:set({page:'group',copied:false}),
+      profileBd:page==='profile'?'oklch(0.52 0.2 280)':'#ECEAF2',profileBg:page==='profile'?'oklch(0.975 0.015 280)':'#fff',
+      friendCount:ALL.length-1,freeFriends:ALL.slice(1).filter((_,j)=>nowStatus(j+1).free).length,friendTabs,friendRows,fd,noFriendRows:friendRows.length===0,
+      plans,requests,gInv,inviteCount,hasInvites:inviteCount>0,pendingPlans:PLANS.filter(p=>!R[p.id]).length,
+      statusOpts,statusHelp,hourRows,calendars,titleOpts,notifs,
+      gName:g.name,gIni:g.ini,gColor:`oklch(0.62 0.14 ${g.hue})`,gCount:g.members.length,members,gSettings,gLink:'whosfree.app/j/'+g.name.toLowerCase().replace(/[^a-z0-9]+/g,'-'),copyLabel:st.copied?'Copied':'Copy link',copyLink:set({copied:true}),
+      modalOpen:st.modal,openNewGroup:set({modal:true,newName:'',newMembers:[],newHue:130}),closeModal:set({modal:false}),stop:e=>e.stopPropagation(),newName:st.newName,onName:e=>this.setState({newName:e.target.value}),hueOpts,pickFriends,newCount:st.newMembers.length+1,
+      createOpacity:canCreate?1:0.45,createGroup:()=>{if(!canCreate)return;const name=st.newName.trim();const ini=name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();this.setState(s=>({groups:s.groups.concat({name,ini,hue:s.newHue,members:[0].concat(s.newMembers)}),group:s.groups.length,page:'group',modal:false}));}};
+  }
+  go(d,view){this.setState(view?{date:d,view}:{date:d});}
+  shift(dir){const {view,date}=this.state;if(view==='day')this.go(addDays(date,dir));else if(view==='week')this.go(addDays(date,7*dir));else this.go(new Date(date.getFullYear(),date.getMonth()+dir,1,12));}
+  renderVals(){
+    const {view,display,date,group}=this.state;const titles=this.props.showEventTitles??true;const weekStyle='overlap';
+    const isToday=same(date,TODAY);const openDay=d=>()=>this.go(d,'day');
+    const gData=this.state.groups;const pg=this.state.page;const gAct=pg==='calendar'||pg==='group';
+    const groups=gData.map((g,i)=>({name:g.name,ini:g.ini,color:`oklch(0.62 0.14 ${g.hue})`,count:g.members.length,bg:gAct&&i===group?'#F6F5FA':'transparent',weight:gAct&&i===group?600:500,onClick:()=>this.setState({group:i,page:'calendar'})}));
+    const nowS=P.map((_,i)=>nowStatus(i));
+    const friends=P.slice(1,6).map((p,i)=>{const s=nowS[i+1];return{onClick:()=>this.setState({page:'friends',friendSel:i+1,friendTab:'all'}),name:p.name,dot:s.free?GREEN:'#C9C6D4',status:s.free?'Free':'Busy',statusColor:s.free?GREEN_INK:MUTED};});
+    // day
+    const hours=[];for(let h=START;h<=END;h++)hours.push({top:(h-START)*H,label:h===END?'':fmt(h).replace(' ','\u00a0')});
+    const dayCols=P.map((p,i)=>{const b=busy(i,date);const freeH=END-START-b.reduce((a,x)=>a+x[1]-x[0],0);const s=nowS[i];
+      return{name:p.name,ini:p.ini,solid:p.solid,status:isToday?(s.free?'● Free now':'Busy now'):freeH+' hrs free',statusColor:isToday?(s.free?GREEN_INK:MUTED):'#6B6880',
+      blocks:b.map(x=>({top:(x[0]-START)*H+2,h:(x[1]-x[0])*H-4,bg:p.bg,bd:p.bd,ink:p.ink,time:fmtR(x[0],x[1]),label:titles?x[2]:'Busy'}))};});
+    const allFree=windows(date).filter(w=>w.free.length===P.length&&w.e-w.s>=0.5).map(w=>({top:(w.s-START)*H,h:(w.e-w.s)*H,range:fmtR(w.s,w.e)}));
+    // week
+    const wk=monday(date);const days=[0,1,2,3,4,5,6].map(i=>addDays(wk,i));
+    const weekDays=days.map(d=>{const t=same(d,TODAY);const slots=[];for(let s=START;s<END;s+=0.5){const c=P.filter((_,i)=>isFree(busy(i,d),s)).length;slots.push({bg:`oklch(${0.97-c*0.058} ${0.02+c*0.022} 155)`});}
+      const b=ranked(d)[0];return{dow:DOW[d.getDay()],num:d.getDate(),onClick:openDay(d),headBg:t?'oklch(0.975 0.015 280)':'transparent',labelColor:t?'oklch(0.52 0.2 280)':MUTED,numBg:t?'oklch(0.52 0.2 280)':'transparent',numColor:t?'#fff':'#17152A',slots,best:b?`${b.free.length} free · ${fmtR(b.s,b.e)}`:'—'};});
+    const weekRows=P.map((p,i)=>({name:p.name,ini:p.ini,solid:p.solid,cells:days.map(d=>{const b=busy(i,d);const fh=END-START-b.reduce((a,x)=>a+x[1]-x[0],0);
+      return{onClick:openDay(d),bg:same(d,TODAY)?'oklch(0.985 0.01 280)':'transparent',freeText:fh>=13?'Free all day':fh+' hrs free',segs:b.map(x=>({left:(x[0]-START)/(END-START)*100,w:(x[1]-x[0])/(END-START)*100,bg:'#9A96AE'}))};})}));
+    const minFree=this.state.minFree??4;const WH=44;
+    const minChips=[[6,'Everyone'],[5,'5+'],[4,'4+'],[3,'3+']].map(([n,lab])=>{const a=n===minFree;return{label:lab,onClick:()=>this.setState({minFree:n}),bg:a?'oklch(0.52 0.2 280)':'#fff',color:a?'#fff':'#4A475C',bd:a?'oklch(0.52 0.2 280)':'#ECEAF2'};});
+    const wHours=[];for(let h=START;h<=END;h++)wHours.push({top:(h-START)*WH,label:h===END?'':fmt(h).replace(' ','\u00a0')});
+    const tone=n=>n===P.length?{bg:GREEN,bd:GREEN,ink:'#fff',ring:GREEN}:n===P.length-1?{bg:'oklch(0.9 0.07 155)',bd:'oklch(0.82 0.1 155)',ink:'oklch(0.32 0.1 155)',ring:'oklch(0.9 0.07 155)'}:{bg:'oklch(0.955 0.035 155)',bd:'oklch(0.88 0.06 155)',ink:'oklch(0.4 0.11 155)',ring:'oklch(0.955 0.035 155)'};
+    const weekCols=days.map(d=>({isToday:same(d,TODAY),bg:same(d,TODAY)?'oklch(0.985 0.01 280)':'transparent',
+      blocks:windows(d).filter(w=>w.free.length>=minFree).map(w=>{const h=(w.e-w.s)*WH;const n=w.free.length;
+        return{...tone(n),top:(w.s-START)*WH+1,h:h-2,count:n===P.length?'Everyone':`${n} free`,range:fmtR(w.s,w.e),tall:h>=40,pad:h<30?'3px 7px':'5px 7px',showAv:h>=66,avatars:avs(w.free),onClick:openDay(d)};})}));
+    const heatColor=c=>({bg:`oklch(${0.97-c*0.058} ${0.02+c*0.022} 155)`,color:c>=4?'#fff':'#4A475C'});
+    const heatRows=[];for(let h=START;h<END;h++)heatRows.push({label:fmt(h),cells:days.map(d=>{const c=P.filter((_,i)=>isFree(busy(i,d),h)&&isFree(busy(i,d),h+0.5)).length;const hc=heatColor(c);return{...hc,text:c===P.length?'All':c,onClick:openDay(d)};})});
+    const legend=[0,1,2,3,4,5,6].map(c=>({bg:heatColor(c).bg}));
+    // month
+    const first=new Date(date.getFullYear(),date.getMonth(),1,12);const gs=monday(first);const last=new Date(date.getFullYear(),date.getMonth()+1,0,12);
+    const nCells=Math.ceil(((last-gs)/864e5+1)/7)*7;const monthCells=[];
+    for(let i=0;i<nCells;i++){const d=addDays(gs,i);const inM=d.getMonth()===date.getMonth();const t=same(d,TODAY);
+      const dots=P.map((_,pi)=>{const b=busy(pi,d);let run=0,mx=0;for(let s=17;s<22;s+=0.5){if(isFree(b,s)){run++;mx=Math.max(mx,run);}else run=0;}return{bg:mx>=4?GREEN:'#E4E2EA',f:mx>=4};});
+      const fc=dots.filter(x=>x.f).length;const b=ranked(d)[0];
+      monthCells.push({num:d.getDate(),onClick:openDay(d),dots,countText:fc+'/6',best:b?`Best ${fmtR(b.s,b.e)}`:'',bg:t?'oklch(0.975 0.015 280)':fc>=5?'oklch(0.985 0.02 155)':'#fff',opacity:inM?1:0.4,numBg:t?'oklch(0.52 0.2 280)':'transparent',numColor:t?'#fff':'#17152A'});}
+    // lists
+    const dayList=windows(date).map(w=>{const n=w.free.length;const isNow=isToday&&NOW>=w.s&&NOW<w.e;const busyIdx=P.map((_,i)=>i).filter(i=>!w.free.includes(i));
+      return{range:fmtR(w.s,w.e),dur:dur(w.e-w.s),avatars:avs(w.free),countText:n===P.length?'Everyone free':n===0?'Nobody free':`${n} of ${P.length} free`,countColor:n===P.length?GREEN_INK:n===0?MUTED:'#17152A',
+      busy:busyIdx.length?'Busy: '+busyIdx.map(i=>P[i].name.split(' ')[0]).join(', '):'',bg:isNow?'oklch(0.975 0.015 280)':n===P.length?'oklch(0.975 0.03 155)':'#fff',tag:isNow?'NOW':n===P.length?'BEST':'',tagColor:isNow?'#E5484D':GREEN_INK};});
+    const listDays=view==='month'?Array.from({length:last.getDate()},(_,i)=>addDays(first,i)):days;
+    const rangeList=listDays.map(d=>({num:d.getDate(),dow:DOWL[d.getDay()],month:MON[d.getMonth()],onClick:openDay(d),bg:same(d,TODAY)?'oklch(0.975 0.015 280)':'#fff',
+      wins:ranked(d).slice(0,2).map((w,j)=>({range:fmtR(w.s,w.e),count:w.free.length===P.length?'Everyone':w.free.length+' free',avatars:avs(w.free),bg:j===0?'oklch(0.97 0.03 155)':'#FBFAFD',bd:j===0?'oklch(0.88 0.07 155)':'#ECEAF2'}))}));
+    // rail
+    const nowPeople=P.map((p,i)=>{const s=nowS[i];return{name:p.name,ini:p.ini,solid:p.solid,dot:s.free?GREEN:'#C9C6D4',color:s.free?GREEN_INK:'#6B6880',status:s.free?s.text:(titles?s.label+' · ':'')+s.text};});
+    let nextAll=null;for(let k=0;k<14&&!nextAll;k++){const d=addDays(TODAY,k);const w=windows(d).find(w=>w.free.length===P.length&&w.e-w.s>=1&&(k>0||w.e>NOW));if(w)nextAll={d,w,k};}
+    const bestWeek=days.filter(d=>key(d)>=key(TODAY)).map(d=>({d,w:ranked(d)[0]})).filter(x=>x.w).sort((a,b)=>b.w.free.length-a.w.free.length||(b.w.e-b.w.s)-(a.w.e-a.w.s)).slice(0,3)
+      .map(x=>({dow:DOW[x.d.getDay()],num:x.d.getDate(),range:fmtR(x.w.s,x.w.e),count:x.w.free.length===P.length?'Everyone free':`${x.w.free.length} of ${P.length} free`,onClick:openDay(x.d)}));
+    const ws=days[0],we=days[6];
+    const rangeLabel=view==='day'?`${DOWL[date.getDay()]}, ${MON[date.getMonth()]} ${date.getDate()}`:view==='week'?`${MON[ws.getMonth()]} ${ws.getDate()} – ${ws.getMonth()===we.getMonth()?'':MON[we.getMonth()]+' '}${we.getDate()}, ${we.getFullYear()}`:`${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+    const cal=display==='cal';const c=seg(cal),l=seg(!cal);
+    const pages=this.pageVals(titles,group);
+    return{...pages,groups,friends,meStatus:nowS[0].free?'● '+nowS[0].text:nowS[0].text,groupName:gData[group].name,memberCount:gData[group].members.length,freeNowCount:nowS.filter(s=>s.free).length,
+      goToday:()=>this.go(TODAY),prev:()=>this.shift(-1),next:()=>this.shift(1),rangeLabel,
+      viewTabs:['day','week','month'].map(v=>({label:v[0].toUpperCase()+v.slice(1),onClick:()=>this.setState({view:v}),...seg(view===v)})),
+      setCal:()=>this.setState({display:'cal'}),setList:()=>this.setState({display:'list'}),calBg:c.bg,calColor:c.color,calShadow:c.shadow,listBg:l.bg,listColor:l.color,listShadow:l.shadow,
+      isDayCal:cal&&view==='day',isWeekOverlap:cal&&view==='week'&&weekStyle==='overlap',isWeekTimelines:cal&&view==='week'&&weekStyle==='timelines',minChips,weekCols,wGridH:(END-START)*WH,wHours,wNowTop:(NOW-START)*WH,isWeekHeat:cal&&view==='week'&&weekStyle==='heatmap',isMonthCal:cal&&view==='month',isDayList:!cal&&view==='day',isRangeList:!cal&&view!=='day',
+      gridH:(END-START)*H,hours,dayCols,allFree,showNow:isToday,nowTop:(NOW-START)*H,
+      weekDays,weekRows,heatRows,legend,dowLabels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],monthCells,dayList,rangeList,
+      nowPeople,nextAllRange:nextAll?fmtR(nextAll.w.s,nextAll.w.e):'No overlap soon',nextAllDay:nextAll?(nextAll.k===0?'Today':nextAll.k===1?'Tomorrow':DOWL[nextAll.d.getDay()])+', '+MON[nextAll.d.getMonth()]+' '+nextAll.d.getDate()+' · '+dur(nextAll.w.e-nextAll.w.s):'',
+      allAvatars:avs(P.map((_,i)=>i)),bestWeek};
+  }
+}
+</script>
+</body>
+</html>

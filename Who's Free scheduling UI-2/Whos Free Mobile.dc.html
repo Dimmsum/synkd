@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><meta name="design_doc_mode" content="canvas"><link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet"><style>body{margin:0;background:#ECEAF2;font-family:'Onest',system-ui,sans-serif;color:#17152A}a{color:oklch(0.52 0.2 280)}a:hover{color:oklch(0.42 0.2 280)}</style></helmet>
+<section style="padding:48px 56px 64px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:6px;max-width:760px">
+<h1 style="margin:0;font-size:28px;font-weight:700;letter-spacing:-0.02em">Who's Free · Mobile</h1>
+<p style="margin:0;font-size:15px;line-height:1.5;color:#4A475C;text-wrap:pretty">Every phone is fully interactive. The sidebar becomes a four-tab bar, and groups move into a sheet you open from the group name. Body text is 15–16 px, secondary text is at least 12 px, and every tap target is at least 44 px.</p>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+<sc-for list="{{ screens }}" as="s" hint-placeholder-count="8">
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 11px ui-monospace,Menlo,monospace;padding:3px 7px;background:#17152A;color:#fff;border-radius:5px">{{ s.id }}</span><span style="font-size:15px;font-weight:600">{{ s.label }}</span></div>
+<dc-import name="Whos Free Phone" tab="{{ s.tab }}" view="{{ s.view }}" display="{{ s.display }}" friend="{{ s.friend }}" hint-size="410px,864px"></dc-import>
+</div>
+</sc-for>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    const S=[['M1','Day','calendar','day','cal'],['M2','Week','calendar','week','cal'],['M3','Month','calendar','month','cal'],['M4','Day · list','calendar','day','list'],['M5','Friends','friends','day','cal'],['M6','Friend detail','friends','day','cal',1],['M7','Invites','invites','day','cal'],['M8','Profile','profile','day','cal']];
+    return{screens:S.map(([id,label,tab,view,display,friend])=>({id,label,tab,view,display,friend:friend??null}))};
+  }
+}
+</script>
+</body>
+</html>
