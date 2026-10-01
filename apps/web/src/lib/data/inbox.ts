@@ -33,17 +33,3 @@ export const getUnreadCount = cache(async (): Promise<number> => {
   }
   return data;
 });
-
-/**
- * The viewer's users.id, which names their private Realtime channel (`user:<id>`), or null
- * without an account.
- */
-export const getViewerUserId = cache(async (): Promise<string | null> => {
-  const supabase = await createServerSupabase();
-  const { data, error } = await supabase.rpc('current_user_id');
-  if (error) {
-    console.error('current_user_id failed', error.code ?? 'no code');
-    return null;
-  }
-  return data ?? null;
-});

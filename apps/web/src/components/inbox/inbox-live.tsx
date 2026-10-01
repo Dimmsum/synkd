@@ -6,19 +6,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@clerk/nextjs';
-import { INBOX_CHANGED_EVENT, userChannel } from '@whosfree/shared';
+import { INBOX_CHANGED_EVENT } from '@whosfree/shared';
+import { useRefetch, useUserSignals } from '@/components/realtime/use-user-signals';
 import { markPingsRead, replyToPing } from '@/lib/actions/pings';
-import { createBrowserSupabase } from '@/lib/pings/browser-supabase';
 import {
   QUICK_REPLY_CACHE,
   parsePendingQuickReply,
   quickReplyPath,
   type PendingQuickReply,
 } from '@/lib/push/quick-reply';
-
-/** Coalesces bursts of signals (a ping and its push arrive together) into one refresh. */
-const REFRESH_DEBOUNCE_MS = 300;
 
 /**
  * Re-fetches the inbox when a ping or reply arrives: the database sends an empty
@@ -27,33 +23,16 @@ const REFRESH_DEBOUNCE_MS = 300;
  * a signal was missed while the phone slept.
  */
 export function InboxLive({ viewerId }: { viewerId: string }) {
-  const router = useRouter();
-  const { isSignedIn, getToken } = useAuth();
+  const refetch = useRefetch();
+  useUserSignals(viewerId, INBOX_CHANGED_EVENT, refetch, 'Inbox');
 
   useEffect(() => {
-    if (!isSignedIn) return;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const refresh = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => router.refresh(), REFRESH_DEBOUNCE_MS);
-    };
     const onVisible = () => {
-      if (document.visibilityState === 'visible') refresh();
+      if (document.visibilityState === 'visible') refetch();
     };
     document.addEventListener('visibilitychange', onVisible);
-
-    const supabase = createBrowserSupabase(() => getToken());
-    const channel = supabase
-      ?.channel(userChannel(viewerId), { config: { private: true } })
-      .on('broadcast', { event: INBOX_CHANGED_EVENT }, refresh)
-      .subscribe();
-
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('visibilitychange', onVisible);
-      if (supabase && channel) void supabase.removeChannel(channel);
-    };
-  }, [viewerId, isSignedIn, getToken, router]);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [refetch]);
 
   return null;
 }

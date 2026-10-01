@@ -13,7 +13,8 @@ import {
 } from '@/components/inbox/inbox-live';
 import { PingMenu, PingReplyBox } from '@/components/inbox/ping-reply';
 import { PushInboxHint } from '@/components/push/push-permission';
-import { getInbox, getViewerUserId } from '@/lib/data/inbox';
+import { getInbox } from '@/lib/data/inbox';
+import { getViewerRow } from '@/lib/data/now';
 import { getNow } from '@/lib/data/people';
 import { QUICK_REPLY_PARAM } from '@/lib/push/quick-reply';
 import type { Ping } from '@/lib/types';
@@ -23,10 +24,10 @@ export const metadata: Metadata = { title: 'Inbox' };
 // Inbox (WF-092, WF-093). Pings always land here, even without push (NFR-COMPAT-2). Live: a
 // ping or reply for the viewer re-fetches this page (InboxLive, `inbox_changed`).
 export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
-  const [params, inbox, viewerId, { now }] = await Promise.all([
+  const [params, inbox, viewer, { now }] = await Promise.all([
     searchParams,
     getInbox(),
-    getViewerUserId(),
+    getViewerRow(),
     getNow(),
   ]);
   const showSent = params.tab === 'sent';
@@ -37,7 +38,7 @@ export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
   return (
     <>
       <PageHeader title="Inbox" subtitle="Pings expire after 2 hours." />
-      {viewerId ? <InboxLive viewerId={viewerId} /> : null}
+      <InboxLive viewerId={viewer.id} />
       <MarkPingsRead ids={unreadIds} />
       <div className="mx-auto flex max-w-2xl flex-col gap-4">
         <QuickReplyFromNotification quickKey={typeof quick === 'string' ? quick : undefined} />
