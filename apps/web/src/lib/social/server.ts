@@ -13,6 +13,10 @@ import { knownDbErrorMessage, TRY_AGAIN, type DbError } from '@/lib/social/error
 export function failFrom(fn: string, error: DbError) {
   const known = knownDbErrorMessage(error);
   if (!known) console.error(`${fn} failed`, error.code ?? 'no code');
+  // A refusal names only database objects ("permission denied for function …", "… row-level
+  // security policy for table …"), never anything a user typed, and it's what tells a missing
+  // grant apart from a permission really taken away.
+  else if (error.code === '42501') console.warn(`${fn} refused`, error.message ?? 'no message');
   return fail(known ?? TRY_AGAIN);
 }
 
