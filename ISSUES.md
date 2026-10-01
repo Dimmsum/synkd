@@ -101,17 +101,15 @@ These have no unfinished dependencies:
 | ID | Title | Category |
 |---|---|---|
 | [WF-011](#wf-011--decide-final-name-and-register-domain) | Decide final name and register domain | `chore` |
-| [WF-013](#wf-013--set-up-openrouter-account-and-data-policy) | Set up OpenRouter account and data policy | `chore` |
 | [WF-020](#wf-020--collect-20-real-schedule-samples-eval-set) | Collect 20+ real schedule samples (eval set) | `test` |
 | [WF-119](#wf-119--jamaica-dpa-legal-review-and-oic-registration) | Jamaica DPA: legal review and OIC registration | `compliance` |
 | [WF-122](#wf-122--user-research-interviews) | User research interviews | `research` |
-| [WF-063](#wf-063--manual-status-override) | Manual status override (engine side is done; needs a `statusOverrides` table) | `feature` |
 | [WF-070](#wf-070--short-gap-rule) | Short-gap rule (stretch) | `feature` |
 | [WF-050](#wf-050--pause-sharing) | Pause sharing (stretch; the column and redaction already exist) | `feature` |
 
-In progress: WF-002 (web scaffold and UI with mock data); backend side of WF-040, 042, 047 (friends), WF-043, 044, 045 (groups), and WF-004, 005, 015, 062, 063 (account and status). **Waiting on the owner:** WF-003 (create the Supabase and Clerk projects) and WF-006 (branch-protection decision). Most backend issues depend on WF-003 being `done`, but the code they need is already merged.
+**Milestone A code is merged** (2026-09-30). What's `in-review` is waiting for the owner's migrations, environment variables and a real run on a deploy and on phones: WF-004, 005, 006, 015, 026–032, 035, 040, 042–045, 047, 062, 063, 064, 068, 090–093, 111, 127. Still `in-progress`: WF-010 (legal values), WF-013 (OpenRouter settings), WF-037 (event and ping purges), WF-128 (slot-finder part, waits for WF-098). **Waiting on the owner:** WF-002 (hosting: Railway for now, Vercel is the PRD target), WF-003 (apply migrations), WF-006 (branch protection).
 
-> WF-020 (collecting samples) is the **highest-leverage thing you can do before any code**. Every parser decision depends on it.
+> WF-020 (collecting samples) still gates WF-023's model choice and WF-028's accuracy target. The parser runs on provisional models until then.
 
 ---
 
@@ -201,32 +199,32 @@ Everything else at P0, which adds:
 | WF-010 | Privacy policy, terms, contact pages | compliance | legal, web | P0 | 0 | A | in-progress | 002 |
 | WF-011 | Decide final name and register domain | chore | ops | P0 | 0 | B | todo | — |
 | WF-012 | Google Cloud project and OAuth consent screen | chore | gcal | P0 | 0 | B | todo | 010, 011 |
-| WF-013 | Set up OpenRouter account and data policy | chore | parser | P0 | 0 | A | todo | — |
+| WF-013 | Set up OpenRouter account and data policy | chore | parser | P0 | 0 | A | in-progress | — |
 | WF-014 | Signed-in app shell, navigation, 404/error pages | feature | web | P0 | 0 | A | done | 004 |
 | WF-015 | Consent record (versioned terms/privacy acceptance) | compliance | backend | P0 | 0 | A | in-review | 004, 010 |
 | WF-020 | Collect 20+ real schedule samples (eval set) | test | parser | P0 | 1 | A | todo | — |
 | WF-021 | Shared schemas package (event draft, statuses, tiers) | feature | repo | P0 | 1 | A | done | 001 |
 | WF-022 | Parser eval harness | test | parser | P0 | 1 | A | done | 013, 020, 021 |
 | WF-023 | Spike: compare vision models via OpenRouter | spike | parser | P0 | 1 | A | todo | 022 |
-| WF-024 | Spike: Vercel functions vs Railway worker | spike | worker | P0 | 1 | A | in-review | 002 |
-| WF-025 | Scaffold worker service (Hono, Railway, HMAC) | infra | worker | P0 | 1 | A | todo | 001, 024 |
-| WF-026 | File upload, validation and `scheduleFiles` | feature | web, backend | P0 | 1 | A | todo | 003, 014 |
-| WF-027 | Parse job pipeline (queue, worker call, callback, retries) | feature | backend, worker | P0 | 1 | A | todo | 023, 025, 026 |
-| WF-028 | Recurring schedule extraction | feature | parser | P0 | 1 | A | todo | 027 |
-| WF-029 | Review screen (grid, confidence, side-by-side, editing) | feature | web | P0 | 1 | A | todo | 021, 027 |
-| WF-030 | Commit schedule to events (RRULE, date range, exceptions) | feature | backend | P0 | 1 | A | in-progress | 029 |
+| WF-024 | Spike: Vercel functions vs Railway worker | spike | worker | P0 | 1 | A | done | 002 |
+| WF-025 | Scaffold worker service (Hono, Railway, HMAC) | infra | worker | P0 | 1 | A | wontfix | 001, 024 |
+| WF-026 | File upload, validation and `scheduleFiles` | feature | web, backend | P0 | 1 | A | in-review | 003, 014 |
+| WF-027 | Parse job pipeline (queue, worker call, callback, retries) | feature | backend, worker | P0 | 1 | A | in-review | 023, 025, 026 |
+| WF-028 | Recurring schedule extraction | feature | parser | P0 | 1 | A | in-review | 027 |
+| WF-029 | Review screen (grid, confidence, side-by-side, editing) | feature | web | P0 | 1 | A | in-review | 021, 027 |
+| WF-030 | Commit schedule to events (RRULE, date range, exceptions) | feature | backend | P0 | 1 | A | in-review | 029 |
 | WF-031 | Manual schedule entry | feature | web | P0 | 1 | A | in-review | 029 |
-| WF-032 | Pending uploads list (view, delete) | feature | web | P0 | 1 | B | todo | 026 |
+| WF-032 | Pending uploads list (view, delete) | feature | web | P0 | 1 | B | in-review | 026 |
 | WF-033 | Re-upload and schedule replacement | feature | backend, web | P0 | 1 | B | todo | 030 |
 | WF-034 | Re-parse a stored file | feature | backend | P1 | 1 | stretch | wontfix | 027 |
-| WF-035 | Parse rate limiting | security | backend | P0 | 1 | Gate | todo | 027 |
+| WF-035 | Parse rate limiting | security | backend | P0 | 1 | Gate | in-review | 027 |
 | WF-036 | Dated schedules (rosters) | feature | parser | P1 | 1 | stretch | todo | 023, 028 |
-| WF-037 | Retention jobs (files, events, pings) | compliance | backend | P0 | 1 | B | todo | 026, 030 |
+| WF-037 | Retention jobs (files, events, pings) | compliance | backend | P0 | 1 | B | in-progress | 026, 030 |
 | WF-038 | Camera capture on upload | feature | web | P1 | 1 | stretch | todo | 026 |
 | WF-039 | Run parser evals in CI | test | parser | P0 | 1 | B | todo | 006, 022 |
-| WF-040 | Profiles and handles | feature | social | P0 | 2 | A | in-progress | 004 |
+| WF-040 | Profiles and handles | feature | social | P0 | 2 | A | in-review | 004 |
 | WF-041 | Visibility tiers and server-side redaction | security | backend | P0 | 2 | A | done | 003, 021 |
-| WF-042 | Friend requests with tier choice | feature | social | P0 | 2 | A | in-progress | 040, 041 |
+| WF-042 | Friend requests with tier choice | feature | social | P0 | 2 | A | in-review | 040, 041 |
 | WF-043 | Groups: create, edit, admin role, 20-member cap | feature | social | P0 | 2 | A | in-review | 040 |
 | WF-044 | Group member permissions | feature | social | P0 | 2 | Gate | in-review | 043 |
 | WF-045 | Invite links, invite page and join flow | feature | social, web | P0 | 2 | A | in-review | 041, 043 |
@@ -237,13 +235,13 @@ Everything else at P0, which adds:
 | WF-050 | Pause sharing | feature | backend, web | P1 | 2 | stretch | todo | 041 |
 | WF-060 | Availability engine core | feature | availability | P0 | 3 | A | done | 021 |
 | WF-061 | Recurrence expansion and multi-user free intervals | feature | availability | P0 | 3 | A | done | 060 |
-| WF-062 | Available hours (onboarding slider and settings) | feature | web, backend | P0 | 3 | A | in-progress | 014, 060 |
-| WF-063 | Manual status override | feature | web, backend | P0 | 3 | A | in-progress | 060 |
+| WF-062 | Available hours (onboarding slider and settings) | feature | web, backend | P0 | 3 | A | in-review | 014, 060 |
+| WF-063 | Manual status override | feature | web, backend | P0 | 3 | A | in-review | 060 |
 | WF-064 | Now screen (real-time, redacted) | feature | web, backend | P0 | 3 | A | in-review | 041, 042, 043, 061 |
 | WF-065 | Friend detail and My schedule views | feature | web | P0 | 3 | B | todo | 064 |
 | WF-066 | Group timeline view | feature | web | P1 | 3 | stretch | todo | 064 |
 | WF-067 | Stale-data warning | feature | web, backend | P1 | 3 | stretch | todo | 064 |
-| WF-068 | End-to-end onboarding flow | feature | web | P0 | 3 | A | todo | 005, 030, 045, 062 |
+| WF-068 | End-to-end onboarding flow | feature | web | P0 | 3 | A | in-review | 005, 030, 045, 062 |
 | WF-069 | Empty states and "nudge to add schedule" | feature | web | P0 | 3 | B | todo | 064 |
 | WF-070 | Short-gap rule | feature | availability | P1 | 3 | stretch | todo | 060 |
 | WF-080 | Google Calendar OAuth (own flow, encrypted tokens) | feature | gcal | P0 | 4 | B | todo | 003, 004, 012 |
@@ -265,7 +263,7 @@ Everything else at P0, which adds:
 | WF-098 | Group slot finder | feature | availability, web | P0 | 5 | B | todo | 043, 061 |
 | WF-099 | Share a slot | feature | web | P1 | 5 | stretch | todo | 096, 098 |
 | WF-110 | Offline cache of last-known Now | feature | pwa | P0 | 6 | B | todo | 064, 090 |
-| WF-111 | Install prompt and iOS guide | feature | pwa | P0 | 6 | A | todo | 090 |
+| WF-111 | Install prompt and iOS guide | feature | pwa | P0 | 6 | A | in-review | 090 |
 | WF-112 | App update flow | feature | pwa | P1 | 6 | stretch | todo | 090 |
 | WF-113 | Export my data | compliance | backend | P0 | 6 | B | todo | 030, 042, 092 |
 | WF-114 | Delete my account | compliance | backend | P0 | 6 | B | todo | 030, 043, 080 |
@@ -281,8 +279,8 @@ Everything else at P0, which adds:
 | WF-124 | Schedule-expiry reminder | feature | backend | P1 | 6 | stretch | todo | 030, 091 |
 | WF-125 | Google event titles only while a T3 grant exists | security | gcal | P0 | 4 | B | todo | 041, 081 |
 | WF-126 | Manual export/deletion request process | compliance | legal | P0 | 6 | Gate | todo | 010 |
-| WF-127 | Offline friends: add someone not on whosfree and import their timetable | feature | social, backend, web | P0 | 2 | A | in-progress | 030, 031 |
-| WF-128 | Show offline friends on Now, detail page and Find a time | feature | web, availability | P0 | 3 | A | todo | 064, 127 |
+| WF-127 | Offline friends: add someone not on whosfree and import their timetable | feature | social, backend, web | P0 | 2 | A | in-review | 030, 031 |
+| WF-128 | Show offline friends on Now, detail page and Find a time | feature | web, availability | P0 | 3 | A | in-progress | 064, 127 |
 
 ---
 
@@ -458,12 +456,14 @@ The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy
 - [ ] Test users added (up to 100)
 
 #### WF-013 · Set up OpenRouter account and data policy
-- **Category:** `chore` · **Area:** `parser` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `chore` · **Area:** `parser` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** —
 - **PRD:** D15, NFR-SEC-8
 
+> Owner (2026-09-30): the API key is stored. **Left (owner):** confirm the spend limit and that zero data retention is on, and allow the Mistral and Google Vertex providers (the provisional models, WF-023).
+
 **Acceptance criteria**
-- [ ] OpenRouter account and API key created and stored in a secret manager (never committed)
+- [x] OpenRouter account and API key created and stored in a secret manager (never committed)
 - [ ] Settings exclude providers that store or train on prompts. Document what OpenRouter actually guarantees.
 - [ ] Spend limit set on the account
 
@@ -540,13 +540,15 @@ A script in `packages/parser` that runs a model and prompt against the eval set 
 - **Depends on:** WF-022
 - **PRD:** D15, NFR-COST-1, NFR-PERF-4
 
+> Provisional until there are samples (WF-020): primary `mistralai/mistral-small-2603`, fallback `google/gemini-3.1-flash-lite` (`packages/shared` constants, `PARSER_VERSION = 1.0+prompt.v2`). One smoke test on a synthetic timetable validated exactly (US$0.0005, 4 s). Two other candidates had no zero-data-retention endpoint that takes `temperature`. The fallback hasn't been seen to answer yet.
+
 **Acceptance criteria**
 - [ ] 2–3 vision models with structured output compared on the eval set
 - [ ] A chosen **primary model and fallback model**, recorded in the PRD decision log
 - [ ] Evidence it can reach **≥ 70% parse acceptance**, at a cost of about ≤ US$0.05 per parse and p95 ≤ 60 s. If it can't, say what would need to change.
 
 #### WF-024 · Spike: Vercel functions vs Railway worker
-- **Category:** `spike` · **Area:** `worker` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `spike` · **Area:** `worker` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-002
 - **PRD:** §8.1, D6, R8
 
@@ -554,14 +556,18 @@ Can Vercel (Node) functions on the Next.js server handle PDF rasterisation and H
 
 > Spike done: [docs/spikes/WF-024-vercel-vs-worker.md](docs/spikes/WF-024-vercel-vs-worker.md). **Recommendation: drop the worker** (medium-high confidence). PDFium (WASM) + libheif (WASM) + sharp convert every FR-IMP-1 input in about 0.02–3.3 s locally, under 1 GB of memory, adding about 25 MB to the function, with no custom binaries. Vercel's 4.5 MB body limit means uploads must go straight to Supabase Storage through a signed upload URL (affects WF-026). The prototype route is on branch `spike/wf-024` (not merged; gated to 404 in production without `SPIKE_WF024_TOKEN`). **Left (owner):** run the write-up's §10 checklist on a Vercel preview of that branch, then decide. If it passes: record D46 in the PRD (text in the report), set WF-025 to `wontfix`, move `convert.ts` into the parser for WF-027, and delete the spike route.
 
+> **Decided (owner, 2026-09-30): drop the worker** (D46, PRD v0.12). The §10 Vercel checklist was skipped (the app runs on Railway for now, where none of Vercel's limits apply), so the first criterion stays open as accepted risk. The converter moved to `@whosfree/parser/node` (exact pins, magic bytes, ~50 MP HEIC cap, PDF page caps, `limitInputPixels`, one conversion at a time); the spike route was never merged. A production build traces the PDFium WASM and keeps sharp external.
+
 - [ ] A prototype of PDF → image and HEIC → JPEG inside a Next.js route handler deployed on Vercel
 - [x] Documented limits (runtime, memory, native dependencies)
-- [ ] A decision recorded in the PRD: keep the worker or drop it. **If it's dropped, WF-025 becomes `wontfix`** and WF-027 calls OpenRouter from the Next.js server instead.
+- [x] A decision recorded in the PRD: keep the worker or drop it. **If it's dropped, WF-025 becomes `wontfix`** and WF-027 calls OpenRouter from the Next.js server instead.
 
 #### WF-025 · Scaffold worker service (Hono, Railway, HMAC)
-- **Category:** `infra` · **Area:** `worker` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `infra` · **Area:** `worker` · **Priority:** P0 · **Milestone:** A · **Status:** `wontfix`
 - **Depends on:** WF-001, WF-024
 - **PRD:** §8.1, NFR-SEC-5, NFR-SEC-8, NFR-SCALE-2
+
+> Wontfix: there is no worker (D46, WF-024). Parse runs happen on the Next.js server behind a `CRON_SECRET`-authenticated internal route.
 
 **Acceptance criteria**
 - [ ] `apps/worker` is a Node + Hono service with a Dockerfile, deployed on Railway
@@ -570,68 +576,78 @@ Can Vercel (Node) functions on the Next.js server handle PDF rasterisation and H
 - [ ] `/health` endpoint, Sentry wired in, and no state kept between requests
 
 #### WF-026 · File upload, validation and `scheduleFiles`
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-003, WF-014
 - **PRD:** FR-IMP-1, FR-IMP-15, NFR-SEC-6, NFR-PERF-6, D38
 
+> Merged (migration `20261003500000_schedule_files_and_parse_jobs.sql`): `create_schedule_upload(...)` registers the file (server-chosen path `<user>/<file>`, 10 pending max, 20/day) and the browser uploads straight to the private `schedule-files` bucket through a signed upload URL. Images are shrunk on the device to ≤ 2000 px; the server sniffs magic bytes before converting; the original is shown through a 60 s signed URL after an RLS ownership check. **Left:** a live run once the migration is applied (check the bucket row: private, 10 MB, PDF and image types).
+
 **Acceptance criteria**
-- [ ] Accepts PDF, PNG, JPG, HEIC and WebP up to 10 MB, and PDFs up to 5 pages
-- [ ] Files are checked by their magic bytes on the server, not just their extension
-- [ ] Images are compressed on the device to ≤ 2000 px
-- [ ] A `scheduleFiles` row is created with `sha256`, and with `deleteAt = uploadedAt + 7 days` (the fallback for files that are never confirmed)
-- [ ] Storage is private and files are only reachable through short-lived URLs
+- [x] Accepts PDF, PNG, JPG, HEIC and WebP up to 10 MB, and PDFs up to 5 pages
+- [x] Files are checked by their magic bytes on the server, not just their extension
+- [x] Images are compressed on the device to ≤ 2000 px
+- [x] A `scheduleFiles` row is created with `sha256`, and with `deleteAt = uploadedAt + 7 days` (the fallback for files that are never confirmed)
+- [x] Storage is private and files are only reachable through short-lived URLs
 
 #### WF-027 · Parse job pipeline (queue, worker call, callback, retries)
-- **Category:** `feature` · **Area:** `backend`, `worker` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `backend`, `worker` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-023, WF-025, WF-026
 - **PRD:** §8.5, FR-IMP-13, FR-IMP-14, NFR-REL-2, NFR-REL-4, NFR-SEC-7
 
+> Merged (D46, no worker): `start_parse_job` (5/day, WF-035) → dispatch to `/api/internal/parse-jobs/run` (Bearer `CRON_SECRET`), which claims with a lease, converts in memory, makes one model call and calls `complete_parse_job`/`fail_parse_job` (backoff 1 min then 5 min, 3 attempts, fallback model). `/api/internal/parse-jobs/sweep` re-dispatches due jobs, expires files and drains `storage_removals`. Live progress through a `parse_job_changed` signal. The "signed worker call and callback" criterion is met by the internal route instead. **Left (owner):** set `CRON_SECRET`, and a cron calling the sweep every minute (POST or GET with `Authorization: Bearer <CRON_SECRET>`).
+
 **Acceptance criteria**
-- [ ] `parseJobs` status moves through queued → processing → needs_review, or failed
-- [ ] The Next.js server calls the worker with a signed request, and the worker's signed callback (to a server route handler) updates the job. A cron re-dispatches jobs left in `queued`.
-- [ ] Jobs can be repeated safely (idempotent), with up to 3 retries using backoff and OpenRouter's fallback model
-- [ ] Model output is validated with zod, and nothing from it is executed or rendered as HTML
-- [ ] `model`, `parserVersion` and `costUsd` are recorded on the job
-- [ ] The UI shows live progress, and failures show retry, try another file, or enter manually
+- [x] `parseJobs` status moves through queued → processing → needs_review, or failed
+- [x] The Next.js server calls the worker with a signed request, and the worker's signed callback (to a server route handler) updates the job. A cron re-dispatches jobs left in `queued`.
+- [x] Jobs can be repeated safely (idempotent), with up to 3 retries using backoff and OpenRouter's fallback model
+- [x] Model output is validated with zod, and nothing from it is executed or rendered as HTML
+- [x] `model`, `parserVersion` and `costUsd` are recorded on the job
+- [x] The UI shows live progress, and failures show retry, try another file, or enter manually
 
 #### WF-028 · Recurring schedule extraction
-- **Category:** `feature` · **Area:** `parser` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `parser` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-027
 - **PRD:** FR-IMP-3, FR-IMP-4, FR-IMP-5, D7
 
+> Merged: prompt v2 (grids either way, lists, weekly / A-B / odd-even / week numbers, suggested period, per-event confidence) and a title scrubber for D35 (rooms with a keyword, names with honorifics, IDs, emails, links, phones, addresses). A bare room like "SLT 2" or a bare name can't be caught. **Left:** the ≥ 70 % target needs the eval set (WF-020) and model choice (WF-023).
+
 **Acceptance criteria**
-- [ ] Handles grids with days as columns or as rows, and list layouts
-- [ ] Detects weekly, alternating-week (A/B or odd/even) and specific-week-number patterns
-- [ ] Suggests the schedule's date range when the file contains dates
-- [ ] Confidence is scored for each event
+- [x] Handles grids with days as columns or as rows, and list layouts
+- [x] Detects weekly, alternating-week (A/B or odd/even) and specific-week-number patterns
+- [x] Suggests the schedule's date range when the file contains dates
+- [x] Confidence is scored for each event
 - [ ] Rooms, addresses, ID numbers, names and photos in the file are **ignored and never output** (D35)
 - [ ] ≥ 70% acceptance on the recurring part of the eval set
 
 #### WF-029 · Review screen (grid, confidence, side-by-side, editing)
-- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-021, WF-027
 - **PRD:** FR-IMP-9, FR-IMP-10, FR-IMP-11, G1
 
+> Merged: the review grid highlights low-confidence events and shows the original next to it (stacked with a toggle on phones; HEIC previews only in Safari). Edit, delete, add, split (by day or in two) and merge; the editor also keeps specific weeks and one-off dates. **Left:** measure time to confirm in testing.
+
 **Acceptance criteria**
-- [ ] A week-grid preview, with low-confidence events highlighted
-- [ ] The original file is shown next to the grid (stacked on mobile, with a toggle)
-- [ ] Events can be edited, deleted, added, split and merged, using an **event editor component that can be reused** (WF-031 needs it)
-- [ ] Nothing is saved to the schedule until the user taps Confirm
+- [x] A week-grid preview, with low-confidence events highlighted
+- [x] The original file is shown next to the grid (stacked on mobile, with a toggle)
+- [x] Events can be edited, deleted, added, split and merged, using an **event editor component that can be reused** (WF-031 needs it)
+- [x] Nothing is saved to the schedule until the user taps Confirm
 - [ ] Median time from upload to confirm is ≤ 3 minutes in testing
 
 #### WF-030 · Commit schedule to events (RRULE, date range, exceptions)
-- **Category:** `feature` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
+- **Category:** `feature` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-029
 - **PRD:** FR-IMP-7, FR-IMP-8, §9 modelling decision
 
 > Merged (migration `20261002800000_commit_schedule.sql`): `commit_schedule(draft jsonb, source_type 'manual'|'upload', offline_friend_id)` validates a `ScheduleCommit` draft (unknown keys refused, so no location, D35), writes RRULE/UNTIL/EXDATE events plus a `sources` row with the period, and replaces the target's previous upload/manual source in the same transaction (gcal never touched). 20/day. Errors WF401 (invalid draft), WF402 (event never in the period). Jamaican holidays are pre-filled as removable exceptions. **Left for WF-027:** take a job id, move it to `committed`, delete the draft and file row in the same transaction, return the storage path for removal.
 
+> Merged: `confirm_parse_job(job_id, draft)` runs `commit_schedule`, marks the job `committed` and deletes the draft and file row in the same transaction; the server removes the Storage object straight away and a trigger queues it in `storage_removals` for the sweep if that fails (D38). WF403 = job not ready (e.g. double submit).
+
 **Acceptance criteria**
 - [x] The `commit_schedule` database function writes recurring events as RRULE plus EXDATE, and creates a `sources` row with the date range
 - [x] The user sets or confirms the date range. Exceptions such as breaks can be added.
 - [x] Jamaican public holidays are pre-filled as exceptions (P1 part)
-- [ ] The job moves to `committed`
-- [ ] The **draft and the file's row are deleted in the same transaction** as the commit, and the Storage object is removed straight after. The expiry cron retries any removal that fails (D38).
+- [x] The job moves to `committed`
+- [x] The **draft and the file's row are deleted in the same transaction** as the commit, and the Storage object is removed straight after. The expiry cron retries any removal that fails (D38).
 
 #### WF-031 · Manual schedule entry
 - **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
@@ -645,11 +661,13 @@ Can Vercel (Node) functions on the Next.js server handle PDF rasterisation and H
 - [x] Available from onboarding, from a failed parse, and from My schedule
 
 #### WF-032 · Pending uploads list (view, delete)
-- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
+- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** B · **Status:** `in-review`
 - **Depends on:** WF-026
 - **PRD:** FR-IMP-16, NFR-COMP-2, D38
 
 Confirmed files are deleted straight away, so this list only shows uploads that haven't been confirmed yet.
+
+> Merged with WF-026/027: Pending uploads lists real files with their deletion date, live status, view, retry and delete (`delete_schedule_upload`).
 
 **Acceptance criteria**
 - [ ] `/uploads` lists unconfirmed files with the upload date and the date each will be deleted (7 days after upload)
@@ -678,15 +696,17 @@ Confirmed files are deleted straight away, so this list only shows uploads that 
 - [ ] The file's `deleteAt` does **not** change
 
 #### WF-035 · Parse rate limiting
-- **Category:** `security` · **Area:** `backend` · **Priority:** P0 · **Milestone:** Gate · **Status:** `todo`
+- **Category:** `security` · **Area:** `backend` · **Priority:** P0 · **Milestone:** Gate · **Status:** `in-review`
 - **Depends on:** WF-027
 - **PRD:** FR-IMP-19, NFR-SEC-9, NFR-COST-1
 
+> Merged with WF-027: 5 parse attempts a day (`parse` counter in `start_parse_job`), offline friends' parses included; an identical pending file (same `sha256`, same target) reuses its job; PT429 messages for `parse` and `schedule_upload`.
+
 **Acceptance criteria**
-- [ ] Each user gets 5 parse attempts per day, using the `rateLimits` counter checked inside the parse-job function
-- [ ] Uploading a file identical to one that's still pending (same `sha256`) reuses that job and doesn't use up an attempt
-- [ ] A clear message appears when the limit is reached
-- [ ] Parses for offline friends' timetables count towards the same limit (WF-127)
+- [x] Each user gets 5 parse attempts per day, using the `rateLimits` counter checked inside the parse-job function
+- [x] Uploading a file identical to one that's still pending (same `sha256`) reuses that job and doesn't use up an attempt
+- [x] A clear message appears when the limit is reached
+- [x] Parses for offline friends' timetables count towards the same limit (WF-127)
 
 #### WF-036 · Dated schedules (rosters)
 - **Category:** `feature` · **Area:** `parser` · **Priority:** P1 · **Milestone:** stretch · **Status:** `todo`
@@ -701,7 +721,7 @@ Only start this once recurring extraction (WF-028) is working, and only if the e
 - [ ] ≥ 70% acceptance on the roster samples in the eval set
 
 #### WF-037 · Retention jobs (files, events, pings)
-- **Category:** `compliance` · **Area:** `backend` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
+- **Category:** `compliance` · **Area:** `backend` · **Priority:** P0 · **Milestone:** B · **Status:** `in-progress`
 - **Depends on:** WF-026, WF-030
 - **PRD:** FR-ADM-4, NFR-COMP-8, D32, D38
 
@@ -710,6 +730,8 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 > From WF-063: also call `private.purge_expired_status_overrides()`.
 
 > From NFR-SEC-9: also call `private.purge_expired_rate_limits()`.
+
+> Files part merged with WF-027: expired never-confirmed files are deleted with their drafts by the sweep (every minute), and Storage removals are retried from `storage_removals`. Counts are returned by the sweep, not stored. **Left:** the event and ping purges.
 
 **Acceptance criteria**
 - [ ] A daily cron deletes **unconfirmed** files past `deleteAt` (7 days), along with their drafts
@@ -741,7 +763,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 ### Phase 2: Social & visibility
 
 #### WF-040 · Profiles and handles
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-004
 - **PRD:** FR-AUTH-2
 
@@ -751,8 +773,10 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 
 > Web merged: edit name, timezone and handle (`set_handle`, friendly WF101–103/PT429 messages); finding people by exact handle and by friend link `/add/<id>` (with QR). **Avatar replacement is blocked:** there's no avatars Storage bucket yet (needs a migration and upload UI).
 
+> Merged (migration `20261003200200_avatars_bucket.sql`): Settings → Profile can change or remove the photo. The server checks magic bytes, re-encodes to a 256 px WebP with no EXIF/GPS (D35) and stores it in the public `avatars` bucket under an unguessable name; only block-aware functions hand out the URL. **Follow-ups:** other people's photos still show as initials (`PersonAvatar` has no image support); `users.avatar_url` is client-writable, so before showing others' photos restrict it to our Storage URLs (WF-120); account deletion must remove stored photos (WF-114).
+
 **Acceptance criteria**
-- [ ] Users can edit their display name and avatar (the Google avatar can be replaced)
+- [x] Users can edit their display name and avatar (the Google avatar can be replaced)
 - [x] An optional, unique handle (`@kemar`), checked for allowed characters and reserved words
 
 #### WF-041 · Visibility tiers and server-side redaction
@@ -774,7 +798,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [x] Tests prove a viewer never receives fields above their tier
 
 #### WF-042 · Friend requests with tier choice
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-040, WF-041
 - **PRD:** FR-SOC-1, FR-VIS-1
 
@@ -782,8 +806,10 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 
 > Web merged: requests by handle, by friend link `/add/<id>` and by QR, plus accept/decline/cancel with a tier picker (T1 default). **Left:** requests through an *invite link* need a SQL change (drop `invites_group_required` and add friend-invite functions, which would also make friend links revocable), and notifications.
 
+> Merged (migration `20261003200100_friend_invites.sql`): revocable friend invite links `/i/<code>` (create, replace, turn off; one live link per user), joined through `/join/<code>` with a tier picker; remembered through sign-up and picked up on the first visit to Now. Web Push on a new request and on acceptance. `/add/<id>` still works.
+
 **Acceptance criteria**
-- [ ] Friend requests can be sent by handle, invite link or QR code, and are accepted or declined
+- [x] Friend requests can be sent by handle, invite link or QR code, and are accepted or declined
 - [x] Each side picks the tier the other will see before the connection is made, with T1 selected by default
 - [x] Friend requests are rate-limited (NFR-SEC-9)
 
@@ -892,7 +918,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [ ] Resuming restores the previous tiers
 
 #### WF-127 · Offline friends: add someone not on whosfree and import their timetable
-- **Category:** `feature` · **Area:** `social`, `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
+- **Category:** `feature` · **Area:** `social`, `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-030, WF-031
 - **PRD:** FR-SOC-14, FR-SOC-15, FR-SOC-16, FR-SOC-18, FR-SOC-19, NFR-COMP-9, R14, D44, J8
 
@@ -900,28 +926,32 @@ Makes the app useful before someone's friends join (R2): they can upload or type
 
 > Backend done (merged, migrations `20261002300000`/`20261002300100`): `offline_friends` (owner-only RLS, writes through functions), `create_offline_friend(nickname, emoji, permission_confirmed)` (20 per user under a lock, 20/day), `update_offline_friend`, `delete_offline_friend` (cascades the schedule), `list_offline_friends()` (with `has_schedule`). `sources`/`events.offline_friend_id` has a composite FK so it can only point at the row owner's offline friend. `private.redacted_events` skips these rows. **Any other read of a user's own `events`/`sources` (own status in the web app, `now_for_viewer`, WF-049) must filter `offline_friend_id is null`**, because RLS can't tell them apart. Left: `scheduleFiles`/parse jobs must carry the target offline friend (WF-026–031), the web UI, and FR-SOC-19 (UI only: offer `delete_offline_friend`).
 
+> Web merged: add (nickname, emoji, permission tick), edit, delete (schedule goes straight away) from Friends, with the 20 cap. `/import?friend=<id>` and `/import/manual/review?friend=<id>` carry the target through upload → parse → review → confirm and manual entry; their parses count towards the limit. FR-SOC-19: after becoming friends, Friends offers to delete an offline copy (never merged).
+
 **Acceptance criteria**
 - [x] `offline_friends` table (nickname 1–40 characters, optional emoji, `permission_confirmed_at`), owner-only under RLS; `sources` and `events` gain `offline_friend_id`
 - [x] Adding one requires ticking "I have their permission to add their schedule", and the time is recorded
-- [ ] Their schedule comes from the same upload → parse → review → confirm flow (file deleted on confirm, D38) or from manual entry. Their parses count towards the owner's parse limit (WF-035).
+- [x] Their schedule comes from the same upload → parse → review → confirm flow (file deleted on confirm, D38) or from manual entry. Their parses count towards the owner's parse limit (WF-035).
 - [x] **Nobody but the owner** can read an offline friend or their events, through any table or function, including `events_for_viewer`, friend lists and group views. Tests prove it.
-- [ ] Offline friends' events never affect the owner's own status, free time or what others see of the owner
-- [ ] The owner can edit the nickname, re-upload and delete (deleting removes the schedule straight away). At most 20 per user, as a config value.
-- [ ] If the same person later becomes a real friend, the owner is offered to delete the offline copy. The two are never merged automatically. (FR-SOC-19, Should)
+- [x] Offline friends' events never affect the owner's own status, free time or what others see of the owner
+- [x] The owner can edit the nickname, re-upload and delete (deleting removes the schedule straight away). At most 20 per user, as a config value.
+- [x] If the same person later becomes a real friend, the owner is offered to delete the offline copy. The two are never merged automatically. (FR-SOC-19, Should)
 
 #### WF-128 · Show offline friends on Now, detail page and Find a time
-- **Category:** `feature` · **Area:** `web`, `availability` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `web`, `availability` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-064, WF-127
 - **PRD:** FR-SOC-17, NFR-UX-1, J8
 
 The Find a time part waits for WF-098. The invite action uses friend invite links (WF-042).
 
+> Merged: Now has a "Not on whosfree" section (engine over their schedule with 08:00–22:00 in the viewer's timezone); `/friends/offline/[id]` shows their status, day and week, edit, re-upload / type in, delete and **Invite to whosfree** (shares the viewer's friend link). No ping anywhere; status is icon plus words. **Left:** picking them in the slot finder (WF-098).
+
 **Acceptance criteria**
-- [ ] The Now screen has a **Not on whosfree** section with each offline friend's status and "until X", computed by the availability engine from their schedule and the default available hours (08:00–22:00)
-- [ ] A detail page shows their day and week, with edit, re-upload, delete and **Invite to whosfree**
+- [x] The Now screen has a **Not on whosfree** section with each offline friend's status and "until X", computed by the availability engine from their schedule and the default available hours (08:00–22:00)
+- [x] A detail page shows their day and week, with edit, re-upload, delete and **Invite to whosfree**
 - [ ] They can be picked as participants in the slot finder once WF-098 exists, clearly marked as not on whosfree
-- [ ] They can't be pinged; **Invite to whosfree** shares a friend invite link instead
-- [ ] Status is never shown by colour alone (NFR-UX-1)
+- [x] They can't be pinged; **Invite to whosfree** shares a friend invite link instead
+- [x] Status is never shown by colour alone (NFR-UX-1)
 
 ---
 
@@ -953,7 +983,7 @@ The Find a time part waits for WF-098. The invite action uses friend invite link
 - [x] `freeIntervals(users[], range)` for up to 20 users over 14 days runs in ≤ 1 s (NFR-PERF-5). Measured at about 25–40 ms.
 
 #### WF-062 · Available hours (onboarding slider and settings)
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-014, WF-060
 - **PRD:** FR-AVL-2, D24
 
@@ -961,19 +991,23 @@ The Find a time part waits for WF-098. The invite action uses friend invite link
 
 > Web merged: `saveAvailableHours` replaces `availability_prefs.weekly` in one update (days switched off are left out = away all day); `getAvailableHours` reads it under RLS. Left: "away" outside hours shows once WF-064 runs the engine.
 
+> The Now screen runs the engine (WF-064), so "away" outside available hours now shows to viewers. Onboarding records the hours step (WF-068).
+
 **Acceptance criteria**
 - [x] Onboarding asks "When are you usually up and about?" with a slider pre-set to **08:00–22:00 every day**
 - [x] In settings, hours can be edited separately for each day
 - [x] Times outside these hours show as `away`
 
 #### WF-063 · Manual status override
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-060
 - **PRD:** FR-AVL-3, J5
 
 > Backend done (merged): `set_status(status, label, ends_at)` (closes the previous status; `ends_at` ≤ 7 days; label ≤ 40 chars) and `clear_status()`. Left: the status chip, and WF-064 exposing it to viewers.
 
 > Web merged: the status chip in the shell calls `set_status`/`clear_status` (`lib/actions/status.ts`), with presets, "until a time" and an optional 40-character note. The viewer's own chip reads its active override (`lib/data/status.ts`). Left: other viewers see it once WF-064 is wired. `set_status` still has no rate limit (TODO in SQL).
+
+> Merged (migration `20261003200000_set_status_rate_limit.sql`): `set_status` is limited to 60 changes an hour (`STATUS_CHANGES_PER_HOUR`); `clear_status` isn't limited.
 
 **Acceptance criteria**
 - [x] A status chip is reachable from anywhere in the app. Options: Free, Busy, Do not disturb, Away, Studying/Focused.
@@ -1030,16 +1064,18 @@ The Google sync-failure trigger only starts working once WF-082 exists. The end-
 - [ ] The same flag appears in the slot finder (WF-098)
 
 #### WF-068 · End-to-end onboarding flow
-- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-005, WF-030, WF-045, WF-062
 - **PRD:** J1, FR-WEB-5
 
 The "Connect Google Calendar" step becomes active once WF-080 is done, and the install and push steps once WF-111 and WF-091 are done. Until then they're hidden.
 
+> Merged (migration `20261003400000_onboarding_progress.sql`): `users.onboarding_steps`/`onboarded_at` written by `record_onboarding_step`; /onboarding resumes at the first unfinished step (schedule counts as done once one exists; the tier picker only with a working remembered invite) and sends finished users to Now. Existing users who accepted the terms are backfilled as onboarded. Sign-in and the manifest `start_url` now open /onboarding. **Left:** a real run with Clerk and Supabase, with and without an invite.
+
 **Acceptance criteria**
-- [ ] Steps run in order: invite → sign up with the age check → available hours → upload or skip → review → (Google Calendar) → group tier picker → (install and push) → Now
-- [ ] Every step after sign-up can be skipped and picked up later
-- [ ] Works from an invite link and without one
+- [x] Steps run in order: invite → sign up with the age check → available hours → upload or skip → review → (Google Calendar) → group tier picker → (install and push) → Now
+- [x] Every step after sign-up can be skipped and picked up later
+- [x] Works from an invite link and without one
 
 #### WF-069 · Empty states and "nudge to add schedule"
 - **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
@@ -1295,14 +1331,16 @@ Could start at any point after WF-002. It's placed here because push notificatio
 - [ ] Cached data only ever contains what was already redacted for this viewer
 
 #### WF-111 · Install prompt and iOS guide
-- **Category:** `feature` · **Area:** `pwa` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `pwa` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-090
 - **PRD:** FR-PWA-3, R5
 
+> Merged: `beforeinstallprompt` captured early with our own prompt; an iOS step-by-step guide (with variants for other iOS browsers and in-app browsers) that explains push needs the installed app; a closable banner on phones; hidden when installed; once dismissed it stays hidden until Settings → Install app or the help page. **Left:** device tests on Android and iOS 16.4+.
+
 **Acceptance criteria**
-- [ ] Android: a custom prompt built on `beforeinstallprompt`
-- [ ] iOS: a step-by-step "Add to Home Screen" guide explaining that push notifications need the app installed
-- [ ] Not shown again if the user dismisses it, until the user asks for it
+- [x] Android: a custom prompt built on `beforeinstallprompt`
+- [x] iOS: a step-by-step "Add to Home Screen" guide explaining that push notifications need the app installed
+- [x] Not shown again if the user dismisses it, until the user asks for it
 
 #### WF-112 · App update flow
 - **Category:** `feature` · **Area:** `pwa` · **Priority:** P1 · **Milestone:** stretch · **Status:** `todo`
