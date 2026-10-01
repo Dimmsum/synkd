@@ -227,11 +227,11 @@ Everything else at P0, which adds:
 | WF-040 | Profiles and handles | feature | social | P0 | 2 | A | in-progress | 004 |
 | WF-041 | Visibility tiers and server-side redaction | security | backend | P0 | 2 | A | done | 003, 021 |
 | WF-042 | Friend requests with tier choice | feature | social | P0 | 2 | A | in-progress | 040, 041 |
-| WF-043 | Groups: create, edit, admin role, 20-member cap | feature | social | P0 | 2 | A | in-progress | 040 |
-| WF-044 | Group member permissions | feature | social | P0 | 2 | Gate | in-progress | 043 |
-| WF-045 | Invite links, invite page and join flow | feature | social, web | P0 | 2 | A | in-progress | 041, 043 |
+| WF-043 | Groups: create, edit, admin role, 20-member cap | feature | social | P0 | 2 | A | in-review | 040 |
+| WF-044 | Group member permissions | feature | social | P0 | 2 | Gate | in-review | 043 |
+| WF-045 | Invite links, invite page and join flow | feature | social, web | P0 | 2 | A | in-review | 041, 043 |
 | WF-046 | WhatsApp share and link previews | feature | web | P1 | 2 | stretch | todo | 045 |
-| WF-047 | Block, remove friend, leave group | feature | social | P0 | 2 | A | in-progress | 042, 043 |
+| WF-047 | Block, remove friend, leave group | feature | social | P0 | 2 | A | in-review | 042, 043 |
 | WF-048 | "Who can see me" page and overlap hint | feature | web | P0 | 2 | B | todo | 041, 042, 043 |
 | WF-049 | "How others see me" preview | feature | web | P1 | 2 | stretch | todo | 048, 061 |
 | WF-050 | Pause sharing | feature | backend, web | P1 | 2 | stretch | todo | 041 |
@@ -239,7 +239,7 @@ Everything else at P0, which adds:
 | WF-061 | Recurrence expansion and multi-user free intervals | feature | availability | P0 | 3 | A | done | 060 |
 | WF-062 | Available hours (onboarding slider and settings) | feature | web, backend | P0 | 3 | A | in-progress | 014, 060 |
 | WF-063 | Manual status override | feature | web, backend | P0 | 3 | A | in-progress | 060 |
-| WF-064 | Now screen (real-time, redacted) | feature | web, backend | P0 | 3 | A | todo | 041, 042, 043, 061 |
+| WF-064 | Now screen (real-time, redacted) | feature | web, backend | P0 | 3 | A | in-progress | 041, 042, 043, 061 |
 | WF-065 | Friend detail and My schedule views | feature | web | P0 | 3 | B | todo | 064 |
 | WF-066 | Group timeline view | feature | web | P1 | 3 | stretch | todo | 064 |
 | WF-067 | Stale-data warning | feature | web, backend | P1 | 3 | stretch | todo | 064 |
@@ -774,13 +774,15 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 
 > Backend done (merged): `send_friend_request[_by_handle](…, tier)`, `accept_friend_request(user, tier)`, decline, cancel, `list_friend_requests`, `list_friends`. Mutual requests auto-accept. Limits: 20/day, 3 per week to the same person. **Still to do:** friend requests by invite link (needs WF-045's invites table), QR code UI, notifications.
 
+> Web merged: requests by handle, by friend link `/add/<id>` and by QR, plus accept/decline/cancel with a tier picker (T1 default). **Left:** requests through an *invite link* need a SQL change (drop `invites_group_required` and add friend-invite functions, which would also make friend links revocable), and notifications.
+
 **Acceptance criteria**
 - [ ] Friend requests can be sent by handle, invite link or QR code, and are accepted or declined
-- [ ] Each side picks the tier the other will see before the connection is made, with T1 selected by default
-- [ ] Friend requests are rate-limited (NFR-SEC-9)
+- [x] Each side picks the tier the other will see before the connection is made, with T1 selected by default
+- [x] Friend requests are rate-limited (NFR-SEC-9)
 
 #### WF-043 · Groups: create, edit, admin role, 20-member cap
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-040
 - **PRD:** FR-SOC-2, FR-SOC-5, FR-SOC-7, FR-SOC-9, FR-SOC-10, FR-SOC-11, D17
 
@@ -788,40 +790,46 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 
 > Backend done (merged): `create_group` (10/day), `update_group`, `transfer_group_admin`, `delete_group`, `list_my_groups`, `get_group_members` (blocks hidden both ways). Cap = `groups.max_members`, enforced under a group row lock; a deferred trigger keeps `admin_id` and the admin row in sync. A lone admin must delete, not leave. Left: web wiring.
 
+> Web merged: create (with emoji), edit, transfer admin, delete; leave refuses an admin until they transfer. Needs a live check.
+
 **Acceptance criteria**
-- [ ] Users can create a group with a name and emoji, and the creator becomes the **admin**
-- [ ] The admin can transfer the admin role and delete the group. An admin must transfer the role before leaving.
-- [ ] Capped at **20 members**, with the cap stored as a config value (NFR-SCALE-4)
-- [ ] The admin gets **no extra visibility** into members' schedules (covered by a test)
-- [ ] Joining a group doesn't create a friendship
+- [x] Users can create a group with a name and emoji, and the creator becomes the **admin**
+- [x] The admin can transfer the admin role and delete the group. An admin must transfer the role before leaving.
+- [x] Capped at **20 members**, with the cap stored as a config value (NFR-SCALE-4)
+- [x] The admin gets **no extra visibility** into members' schedules (covered by a test)
+- [x] Joining a group doesn't create a friendship
 
 #### WF-044 · Group member permissions
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** Gate · **Status:** `in-progress`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** Gate · **Status:** `in-review`
 - **Depends on:** WF-043
 - **PRD:** FR-SOC-8, D26
 
 > Backend done (merged): `set_group_member_permissions` (admin only), `remove_group_member` (admin or manageMembers; never the admin). Losing `invite` revokes that member's links. Left: web wiring.
 
+> Web merged: per-member permission toggles in `/groups/[id]/settings` (optimistic, rolled back if refused), and remove member. Needs a live check.
+
 **Acceptance criteria**
-- [ ] Permissions are `invite`, `manageMembers`, `editGroup` and `groupPing`
-- [ ] New members start with `invite` ✓, `groupPing` ✓, `manageMembers` ✗, `editGroup` ✗
-- [ ] The admin can grant and revoke each one per member in `/groups/[id]/settings`
-- [ ] Every related mutation checks permissions on the server
+- [x] Permissions are `invite`, `manageMembers`, `editGroup` and `groupPing`
+- [x] New members start with `invite` ✓, `groupPing` ✓, `manageMembers` ✗, `editGroup` ✗
+- [x] The admin can grant and revoke each one per member in `/groups/[id]/settings`
+- [x] Every related mutation checks permissions on the server
 
 #### WF-045 · Invite links, invite page and join flow
-- **Category:** `feature` · **Area:** `social`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
+- **Category:** `feature` · **Area:** `social`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-041, WF-043
 - **PRD:** FR-SOC-3, FR-WEB-3, FR-VIS-1, §8.5 (joining a group)
 
 > Backend done (merged): `invites` table (128-bit codes), `create_group_invite` / `regenerate_group_invite` (30/day), `revoke_group_invite`, `list_group_invites`, public `get_invite_summary` (status valid/full/expired/used_up/revoked; details only for live links), `join_group(code, tier)` (20/day, one transaction). Joins are never refused because of a block. Approval-mode groups are rejected for now. **Wiring notes:** the web mock's invite shape (ok/full/invalid, `maxMembers`) must be mapped to the real statuses; rate-limit `/i/[code]` per IP on the route. Left: remembering the invite through sign-up.
 
+> Web merged: create/revoke/regenerate links (expiry 1/7/30 days, use limit), public `/i/[code]` via `get_invite_summary` (anon), an http-only `wf_invite` cookie (24 h) carries the code through sign-up and onboarding, signed-in visitors join at `/join/[code]`. **Open:** per-IP rate limit on `/i/[code]` (edge/WAF rule, `TODO(NFR-SEC-9)`).
+
 **Acceptance criteria**
-- [ ] Invite links can be created, revoked and regenerated, with optional expiry and a maximum number of uses
-- [ ] The `/i/[code]` page works without signing in and shows only the inviter, the group name and emoji, and the member count
-- [ ] The invite is remembered through sign-up and onboarding
-- [ ] A tier picker appears before joining, with T1 selected by default
-- [ ] A full group shows "This group is full"
-- [ ] Joining is one transaction: validate the invite, check the cap, then create the member row and the visibility rule
+- [x] Invite links can be created, revoked and regenerated, with optional expiry and a maximum number of uses
+- [x] The `/i/[code]` page works without signing in and shows only the inviter, the group name and emoji, and the member count
+- [x] The invite is remembered through sign-up and onboarding
+- [x] A tier picker appears before joining, with T1 selected by default
+- [x] A full group shows "This group is full"
+- [x] Joining is one transaction: validate the invite, check the cap, then create the member row and the visibility rule
 
 #### WF-046 · WhatsApp share and link previews
 - **Category:** `feature` · **Area:** `web` · **Priority:** P1 · **Milestone:** stretch · **Status:** `todo`
@@ -833,7 +841,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [ ] Open Graph tags make WhatsApp preview the link as "Join *{group}* on whosfree"
 
 #### WF-047 · Block, remove friend, leave group
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-042, WF-043
 - **PRD:** FR-SOC-6
 
@@ -843,10 +851,12 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 
 > Leave half done (merged): `leave_group` (admin must transfer first) revokes visibility, the leaver's group rule and their invite links at once.
 
+> Web merged: block (friend page, inbox), remove friend, leave group. **Open:** no blocked-list/unblock UI yet (`list_blocked_users`/`unblock_user` exist); blocking from the inbox works once pings are real (WF-092).
+
 **Acceptance criteria**
-- [ ] A blocked user can't see, ping or invite the person who blocked them, and isn't told
-- [ ] Removing a friend or leaving a group revokes visibility straight away
-- [ ] Every query that returns another user's data respects blocking
+- [x] A blocked user can't see, ping or invite the person who blocked them, and isn't told
+- [x] Removing a friend or leaving a group revokes visibility straight away
+- [x] Every query that returns another user's data respects blocking
 
 #### WF-048 · "Who can see me" page and overlap hint
 - **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
@@ -965,7 +975,7 @@ The Find a time part waits for WF-098. The invite action uses friend invite link
 - [ ] It overrides calendar-based status everywhere
 
 #### WF-064 · Now screen (real-time, redacted)
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-041, WF-042, WF-043, WF-061
 - **PRD:** FR-VIEW-1, FR-VIEW-2, FR-VIEW-3, §8.5 (Now screen), NFR-PERF-1, NFR-PERF-3
 
@@ -973,8 +983,10 @@ The Find a time part waits for WF-098. The invite action uses friend invite link
 
 > From WF-062/063: the Now function must read `availability_prefs` and `status_overrides` inside its definer function (clients can't read other users' rows). Suggest showing a status label only at T3, like event titles.
 
+> Backend merged (migrations `20261002400000_now_for_viewer.sql`, `20261002400100_now_realtime_signals.sql`): `now_for_viewer(range_start, range_end)` returns each connection with tier, `paused`, `has_schedule`, shared `group_ids`, timezone, hours, overrides and redacted sources/events, in the engine's input shape (types `NowConnection` etc. in `@whosfree/backend`). Triggers send an empty `now_changed` Broadcast on private channel `user:<users.id>` (`userChannel()` in `@whosfree/shared`), once per transaction. Offline friends are excluded. **Left (web):** call it, run `statusAt` per connection (catch errors per connection), sections, group filter, subscribe to the channel (debounced re-fetch), client timer, non-colour status. Then remove the mock layer.
+
 **Acceptance criteria**
-- [ ] The `now_for_viewer` database function returns connections already redacted by `resolve_tier` and the redaction path (WF-041)
+- [x] The `now_for_viewer` database function returns connections already redacted by `resolve_tier` and the redaction path (WF-041)
 - [ ] Sections: Free now, Free soon (within 60 minutes), Busy/Away, Not sharing yet. Each status shows "until X".
 - [ ] A group filter
 - [ ] Status changes reach viewers in ≤ 5 s (Realtime Broadcast signal from a database trigger, then a re-fetch)
