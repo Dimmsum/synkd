@@ -311,6 +311,8 @@ Initialise git and set up a pnpm workspace with Turborepo, following the layout 
 Create `apps/web` (Next.js App Router, Tailwind, shadcn/ui) and `packages/ui`.
 
 > Merged: Next.js 16 app and `packages/ui` with every Milestone A screen on mock data (`apps/web/src/lib/data/*` and `lib/actions/*` are the wiring points, ~100 `TODO(WF-…)` markers). Loads the repo-root `.env`. **Blocked on the owner:** connecting the repo to Vercel.
+>
+> **For now the owner is deploying to Railway** (2026-09-30): `railway.json` at the repo root builds with Railpack (`pnpm --filter @whosfree/web build`, then `next start` on `$PORT`, health check `/offline`). Vercel is still the PRD target (§8.4); record a decision before making Railway permanent.
 
 **Acceptance criteria**
 - [x] `apps/web` runs locally with `pnpm dev`
