@@ -1,7 +1,9 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
-import { CalendarSearch, Share2, UsersRound } from 'lucide-react';
+import type { Route } from 'next';
+import { CalendarSearch, Share2, UserRoundPlus, UsersRound } from 'lucide-react';
 import { buttonVariants } from '@whosfree/ui/components/button';
 import { EmptyState } from '@whosfree/ui/components/misc';
 import { GroupEmoji } from '@whosfree/ui/components/person-avatar';
@@ -10,20 +12,27 @@ import { dateKey, formatMonthDay, formatTime, weekdayShort } from '@whosfree/ui/
 import { cn } from '@whosfree/ui/lib/utils';
 import { ConnectionRow } from '@/components/app/connection-row';
 import { PageHeader, Panel } from '@/components/app/page-header';
+import { OfflineFriendRow } from '@/components/offline-friends/offline-friend-row';
 import { filterByGroup, freeNowByGroup, groupIntoNowSections } from '@/lib/now-sections';
+import { sortOfflineFriends } from '@/lib/offline-friends';
 import { presenceAt } from '@/lib/presence/clock';
-import type { Connection, GroupSummary } from '@/lib/types';
+import type { Connection, GroupSummary, OfflineFriendView } from '@/lib/types';
 import { useNowSignals, usePresenceClock, useRefetch } from './use-now-updates';
+
+/** Opens "Add someone not on whosfree" on the Friends page (WF-127, J8 step 1). */
+const ADD_OFFLINE_HREF = '/friends?add=offline#not-on-whosfree' as Route;
 
 /**
  * The live part of the Now screen (FR-VIEW-1/2/3, PRD §8.5, WF-064): who's free right now and
  * until when, kept current by Realtime signals (re-fetch) and a local timer ("until X" passing).
  * `now` is the instant the server worked the statuses out at; `filter` is the group filter,
- * rendered on the server.
+ * rendered on the server. `offlineFriends` are the people the viewer added who aren't on
+ * whosfree (WF-128), shown in their own section (null when they couldn't be read).
  */
 export function NowBoard({
   viewerId,
   connections,
+  offlineFriends,
   groups,
   groupId,
   now: serverNow,
@@ -32,6 +41,7 @@ export function NowBoard({
 }: {
   viewerId: string;
   connections: Connection[];
+  offlineFriends: OfflineFriendView[] | null;
   groups: GroupSummary[];
   groupId: string | null;
   now: string;
@@ -40,13 +50,26 @@ export function NowBoard({
 }) {
   const refetch = useRefetch();
   useNowSignals(viewerId, refetch);
-  const t = usePresenceClock(serverNow, connections, refetch);
+  // Offline friends' "until X" passes on the same timer as everyone else's.
+  const timed = useMemo(
+    () => [...connections, ...(offlineFriends ?? [])],
+    [connections, offlineFriends],
+  );
+  const t = usePresenceClock(serverNow, timed, refetch);
 
   const now = new Date(t).toISOString();
   const today = dateKey(t, timeZone);
   const current = connections.map((c) => presenceAt(c, t));
   const sections = groupIntoNowSections(filterByGroup(current, groupId), new Date(t));
   const freeByGroup = freeNowByGroup(current);
+  // Not in any group, so only without a group filter (FR-VIEW-2).
+  const offline =
+    offlineFriends && !groupId
+      ? sortOfflineFriends(offlineFriends.map((f) => presenceAt(f, t)))
+      : null;
+  const offlineSection = offline ? (
+    <NotOnWhosfreeSection friends={offline} now={now} timeZone={timeZone} />
+  ) : null;
   const groupName = (id: string) => groups.find((g) => g.id === id)?.name;
   const contextFor = (c: Connection) =>
     c.isFriend ? undefined : `In ${c.groupIds.map(groupName).filter(Boolean).join(', ')}`;
@@ -86,18 +109,30 @@ export function NowBoard({
       {filter}
 
       {connections.length === 0 ? (
-        <EmptyState
-          icon={UsersRound}
-          title="None of your friends are here yet"
-          action={
-            <Link href="/groups" className={buttonVariants()}>
-              <Share2 aria-hidden="true" />
-              Share your invite link
-            </Link>
-          }
-        >
-          Invite your crew and you&apos;ll see who&apos;s free right here.
-        </EmptyState>
+        <div className="flex flex-col gap-4">
+          <EmptyState
+            icon={UsersRound}
+            title="None of your friends are here yet"
+            action={
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Link href="/groups" className={buttonVariants()}>
+                  <Share2 aria-hidden="true" />
+                  Share your invite link
+                </Link>
+                {offline && offline.length === 0 ? (
+                  <Link href={ADD_OFFLINE_HREF} className={buttonVariants({ variant: 'outline' })}>
+                    <UserRoundPlus aria-hidden="true" />
+                    Add a friend who isn&apos;t on whosfree
+                  </Link>
+                ) : null}
+              </div>
+            }
+          >
+            Invite your crew and you&apos;ll see who&apos;s free right here. Or add a friend&apos;s
+            timetable yourself while they haven&apos;t joined.
+          </EmptyState>
+          {offline?.length ? offlineSection : null}
+        </div>
       ) : (
         <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
           <div className="flex flex-col gap-4">
@@ -124,6 +159,7 @@ export function NowBoard({
             >
               {row()}
             </NowSection>
+            {offlineSection}
           </div>
           <GroupsRail groups={groups} freeByGroup={freeByGroup} />
         </div>
@@ -174,6 +210,62 @@ function NowSection({
         <ul className="flex flex-col">{people.map(children)}</ul>
       ) : (
         <p className="px-2 pb-1 text-sm text-muted-foreground">Nobody right now.</p>
+      )}
+    </Panel>
+  );
+}
+
+/**
+ * "Not on whosfree" (FR-SOC-17, J8 step 3, WF-128): the people the viewer added who aren't on
+ * whosfree, with their status and "until X" from their own schedule. Only the viewer sees it.
+ * No Ping buttons: they can't be pinged.
+ */
+function NotOnWhosfreeSection({
+  friends,
+  now,
+  timeZone,
+}: {
+  friends: OfflineFriendView[];
+  now: string;
+  timeZone: string;
+}) {
+  return (
+    <Panel
+      id="not-on-whosfree"
+      title={
+        <span className="flex items-center gap-2">
+          <span className="flex size-6 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <UsersRound aria-hidden="true" className="size-3.5" />
+          </span>
+          Not on whosfree
+          <span className="ml-1 rounded-full bg-muted px-2 text-xs font-semibold text-muted-foreground">
+            {friends.length}
+          </span>
+        </span>
+      }
+      action={
+        <Link
+          href={ADD_OFFLINE_HREF}
+          className="inline-flex min-h-11 items-center gap-1 text-[13px] font-semibold text-primary-ink underline-offset-2 hover:underline md:min-h-8"
+        >
+          <UserRoundPlus aria-hidden="true" className="size-4" />
+          Add
+          <span className="sr-only"> a friend who isn’t on whosfree</span>
+        </Link>
+      }
+      bodyClassName="px-2 md:px-3"
+    >
+      {friends.length ? (
+        <ul className="flex flex-col">
+          {friends.map((f) => (
+            <OfflineFriendRow key={f.id} friend={f} now={now} timeZone={timeZone} />
+          ))}
+        </ul>
+      ) : (
+        <p className="px-2 pb-1 text-sm text-muted-foreground">
+          Friends who haven&apos;t joined can still show up here. Add their timetable and
+          you&apos;ll see when they&apos;re free. Only you can see them.
+        </p>
       )}
     </Panel>
   );

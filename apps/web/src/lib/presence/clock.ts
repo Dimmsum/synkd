@@ -3,10 +3,16 @@
 // between sections as "until X" passes, without polling the server. Pure, for tests.
 
 import { FREE_SOON_MINUTES } from '@/lib/now-sections';
-import type { Connection, PresenceChange } from '@/lib/types';
+import type { Connection, Presence, PresenceChange } from '@/lib/types';
+
+/**
+ * Anything with a status that changes on its own: a {@link Connection}, or an offline friend
+ * (WF-128), whose changes ahead are worked out the same way.
+ */
+export type Timed = Presence & Pick<Connection, 'upcoming' | 'refreshAt'>;
 
 /** `c` as of `t` (UTC epoch ms): the latest of its upcoming changes that has started applies. */
-export function presenceAt<C extends Connection>(c: C, t: number): C {
+export function presenceAt<C extends Timed>(c: C, t: number): C {
   let latest: PresenceChange | undefined;
   for (const change of c.upcoming ?? []) {
     if (Date.parse(change.at) > t) break;
@@ -26,7 +32,7 @@ export function presenceAt<C extends Connection>(c: C, t: number): C {
  * was sent and must re-fetch. `null` when nothing is due.
  */
 export function nextChangeAt(
-  connections: readonly Connection[],
+  connections: readonly Timed[],
   t: number,
   freeSoonMinutes = FREE_SOON_MINUTES,
 ): number | null {
@@ -49,6 +55,6 @@ export function nextChangeAt(
 }
 
 /** True once `t` has passed what the client was sent for someone, so it must re-fetch. */
-export function needsRefetch(connections: readonly Connection[], t: number): boolean {
+export function needsRefetch(connections: readonly Timed[], t: number): boolean {
   return connections.some((c) => c.refreshAt != null && Date.parse(c.refreshAt) <= t);
 }

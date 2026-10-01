@@ -10,8 +10,7 @@
 
 import { useEffect, useEffectEvent, useState } from 'react';
 import { NOW_CHANGED_EVENT } from '@whosfree/shared';
-import { nextChangeAt, needsRefetch } from '@/lib/presence/clock';
-import type { Connection } from '@/lib/types';
+import { nextChangeAt, needsRefetch, type Timed } from '@/lib/presence/clock';
 import { useUserSignals } from '@/components/realtime/use-user-signals';
 
 export { useRefetch } from '@/components/realtime/use-user-signals';
@@ -32,7 +31,7 @@ export function useNowSignals(viewerId: string, onChange: () => void): void {
  */
 export function usePresenceClock(
   serverNow: string,
-  connections: readonly Connection[],
+  connections: readonly Timed[],
   onStale: () => void,
 ): number {
   const serverMs = Date.parse(serverNow);

@@ -85,6 +85,21 @@ export interface Connection extends Person, Presence {
   refreshAt?: Iso | null;
 }
 
+/**
+ * Someone not on whosfree whom the viewer added (D44, FR-SOC-14), with their status now. Only
+ * ever the viewer's own: nobody else can see them (FR-SOC-15). They can't be pinged (FR-SOC-17).
+ */
+export interface OfflineFriendView extends Presence {
+  id: string;
+  nickname: string;
+  emoji: string | null;
+  /** False until a schedule is confirmed for them; their status is then `no_schedule`. */
+  hasSchedule: boolean;
+  /** As on {@link Connection}: how their status changes ahead, for the Now screen's timer. */
+  upcoming?: PresenceChange[];
+  refreshAt?: Iso | null;
+}
+
 /** A manual status in effect (WF-063): what the status chip shows and pre-fills. */
 export interface ActiveOverride {
   status: ManualStatus;
