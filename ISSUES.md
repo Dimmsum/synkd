@@ -31,7 +31,7 @@ The single tracker for **everything that needs doing** on whosfree: features, se
 ### IDs
 - Every issue has a permanent ID: `WF-###`. **IDs are never reused or renumbered.**
 - Numbers are grouped by phase (Phase 0 = 001–019, Phase 1 = 020–039, and so on). That makes an ID easy to place, but the gaps aren't meaningful.
-- **New issues (including bugs) take the next free number after the highest existing ID.** The next free number is **WF-130**.
+- **New issues (including bugs) take the next free number after the highest existing ID.** The next free number is **WF-131**.
 - Use the ID in branch names and commit messages, e.g. `feat(parser): recurring extraction (WF-028)`.
 
 ### Category (the kind of work)
@@ -107,7 +107,7 @@ These have no unfinished dependencies:
 | [WF-070](#wf-070--short-gap-rule) | Short-gap rule (stretch) | `feature` |
 | [WF-050](#wf-050--pause-sharing) | Pause sharing (stretch; the column and redaction already exist) | `feature` |
 
-**Milestone A code is merged** (2026-09-30). What's `in-review` is waiting for the owner's migrations, environment variables and a real run on a deploy and on phones: WF-004, 005, 006, 015, 026–032, 035, 040, 042–045, 047, 062, 063, 064, 068, 090–093, 111, 127. Still `in-progress`: WF-010 (legal values), WF-013 (OpenRouter settings), WF-037 (event and ping purges), WF-128 (slot-finder part, waits for WF-098). **Waiting on the owner:** WF-002 (hosting: Railway for now, Vercel is the PRD target), WF-003 (apply migrations), WF-006 (branch protection).
+**Milestone A code is merged** (2026-09-30). What's `in-review` is waiting for the owner's migrations, environment variables and a real run on a deploy and on phones: WF-004, 005, 006, 015, 026–032, 035, 040, 042–045, 047, 062, 063, 064, 068, 090–093, 111, 127, 130. Still `in-progress`: WF-010 (legal values), WF-013 (OpenRouter settings), WF-037 (event and ping purges), WF-128 (slot-finder part, waits for WF-098). **Waiting on the owner:** WF-002 (hosting: Railway for now, Vercel is the PRD target), WF-003 (apply migrations), WF-006 (branch protection).
 
 > WF-020 (collecting samples) still gates WF-023's model choice and WF-028's accuracy target. The parser runs on provisional models until then.
 
@@ -282,6 +282,7 @@ Everything else at P0, which adds:
 | WF-127 | Offline friends: add someone not on whosfree and import their timetable | feature | social, backend, web | P0 | 2 | A | in-review | 030, 031 |
 | WF-128 | Show offline friends on Now, detail page and Find a time | feature | web, availability | P0 | 3 | A | in-progress | 064, 127 |
 | WF-129 | Creating a group fails with "You don't have permission" (42501) | bug | backend | P0 | 2 | A | done | — |
+| WF-130 | Generated handle for every new user | feature | backend, web | P0 | 2 | A | in-review | 040 |
 
 ---
 
@@ -953,6 +954,21 @@ The Find a time part waits for WF-098. The invite action uses friend invite link
 - [ ] They can be picked as participants in the slot finder once WF-098 exists, clearly marked as not on whosfree
 - [x] They can't be pinged; **Invite to whosfree** shares a friend invite link instead
 - [x] Status is never shown by colour alone (NFR-UX-1)
+
+#### WF-130 · Generated handle for every new user
+- **Category:** `feature` · **Area:** `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Depends on:** WF-040
+- **PRD:** FR-AUTH-2, FR-SOC-1, D45, D47
+
+Every account gets a unique handle made from its name when it's created, so friends can find anyone by handle. Users can change it to any free handle but can't remove it.
+
+> Built (migration `20261003700000_generated_handles.sql`): `ensure_current_user` gives the new row a handle from `private.handle_base(name)` (accents dropped, lowercased, letters and digits, at most 20 characters, `user` when nothing is left), with a random 2-, 4- or 6-digit number when it's taken (ignoring case, also in a race) or reserved. `set_handle` refuses null or empty (WF101). The migration gives existing users without a handle one. Settings → Profile requires a handle. **Owner:** apply the migration, and in the Clerk dashboard turn on first and last name for email sign-up and make them required (D45), or email sign-ups fall back to "New member" and `@newmember…`.
+
+**Acceptance criteria**
+- [x] A new user gets a unique handle based on their name, without a step of their own
+- [x] The handle can be changed to any valid handle nobody else has (ignoring case), and can't be cleared
+- [x] Existing users without a handle are given one
+- [ ] Email and password sign-up asks for the person's first and last name (Clerk dashboard setting, owner)
 
 ---
 

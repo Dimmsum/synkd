@@ -31,7 +31,7 @@ function Status({ text }: { text?: string }) {
 }
 
 /**
- * Display name, optional handle and timezone (FR-AUTH-2, FR-AUTH-3, WF-040). The server checks
+ * Display name, handle and timezone (FR-AUTH-2, FR-AUTH-3, WF-040, D47). The server checks
  * the handle's characters, reserved words and uniqueness (lib/profile-form.ts, `set_handle`).
  */
 export function ProfileForm({
@@ -82,6 +82,7 @@ export function ProfileForm({
           </span>
           <Input
             id="profile-handle"
+            required
             value={handle}
             autoCapitalize="none"
             autoCorrect="off"
@@ -93,8 +94,8 @@ export function ProfileForm({
           />
         </div>
         <p id="handle-hint" className="text-xs text-muted-foreground">
-          Optional. Friends can add you with this. {HANDLE_MIN_LENGTH}–{HANDLE_MAX_LENGTH} letters,
-          numbers or underscores, starting with a letter. Leave it empty to have none.
+          Friends can add you with this. {HANDLE_MIN_LENGTH}–{HANDLE_MAX_LENGTH} letters, numbers or
+          underscores, starting with a letter.
         </p>
       </div>
       <div className="flex flex-col gap-2">

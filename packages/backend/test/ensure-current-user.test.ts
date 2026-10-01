@@ -2,7 +2,7 @@
 // sign-in, from the Clerk ID in the token only (FR-AUTH-2, FR-AUTH-3, D41).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { DEFAULT_TIMEZONE } from '@whosfree/shared';
+import { DEFAULT_TIMEZONE, Handle } from '@whosfree/shared';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
 import { addUser } from './harness/seed';
@@ -19,6 +19,7 @@ type UserRow = {
   id: string;
   clerk_id: string;
   name: string;
+  handle: string | null;
   avatar_url: string | null;
   timezone: string;
   sharing_paused: boolean;
@@ -192,5 +193,75 @@ describe('ensure_current_user()', () => {
     await expect(
       db.asService().query(`select public.ensure_current_user('Server')`),
     ).rejects.toThrow(/permission denied for function ensure_current_user/);
+  });
+});
+
+// WF-130 (D47): the new row gets a unique handle generated from the name.
+describe('generated handles', () => {
+  const base = async (name: string | null) =>
+    (await db.admin.query<{ h: string }>(`select private.handle_base($1) as h`, [name])).rows[0]?.h;
+
+  it.each([
+    ['Kemar Johnson', 'kemarjohnson'],
+    ['  José Núñez-García ', 'josenunezgarcia'],
+    ['Zoë O’Brien', 'zoeobrien'],
+    ['2Pac Shakur', 'pacshakur'],
+    ['Whos Free Fan', 'fan'],
+    ['whoswhosfreefree', 'user'],
+    ['李小龙', 'user'],
+    ['😀', 'user'],
+    [null, 'user'],
+    ['Christopher Alexander Montgomery', 'christopheralexander'],
+  ])('bases %j on %j', async (name, expected) => {
+    expect(await base(name)).toBe(expected);
+  });
+
+  it('gives a new user the handle made from their name', async () => {
+    const row = await ensure('user_kemar', 'Kemar Johnson');
+    expect(row.handle).toBe('kemarjohnson');
+  });
+
+  it('adds a number when the handle is taken, ignoring case', async () => {
+    await addUser(db, 'user_other', { handle: 'KemarJohnson' });
+    const row = await ensure('user_kemar', 'Kemar Johnson');
+    expect(row.handle).toMatch(/^kemarjohnson\d{2}$/);
+  });
+
+  it('adds a number to reserved and too-short names', async () => {
+    expect((await ensure('user_a', 'Admin')).handle).toMatch(/^admin\d{2}$/);
+    expect((await ensure('user_b', 'Al')).handle).toMatch(/^al\d{2}$/);
+    expect((await ensure('user_c', 'Me')).handle).toMatch(/^me\d{2}$/);
+  });
+
+  it('gives everyone with the same name a different, valid handle', async () => {
+    const handles: string[] = [];
+    for (let i = 0; i < 30; i++) {
+      handles.push((await ensure(`user_${i}`, 'Kemar')).handle ?? '');
+    }
+    expect(new Set(handles.map((h) => h.toLowerCase())).size).toBe(30);
+    for (const h of handles) expect(Handle.safeParse(h).success).toBe(true);
+  });
+
+  it('keeps the handle when the user signs in again', async () => {
+    const first = await ensure('user_kemar', 'Kemar Johnson');
+    await db.asUser('user_kemar').query(`select public.set_handle('kemar_j')`);
+    expect((await ensure('user_kemar', 'Kemar Johnson')).handle).toBe('kemar_j');
+    expect(first.handle).toBe('kemarjohnson');
+  });
+
+  it('gives an existing user without a handle one (the backfill)', async () => {
+    const id = await addUser(db, 'user_old');
+    await db.admin.query(`update public.users set name = 'Old Timer' where id = $1`, [id]);
+    const { rows } = await db.admin.query<{ h: string }>(
+      `select private.assign_generated_handle($1) as h`,
+      [id],
+    );
+    expect(rows[0]?.h).toBe('oldtimer');
+    const [me] = (
+      await db.admin.query<{ handle: string }>(`select handle from public.users where id = $1`, [
+        id,
+      ])
+    ).rows;
+    expect(me?.handle).toBe('oldtimer');
   });
 });

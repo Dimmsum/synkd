@@ -114,15 +114,14 @@ describe('public.set_handle', () => {
     expect(await handleOf(alice)).toBe('Alice_W');
   });
 
-  it('changes and clears it (null or empty)', async () => {
+  it('changes it, but refuses to clear it (null, empty or just @) with WF101 (D47)', async () => {
     await setHandle('user_alice', 'alice');
     await setHandle('user_alice', 'ALICE'); // case-only change of your own handle
     expect(await handleOf(alice)).toBe('ALICE');
-    expect(await setHandle('user_alice', null)).toEqual([{ h: null }]);
-    expect(await handleOf(alice)).toBeNull();
-    await setHandle('user_alice', 'alice2');
-    await setHandle('user_alice', ' ');
-    expect(await handleOf(alice)).toBeNull();
+    for (const empty of [null, '', ' ', '@']) {
+      expect(await codeOf(setHandle('user_alice', empty))).toBe(DB_ERROR.handleInvalid);
+    }
+    expect(await handleOf(alice)).toBe('ALICE');
   });
 
   it('only ever changes the caller’s own row', async () => {

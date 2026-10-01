@@ -14,16 +14,16 @@ export type ParsedProfile =
   | {
       ok: true;
       name: string;
-      /** Normalised (no `@`, trimmed). Null clears the handle: handles are optional. */
-      handle: string | null;
+      /** Normalised (no `@`, trimmed). Every user has one, so it can't be cleared (D47). */
+      handle: string;
       timezone: string;
     }
   | { ok: false; error: string };
 
 /**
- * Name: 1–100 characters, no control characters. Handle: optional; when given, the shared
- * `Handle` rules (3–30 ASCII letters, digits or underscores, starting with a letter, not
- * reserved). Timezone: an IANA name the database accepts.
+ * Name: 1–100 characters, no control characters. Handle: required (D47), with the shared `Handle`
+ * rules (3–30 ASCII letters, digits or underscores, starting with a letter, not reserved).
+ * Timezone: an IANA name the database accepts.
  */
 export function parseProfileInput(input: ProfileInput): ParsedProfile {
   const name = DisplayName.safeParse(input.name);
@@ -35,18 +35,15 @@ export function parseProfileInput(input: ProfileInput): ParsedProfile {
   }
 
   const typed = normalizeHandleInput(input.handle);
-  let handle: string | null = null;
-  if (typed) {
-    const parsed = Handle.safeParse(typed);
-    if (!parsed.success) {
-      return { ok: false, error: `${parsed.error.issues[0]?.message ?? 'Check your handle'}.` };
-    }
-    handle = parsed.data;
+  if (!typed) return { ok: false, error: 'Choose a handle.' };
+  const handle = Handle.safeParse(typed);
+  if (!handle.success) {
+    return { ok: false, error: `${handle.error.issues[0]?.message ?? 'Check your handle'}.` };
   }
 
   if (!isKnownTimezone(input.timeZone)) {
     return { ok: false, error: 'Pick a timezone from the list.' };
   }
 
-  return { ok: true, name: name.data, handle, timezone: input.timeZone };
+  return { ok: true, name: name.data, handle: handle.data, timezone: input.timeZone };
 }

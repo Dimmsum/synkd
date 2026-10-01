@@ -3,9 +3,9 @@
 | Field | Value |
 |---|---|
 | Product | whosfree (working name, see D23) |
-| Document version | 0.12 |
+| Document version | 0.13 |
 | Status | Draft. All open questions resolved, ready for Phase 0 (see [§14](#14-open-questions)) |
-| Last updated | 2026-09-30 |
+| Last updated | 2026-10-01 |
 | Owner | Dimetri Lee |
 | Launch market | Jamaica, adults 18+ with busy schedules |
 
@@ -20,6 +20,7 @@
 | 0.6 | 2026-09-30 | **Backend moves from Convex to Supabase** (D40): Postgres with row-level security, Supabase Storage, Realtime and Cron. Clerk stays for sign-in, connected through Supabase's third-party auth. **Authorisation and tier redaction are enforced in Postgres**, and TypeScript server logic runs on the Next.js server (D41). Updated the architecture (§8), data model (§9), NFRs and risks to match. |
 | 0.7 | 2026-09-30 | Recorded decisions from building the availability engine (D42): recurrence and timezones are handled in-house instead of with `rrule` and `date-fns-tz`, `exdates` are occurrence start instants, and week numbers count from the Monday week containing the schedule's start date (FR-IMP-5). |
 | 0.8 | 2026-09-30 | Data model matches the first migrations (D43): blocks get their own directed `blocks` table instead of a `blocked` friendship status; `events` use `startsAt`/`endsAt`; group permissions are four boolean columns; a source's period is three columns. |
+| 0.13 | 2026-10-01 | Every account gets a **handle generated from its name** at sign-up, which can be changed but not removed (D47, FR-AUTH-2). |
 | 0.12 | 2026-09-30 | **No Railway worker** (D46, after the WF-024 spike): PDF and HEIC conversion and the OpenRouter call run on the Next.js server, with uploads going straight to Supabase Storage and parse jobs queued in Postgres with a cron sweep. Updated §8, the parse flow and the NFRs that mentioned the worker. |
 | 0.11 | 2026-09-30 | Phone navigation is a **hamburger menu** in the header, not the design's bottom bar (FR-WEB-9). |
 | 0.10 | 2026-09-30 | Sign-in accepts **email and password** as well as Google (D45, FR-AUTH-1). |
@@ -209,7 +210,7 @@ Shanice is why every group gets its own visibility tier, chosen when you join it
 | ID | Requirement | Priority |
 |---|---|---|
 | FR-AUTH-1 | Users sign in through **Clerk**, with **Google** or with an **email address and password** (D45). Email addresses are verified before the account is used. Google sign-in asks for basic profile and email scopes only, **never** calendar scopes (those come later, FR-GCAL-1). | M |
-| FR-AUTH-2 | The profile has a display name (from Google, or entered at email sign-up), an avatar (taken from Google when there is one, can be replaced) and an optional handle (`@kemar`). | M |
+| FR-AUTH-2 | The profile has a display name (from Google, or the full name entered at email sign-up), an avatar (taken from Google when there is one, can be replaced) and a **handle** (`@kemar`). Every new account gets a unique handle generated from its name, which the user can change to any handle nobody else has, but not remove (D47). | M |
 | FR-AUTH-3 | Users have a **timezone**, detected automatically and defaulting to `America/Jamaica`. | M |
 | FR-AUTH-4 | Sign-in by email magic link or one-time code, using Clerk's built-in support. | S |
 | FR-AUTH-5 | Sessions last across PWA launches, so users don't have to sign in every time they open the app. | M |
@@ -850,6 +851,7 @@ The **[ASSUMPTION]** markers still in this document (for example the file-size a
 | D44 | 2026-09-30 | **Offline friends**: users can add people who aren't on whosfree and upload or type in their timetables. Private to the uploader, nickname only, with a permission confirmation, and never merged with a real account. Part of Milestone A. | The app has to be useful before someone's friends join (R2, cold start), and people already have their friends' timetables. |
 | D45 | 2026-09-30 | **Sign-in accepts email and password as well as Google.** Clerk handles passwords, email verification and resets; we never see or store a password. Names are required at email sign-up. | Not everyone wants to use their Google account (A3, R11), and some school-managed Google accounts block third-party apps. Clerk supports both with no extra backend work. |
 | D46 | 2026-09-30 | **No separate worker service.** PDF and HEIC conversion (PDFium and libheif as WASM, plus `sharp`) and the OpenRouter call run on the Next.js server in a dedicated internal route. Uploads go straight to Supabase Storage through signed upload URLs. Parse jobs are queued in Postgres with a lease and retried by a cron sweep. Replaces the worker part of D6. | The WF-024 spike showed conversion fits comfortably in a Node function (WASM, no custom binaries), so a second service, its HMAC channel and a second deploy target aren't worth it (R8). `dispatch(jobId)` keeps it swappable. |
+| D47 | 2026-10-01 | **Every user has a handle, generated from their name at sign-up.** The database picks it when it creates the account (the name lowercased, accents dropped, letters and digits only, up to 20 characters, with a random number added if it's taken or reserved). Users can change it to any free handle but can't clear it. Existing accounts without one are given one. Replaces the optional handle in FR-AUTH-2. | Friends find each other by handle (FR-SOC-1), so an account without one can only be added by link or QR code. Generating it in Postgres keeps uniqueness and the reserved words in one place. |
 
 ---
 

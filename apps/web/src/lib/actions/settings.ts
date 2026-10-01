@@ -52,8 +52,8 @@ export async function saveAvailableHours(days: AvailableHoursDay[]): Promise<Act
 
 /**
  * Saves the display name, handle and timezone (FR-AUTH-2, FR-AUTH-3, WF-040). The handle is
- * optional ('' clears it) and goes through `set_handle`, which checks the format, reserved words
- * and uniqueness and allows 10 changes a day; setting the same handle again is free. It is saved
+ * required (D47) and goes through `set_handle`, which checks the format, reserved words and
+ * uniqueness and allows 10 changes a day; setting the same handle again is free. It is saved
  * first, so a taken or reserved handle leaves the rest unchanged. Name and timezone are plain
  * column updates the user is granted on their own row.
  */
@@ -69,10 +69,7 @@ export async function saveProfile(input: {
   if (!userId) return fail('Sign in again to save your profile.');
   const supabase = await createServerSupabase();
 
-  // null clears the handle; the generated Args type says string, but the function takes null.
-  const { error: handleError } = await supabase.rpc('set_handle', {
-    handle: parsed.handle as string,
-  });
+  const { error: handleError } = await supabase.rpc('set_handle', { handle: parsed.handle });
   if (handleError) {
     // WF1xx and PT429 are expected; anything else is worth a log (the code only, NFR-SEC-11).
     if (!/^(WF1\d\d|PT429)$/.test(handleError.code)) {

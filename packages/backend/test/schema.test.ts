@@ -300,6 +300,7 @@ const CLIENT_FUNCTIONS = [...CLIENT_DEFINER_FUNCTIONS, ...CLIENT_INVOKER_FUNCTIO
 /** Internal helpers in `private`: not security definer, not callable by clients. */
 const PRIVATE_FUNCTIONS = [
   'private.assert_group_admin_in_sync(uuid)',
+  'private.assign_generated_handle(uuid)',
   'private.authorize_group(uuid,uuid,text)',
   'private.authorize_invite_change(invites,uuid)',
   'private.check_event_offline_friend()',
@@ -321,6 +322,7 @@ const PRIVATE_FUNCTIONS = [
   'private.epoch_ms(timestamp with time zone)',
   'private.find_friend_invite(text)',
   'private.group_admin_in_sync_trigger()',
+  'private.handle_base(text)',
   'private.insert_group_invite(uuid,uuid,timestamp with time zone,integer)',
   'private.invite_status(invites)',
   'private.is_blocked(uuid,uuid)',

@@ -15,9 +15,11 @@ describe('parseProfileInput (FR-AUTH-2)', () => {
     });
   });
 
-  it('an empty handle clears it (handles are optional)', () => {
-    const r = parseProfileInput({ ...base, handle: '  @ ' });
-    expect(r.ok && r.handle).toBeNull();
+  it('refuses an empty handle: every user has one (D47)', () => {
+    expect(parseProfileInput({ ...base, handle: '  @ ' })).toEqual({
+      ok: false,
+      error: 'Choose a handle.',
+    });
   });
 
   it('needs a name of 1–100 characters on one line', () => {
