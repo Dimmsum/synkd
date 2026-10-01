@@ -373,6 +373,76 @@ export type Database = {
           },
         ];
       };
+      pings: {
+        Row: {
+          created_at: string;
+          expires_at: string;
+          group_id: string | null;
+          id: string;
+          read_at: string | null;
+          recipient_id: string;
+          replied_at: string | null;
+          reply: string | null;
+          reply_read_at: string | null;
+          reply_text: string | null;
+          sender_id: string;
+          template: string | null;
+          text: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          expires_at: string;
+          group_id?: string | null;
+          id?: string;
+          read_at?: string | null;
+          recipient_id: string;
+          replied_at?: string | null;
+          reply?: string | null;
+          reply_read_at?: string | null;
+          reply_text?: string | null;
+          sender_id: string;
+          template?: string | null;
+          text?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          expires_at?: string;
+          group_id?: string | null;
+          id?: string;
+          read_at?: string | null;
+          recipient_id?: string;
+          replied_at?: string | null;
+          reply?: string | null;
+          reply_read_at?: string | null;
+          reply_text?: string | null;
+          sender_id?: string;
+          template?: string | null;
+          text?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'pings_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'pings_recipient_id_fkey';
+            columns: ['recipient_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'pings_sender_id_fkey';
+            columns: ['sender_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       push_subscriptions: {
         Row: {
           auth: string;
@@ -791,6 +861,25 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      list_inbox: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          created_at: string;
+          direction: string;
+          expires_at: string;
+          id: string;
+          other_avatar_url: string;
+          other_handle: string;
+          other_id: string;
+          other_name: string;
+          replied_at: string;
+          reply: string;
+          reply_text: string;
+          template: string;
+          text: string;
+          unread: boolean;
+        }[];
+      };
       list_my_groups: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -820,6 +909,7 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      mark_pings_read: { Args: { ping_ids?: string[] }; Returns: number };
       now_for_viewer: {
         Args: { range_end?: string; range_start?: string };
         Returns: {
@@ -849,6 +939,14 @@ export type Database = {
         };
       };
       remove_group_member: { Args: { group_id: string; user_id: string }; Returns: undefined };
+      reply_to_ping: {
+        Args: { message?: string; ping_id: string; reply?: string };
+        Returns: {
+          notify: boolean;
+          replier_name: string;
+          sender_id: string;
+        }[];
+      };
       request_test_push: { Args: Record<PropertyKey, never>; Returns: string };
       revoke_group_invite: { Args: { invite_id: string }; Returns: undefined };
       save_push_subscription: {
@@ -857,6 +955,15 @@ export type Database = {
       };
       send_friend_request: { Args: { tier?: number; user_id: string }; Returns: string };
       send_friend_request_by_handle: { Args: { handle: string; tier?: number }; Returns: string };
+      send_ping: {
+        Args: { confirmed?: boolean; message?: string; recipient: string; template?: string };
+        Returns: {
+          notify: boolean;
+          ping_id: string;
+          recipient_id: string;
+          sender_name: string;
+        }[];
+      };
       set_day_hours: {
         Args: { day: string; end_time?: string; start_time?: string };
         Returns: Json;
@@ -897,6 +1004,7 @@ export type Database = {
       };
       unblock_user: { Args: { user_id: string }; Returns: undefined };
       unfriend: { Args: { user_id: string }; Returns: undefined };
+      unread_ping_count: { Args: Record<PropertyKey, never>; Returns: number };
       update_group: { Args: { emoji: string; group_id: string; name: string }; Returns: undefined };
       update_offline_friend: {
         Args: { emoji: string; nickname: string; offline_friend_id: string };

@@ -28,6 +28,24 @@ export const DB_ERROR = {
   /** You have blocked this person; unblock them first. Only ever sent to the blocker. */
   blockedByYou: 'WF206',
   /**
+   * The recipient can't be pinged right now (FR-PING-1): they're on do not disturb or have
+   * paused sharing. `details` is their status, `dnd` or `paused`. Show "Can't ping them now".
+   */
+  pingRecipientUnavailable: 'WF301',
+  /**
+   * The recipient isn't free (FR-PING-1), so the sender must confirm first ("Ping anyway?"),
+   * then call `send_ping` again with `confirmed: true`. `details` is their status: `busy`,
+   * `away` or `no_schedule`.
+   */
+  pingNeedsConfirmation: 'WF302',
+  /**
+   * No such ping among the caller's received pings, or the sender is blocked either way, so a
+   * blocked person can't tell (FR-SOC-6). Show "This ping isn't there any more".
+   */
+  pingNotFound: 'WF303',
+  /** The ping already has a reply; a reply is final (FR-PING-4). */
+  pingAlreadyReplied: 'WF304',
+  /**
    * Rate limited (NFR-SEC-9): "Slow down". PostgREST returns HTTP 429. The error
    * `details` is JSON: `{ action, limit, retry_at }`.
    */

@@ -174,6 +174,11 @@ describe('PingText', () => {
   it('rejects whitespace-only text', () => {
     expect(PingText.safeParse('   ').success).toBe(false);
   });
+  it('allows newlines and tabs but no other control characters', () => {
+    expect(PingText.safeParse('Patty run?\nMeet by the gate\tin 10').success).toBe(true);
+    for (const c of ['\u0000', '\u0007', '\r', '\u001b', '\u007f'])
+      expect(PingText.safeParse(`hi${c}there`).success).toBe(false);
+  });
 });
 
 describe('OfflineFriendNickname', () => {

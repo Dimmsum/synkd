@@ -303,3 +303,52 @@ export const PUSH_SUBSCRIPTION_ERRORS = {
   invalidDeviceLabel: 'Invalid device label',
   rateLimited: 'Too many attempts',
 } as const;
+
+/**
+ * One row of `list_inbox` (WF-092): a ping the caller received or sent, newest first, with the
+ * other person's public profile (nobody blocked either way appears). `template`/`text` and the
+ * reply fields are optional; `unread` is the caller's own flag (an unread received ping, or an
+ * unread reply to a sent one). Text is plain text (D31): never render it as HTML or linkify it.
+ */
+export type InboxPing = Omit<
+  Fn['list_inbox']['Returns'][number],
+  | 'direction'
+  | 'other_handle'
+  | 'other_avatar_url'
+  | 'template'
+  | 'text'
+  | 'reply'
+  | 'reply_text'
+  | 'replied_at'
+> & {
+  direction: 'received' | 'sent';
+  other_handle: string | null;
+  other_avatar_url: string | null;
+  template: string | null;
+  text: string | null;
+  reply: string | null;
+  reply_text: string | null;
+  replied_at: string | null;
+};
+
+/**
+ * The messages the ping functions raise (WF-092, WF-093) besides the codes in `DB_ERROR`
+ * (WF001, WF201, WF202, WF206, WF301-WF304, PT429). Match on `error.message` for 22023 (bad
+ * argument). None of them repeats the ping text (NFR-SEC-11).
+ */
+export const PING_ERRORS = {
+  noAccount: 'No account for this sign-in',
+  userNotFound: 'User not found',
+  cannotPingSelf: "You can't ping yourself",
+  blockedByYou: 'You have blocked this user',
+  unknownTemplate: 'Unknown ping template',
+  emptyPing: 'A ping needs a template or a message',
+  invalidText: 'Ping text must be 1 to 140 characters of plain text',
+  recipientUnavailable: "They can't be pinged right now",
+  needsConfirmation: "Confirm before pinging someone who isn't free",
+  pingNotFound: 'Ping not found',
+  alreadyReplied: 'Already replied',
+  replyNeedsOne: 'Reply with a quick reply or a message',
+  unknownReply: 'Unknown quick reply',
+  rateLimited: 'Too many attempts',
+} as const;
