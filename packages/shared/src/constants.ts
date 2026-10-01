@@ -136,6 +136,37 @@ export const DISPLAY_NAME_MAX_LENGTH = 100;
 export const SOURCE_TYPES = ['upload', 'manual', 'gcal'] as const;
 export type SourceType = (typeof SOURCE_TYPES)[number];
 
+/**
+ * The source types `commit_schedule` writes (WF-030): a confirmed upload or a schedule typed in
+ * by hand (FR-IMP-12). Google Calendar sources come from sync (WF-080), never from a commit.
+ */
+export const COMMIT_SOURCE_TYPES = ['manual', 'upload'] as const;
+export type CommitSourceType = (typeof COMMIT_SOURCE_TYPES)[number];
+
+/** Event title length, in characters (PRD §9 `events.title`, FR-IMP-3). `commit_schedule` checks it too. */
+export const EVENT_TITLE_MAX_LENGTH = 120;
+
+/** Most events in one parse draft or schedule commit (PRD §8.5, NFR-SEC-7, WF-030). */
+export const SCHEDULE_MAX_EVENTS = 200;
+
+/**
+ * Longest schedule period, in days counting both ends (FR-IMP-7): a school year or a long
+ * roster. A new period is added when it ends (J6). `commit_schedule` checks the same.
+ */
+export const SCHEDULE_PERIOD_MAX_DAYS = 366;
+
+/** Most exceptions (breaks, holidays, exams) on one schedule period (FR-IMP-8). */
+export const SCHEDULE_MAX_EXCEPTIONS = 50;
+
+/** Schedule exception label length, in characters (FR-IMP-8), e.g. "Reading week". */
+export const SCHEDULE_EXCEPTION_LABEL_MAX_LENGTH = 60;
+
+/**
+ * Schedule commits (confirmed uploads plus manual saves) per user per day (NFR-SEC-9, WF-030),
+ * shared by the user's own schedule and their offline friends'. `commit_schedule` enforces it.
+ */
+export const SCHEDULE_COMMITS_PER_DAY = 20;
+
 export const PARSE_JOB_STATUSES = [
   'queued',
   'processing',

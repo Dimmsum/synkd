@@ -7,6 +7,7 @@ import {
   OfflineFriendNickname,
   ParseDraft,
   PingText,
+  ScheduleCommit,
   SchedulePeriod,
   StatusLabel,
   Tier,
@@ -137,6 +138,43 @@ describe('ParseDraft', () => {
   });
   it('caps the number of events', () => {
     expect(ParseDraft.safeParse({ events: Array(201).fill(lecture) }).success).toBe(false);
+  });
+});
+
+describe('ScheduleCommit (WF-030)', () => {
+  const period = { start: '2026-08-31', end: '2026-12-12' };
+  it('accepts events and a period, defaulting exceptions to none', () => {
+    expect(ScheduleCommit.parse({ events: [lecture], period })).toEqual({
+      events: [lecture],
+      period: { ...period, exceptions: [] },
+    });
+  });
+  it('needs at least one event and at most 200', () => {
+    expect(ScheduleCommit.safeParse({ events: [], period }).success).toBe(false);
+    expect(ScheduleCommit.safeParse({ events: Array(201).fill(lecture), period }).success).toBe(
+      false,
+    );
+  });
+  it('caps the period at 366 days, counting both ends', () => {
+    const year = { start: '2026-01-01', end: '2027-01-01' };
+    expect(ScheduleCommit.safeParse({ events: [lecture], period: year }).success).toBe(true);
+    const tooLong = { start: '2026-01-01', end: '2027-01-02' };
+    expect(ScheduleCommit.safeParse({ events: [lecture], period: tooLong }).success).toBe(false);
+  });
+  it('caps the exceptions at 50', () => {
+    const day = { start: '2026-09-07', end: '2026-09-07' };
+    const ok = { ...period, exceptions: Array(50).fill(day) };
+    const tooMany = { ...period, exceptions: Array(51).fill(day) };
+    expect(ScheduleCommit.safeParse({ events: [lecture], period: ok }).success).toBe(true);
+    expect(ScheduleCommit.safeParse({ events: [lecture], period: tooMany }).success).toBe(false);
+  });
+  it('drops a location anywhere in the draft (D35)', () => {
+    const parsed = ScheduleCommit.parse({
+      events: [{ ...lecture, location: 'SLT 3' }],
+      period,
+      location: 'UWI Mona',
+    });
+    expect(JSON.stringify(parsed)).not.toMatch(/SLT|Mona|location/);
   });
 });
 

@@ -1,10 +1,12 @@
-// Friendly messages for the database errors settings and status writes can hit (WF-040, WF-062,
-// WF-063). supabase-js puts the SQLSTATE in `error.code`; our functions raise the codes listed in
-// packages/backend/src/errors.ts. Pure: the actions pass in the code and show what comes back.
-// Messages never repeat what the user typed (NFR-SEC-11 applies to logs, and we keep UI errors
-// just as plain).
+// Friendly messages for the database errors settings, status and schedule writes can hit (WF-040,
+// WF-062, WF-063, WF-030). supabase-js puts the SQLSTATE in `error.code`; our functions raise the
+// codes listed in packages/backend/src/errors.ts. Pure: the actions pass in the code and show what
+// comes back. Messages never repeat what the user typed (NFR-SEC-11 applies to logs, and we keep UI
+// errors just as plain), except that a schedule error may name the user's own event on their own
+// screen so they can find it. Never log these messages.
 
 import { DB_ERROR } from '@whosfree/backend';
+import { outsideMessage } from './schedule-draft';
 
 export const TRY_AGAIN = 'Something went wrong on our side. Try again.';
 const NO_ACCOUNT = 'Finish signing up first, then try again.';
@@ -60,6 +62,39 @@ export function hoursErrorMessage(code: string | undefined): string {
       return 'Each day’s end time must be after its start time.';
     case DB_ERROR.noAccount:
     case PG.notFound:
+      return NO_ACCOUNT;
+    default:
+      return TRY_AGAIN;
+  }
+}
+
+/**
+ * `commit_schedule` (WF-030, WF-031). `details` is the error's detail string: for an event that
+ * never happens in the period (WF302) it's `{"event": index}`, used with the draft to name it.
+ */
+export function scheduleErrorMessage(
+  code: string | undefined,
+  details: string | undefined,
+  draft: { events: readonly { title: string }[]; period: { start: string; end: string } },
+): string {
+  switch (code) {
+    case DB_ERROR.scheduleEventOutsidePeriod: {
+      let index: unknown;
+      try {
+        index = (JSON.parse(details ?? 'null') as { event?: unknown } | null)?.event;
+      } catch {
+        index = undefined;
+      }
+      const title = typeof index === 'number' ? draft.events[index]?.title : undefined;
+      return outsideMessage(title, draft.period);
+    }
+    case DB_ERROR.scheduleInvalid:
+      return 'Something in this schedule isn’t right. Check your events and dates, then try again.';
+    case PG.notFound:
+      return 'We couldn’t find that friend. They may have been removed.';
+    case DB_ERROR.rateLimited:
+      return 'You’ve saved a schedule a lot today. Try again tomorrow.';
+    case DB_ERROR.noAccount:
       return NO_ACCOUNT;
     default:
       return TRY_AGAIN;

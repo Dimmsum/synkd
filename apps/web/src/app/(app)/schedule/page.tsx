@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { SourceType } from '@whosfree/shared';
-import { Upload } from 'lucide-react';
+import { PenLine, Upload } from 'lucide-react';
 import { buttonVariants } from '@whosfree/ui/components/button';
 import { SourceBadge, TimeRange } from '@whosfree/ui/components/misc';
 import { addDays, minutesIntoDay, startOfWeek, weekdayShort } from '@whosfree/ui/lib/time';
@@ -54,10 +54,20 @@ export default async function SchedulePage({ searchParams }: PageProps<'/schedul
         title="My schedule"
         subtitle="Everything that makes you busy, from every source."
         actions={
-          <Link href="/import" className={buttonVariants({ size: 'sm' })}>
-            <Upload aria-hidden="true" />
-            Add a schedule
-          </Link>
+          <>
+            {/* Manual entry (FR-IMP-12, WF-031): build a schedule without a file. */}
+            <Link
+              href="/import/manual/review"
+              className={buttonVariants({ variant: 'outline', size: 'sm' })}
+            >
+              <PenLine aria-hidden="true" />
+              Type it in
+            </Link>
+            <Link href="/import" className={buttonVariants({ size: 'sm' })}>
+              <Upload aria-hidden="true" />
+              Add a schedule
+            </Link>
+          </>
         }
       />
       <CalendarToolbar path="/schedule" view={view} date={date} today={today} />

@@ -3,8 +3,8 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { DAYS_OF_WEEK } from '@whosfree/shared';
-import { FileText, Pencil, Plus, Trash, TriangleAlert } from 'lucide-react';
+import { DateRange, DAYS_OF_WEEK, SCHEDULE_EXCEPTION_LABEL_MAX_LENGTH } from '@whosfree/shared';
+import { CalendarOff, FileText, Info, Pencil, Plus, Trash, TriangleAlert, X } from 'lucide-react';
 import { Button } from '@whosfree/ui/components/button';
 import { Input } from '@whosfree/ui/components/input';
 import { Label } from '@whosfree/ui/components/label';
@@ -12,6 +12,8 @@ import { formatClockRange } from '@whosfree/ui/lib/time';
 import { cn } from '@whosfree/ui/lib/utils';
 import { blockPosition, TimeGrid, type GridColumn } from '@/components/calendar/time-grid';
 import { confirmSchedule } from '@/lib/actions/imports';
+import { formatPeriod } from '@/lib/my-schedule';
+import { formatDateRange, withHolidays, type EditableException } from '@/lib/schedule-draft';
 import { CATEGORY_LABELS } from '@/lib/status';
 import type { DraftEvent, ParseJob } from '@/lib/types';
 import { describeWhen, EventEditorDialog } from './event-editor';
@@ -26,14 +28,36 @@ const toMin = (t: string) => {
 const HOUR = 40;
 
 /**
- * Review a parsed schedule before it's saved (FR-IMP-9/10/11, WF-029). Nothing reaches
- * the schedule until Confirm. The original file sits next to the preview (stacked with a
- * toggle on phones).
+ * Review a parsed schedule before it's saved (FR-IMP-9/10/11, WF-029), or build one from
+ * scratch (manual entry, FR-IMP-12, WF-031: a job without a file). Nothing reaches the
+ * schedule until Confirm. The original file sits next to the preview (stacked with a toggle on
+ * phones). The user sets the dates the schedule covers and its breaks; Jamaican public holidays
+ * are pre-filled (FR-IMP-7, FR-IMP-8).
+ *
+ * `replaces` is the confirmed schedule this one replaces, if any (FR-IMP-17), so the user is
+ * told before confirming. `offlineFriendId` saves it as that offline friend's schedule instead
+ * of the viewer's (WF-127, D44).
  */
-export function ReviewEditor({ job, doneHref }: { job: ParseJob; doneHref: Route }) {
+export function ReviewEditor({
+  job,
+  doneHref,
+  replaces = null,
+  offlineFriendId = null,
+}: {
+  job: ParseJob;
+  doneHref: Route;
+  replaces?: { start: string; end: string } | null;
+  offlineFriendId?: string | null;
+}) {
   const router = useRouter();
   const [events, setEvents] = useState<DraftEvent[]>(job.events);
-  const [period, setPeriod] = useState(job.period);
+  const [period, setPeriod] = useState({ start: job.period.start, end: job.period.end });
+  const [ownExceptions, setOwnExceptions] = useState<EditableException[]>(
+    job.period.exceptions ?? [],
+  );
+  // Pre-filled holidays the user removed, by date.
+  const [dismissed, setDismissed] = useState<string[]>([]);
+  const exceptions = withHolidays(ownExceptions, period, dismissed);
   const [editing, setEditing] = useState<DraftEvent | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
@@ -94,7 +118,11 @@ export function ReviewEditor({ job, doneHref }: { job: ParseJob; doneHref: Route
       const res = await confirmSchedule({
         jobId: job.id,
         events: events.map(({ id: _id, ...rest }) => rest),
-        period,
+        period: {
+          ...period,
+          exceptions: exceptions.map(({ holiday: _holiday, ...range }) => range),
+        },
+        offlineFriendId,
       });
       if (res.ok) router.push(doneHref);
       else setError(res.error);
@@ -273,15 +301,29 @@ export function ReviewEditor({ job, doneHref }: { job: ParseJob; doneHref: Route
             />
           </div>
         </div>
-        {/* TODO(WF-030/FR-IMP-8): exceptions (breaks, exams) with Jamaican public holidays pre-filled. */}
+        <Exceptions
+          exceptions={exceptions}
+          onAdd={(range) => setOwnExceptions((prev) => [...prev, range])}
+          onRemove={(range) => {
+            if (range.holiday) setDismissed((prev) => [...prev, range.start]);
+            else setOwnExceptions((prev) => prev.filter((x) => x !== range));
+          }}
+        />
       </section>
+
+      {replaces ? (
+        <p className="flex items-start gap-2 rounded-xl bg-primary-soft p-3 text-sm text-primary-ink">
+          <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          Confirming replaces your current schedule ({formatPeriod(replaces)}).
+        </p>
+      ) : null}
 
       {error ? (
         <p role="alert" className="text-sm font-medium text-destructive">
           {error}
         </p>
       ) : null}
-      <div className="sticky bottom-20 z-20 flex flex-col gap-2 rounded-2xl border bg-card/95 p-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between md:bottom-4">
+      <div className="sticky bottom-[max(1rem,env(safe-area-inset-bottom))] z-20 flex flex-col gap-2 rounded-2xl border bg-card/95 p-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between md:bottom-4">
         <p className="text-xs text-muted-foreground">
           {manual
             ? 'Nothing is saved until you confirm.'
@@ -305,6 +347,119 @@ export function ReviewEditor({ job, doneHref }: { job: ParseJob; doneHref: Route
           setEditorOpen(false);
         }}
       />
+    </div>
+  );
+}
+
+/**
+ * Breaks, holidays and exam periods when the schedule doesn't apply (FR-IMP-8). Public holidays
+ * are listed already; the user can remove any of them and add their own.
+ */
+function Exceptions({
+  exceptions,
+  onAdd,
+  onRemove,
+}: {
+  exceptions: EditableException[];
+  onAdd: (range: EditableException) => void;
+  onRemove: (range: EditableException) => void;
+}) {
+  const [label, setLabel] = useState('');
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const [error, setError] = useState<string>();
+
+  function add() {
+    const parsed = DateRange.safeParse({ start, end: end || start, label });
+    if (!parsed.success) {
+      setError(start ? 'The last day can’t be before the first.' : 'Pick the first day.');
+      return;
+    }
+    const { label: name, ...range } = parsed.data;
+    onAdd(name ? { ...range, label: name } : range);
+    setLabel('');
+    setStart('');
+    setEnd('');
+    setError(undefined);
+  }
+
+  return (
+    <div className="mt-5 flex flex-col gap-3">
+      <div>
+        <h3 className="text-sm font-semibold">Breaks and holidays</h3>
+        <p className="text-xs text-muted-foreground">
+          You won&apos;t show as busy from this schedule on these days. We&apos;ve added Jamaican
+          public holidays; remove any that don&apos;t apply.
+        </p>
+      </div>
+      {exceptions.length ? (
+        <ul className="flex flex-col divide-y divide-border-subtle rounded-xl border">
+          {exceptions.map((x) => (
+            <li
+              key={`${x.start}-${x.end}-${x.label ?? ''}`}
+              className="flex items-center gap-3 px-3 py-2"
+            >
+              <CalendarOff aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-sm font-medium">{x.label || 'Break'}</span>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {formatDateRange(x)}
+                </span>
+              </span>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Remove ${x.label || 'break'} (${formatDateRange(x)})`}
+                onClick={() => onRemove(x)}
+              >
+                <X aria-hidden="true" />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground">No breaks in these dates.</p>
+      )}
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="exception-label">Name (optional)</Label>
+          <Input
+            id="exception-label"
+            value={label}
+            maxLength={SCHEDULE_EXCEPTION_LABEL_MAX_LENGTH}
+            placeholder="Reading week"
+            onChange={(e) => setLabel(e.target.value)}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="exception-start">First day</Label>
+          <Input
+            id="exception-start"
+            type="date"
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="exception-end">Last day</Label>
+          <Input
+            id="exception-end"
+            type="date"
+            value={end}
+            min={start || undefined}
+            onChange={(e) => setEnd(e.target.value)}
+          />
+        </div>
+        <Button variant="soft" onClick={add}>
+          <Plus aria-hidden="true" />
+          Add break
+        </Button>
+      </div>
+      {error ? (
+        <p role="alert" className="text-sm font-medium text-destructive">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

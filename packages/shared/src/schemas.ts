@@ -3,9 +3,14 @@ import {
   DAYS_OF_WEEK,
   DISPLAY_NAME_MAX_LENGTH,
   EVENT_CATEGORIES,
+  EVENT_TITLE_MAX_LENGTH,
   MANUAL_STATUSES,
   OFFLINE_FRIEND_NICKNAME_MAX_LENGTH,
   PING_TEXT_MAX_LENGTH,
+  SCHEDULE_EXCEPTION_LABEL_MAX_LENGTH,
+  SCHEDULE_MAX_EVENTS,
+  SCHEDULE_MAX_EXCEPTIONS,
+  SCHEDULE_PERIOD_MAX_DAYS,
   STATUS_LABEL_MAX_LENGTH,
   TIERS,
 } from './constants';
@@ -69,7 +74,7 @@ export type EventWhen = z.infer<typeof EventWhen>;
  */
 export const EventDraft = z
   .object({
-    title: z.string().trim().min(1).max(120),
+    title: z.string().trim().min(1).max(EVENT_TITLE_MAX_LENGTH),
     category: EventCategory,
     start: LocalTime,
     end: LocalTime,
@@ -82,7 +87,11 @@ export type EventDraft = z.infer<typeof EventDraft>;
 
 /** A date span, inclusive of both ends. */
 export const DateRange = z
-  .object({ start: LocalDate, end: LocalDate, label: z.string().trim().max(60).optional() })
+  .object({
+    start: LocalDate,
+    end: LocalDate,
+    label: z.string().trim().max(SCHEDULE_EXCEPTION_LABEL_MAX_LENGTH).optional(),
+  })
   .refine((r) => r.start <= r.end, { message: 'Start must be on or before end', path: ['end'] });
 export type DateRange = z.infer<typeof DateRange>;
 
@@ -98,11 +107,42 @@ export type SchedulePeriod = z.infer<typeof SchedulePeriod>;
 
 /** The parser's output for one file (PRD §8.5, NFR-SEC-7). */
 export const ParseDraft = z.object({
-  events: z.array(EventDraft).max(200),
+  events: z.array(EventDraft).max(SCHEDULE_MAX_EVENTS),
   /** A date range found in the file, if any (FR-IMP-7). The user confirms it. */
   suggestedPeriod: SchedulePeriod.optional(),
 });
 export type ParseDraft = z.infer<typeof ParseDraft>;
+
+/** Days from `start` to `end` of a valid {@link DateRange}, counting both ends. */
+function daysInRange(r: { start: string; end: string }): number {
+  return (Date.parse(`${r.end}T00:00:00Z`) - Date.parse(`${r.start}T00:00:00Z`)) / 86_400_000 + 1;
+}
+
+/**
+ * What `commit_schedule` takes (WF-030, PRD §8.5 step 7): the confirmed events and the period
+ * they cover, from the review screen (an upload's draft) or manual entry (FR-IMP-12). Stricter
+ * than {@link ParseDraft}: at least one event, a period of at most
+ * {@link SCHEDULE_PERIOD_MAX_DAYS} days, at most {@link SCHEDULE_MAX_EXCEPTIONS} exceptions.
+ * The database checks the same rules again and rejects unknown keys (D35: no location).
+ *
+ * Exceptions are stored on the source (`sources.period_exceptions`) and applied when the
+ * schedule is expanded; Jamaican public holidays are pre-filled by the UI (FR-IMP-8,
+ * `jamaicanPublicHolidays`). Every weekly event must happen at least once in the period.
+ */
+export const ScheduleCommit = z.object({
+  events: z.array(EventDraft).min(1, 'Add at least one event').max(SCHEDULE_MAX_EVENTS),
+  period: SchedulePeriod.refine(
+    (p) => p.start > p.end || daysInRange(p) <= SCHEDULE_PERIOD_MAX_DAYS,
+    {
+      message: `A schedule can cover at most ${SCHEDULE_PERIOD_MAX_DAYS} days`,
+      path: ['end'],
+    },
+  ).refine((p) => p.exceptions.length <= SCHEDULE_MAX_EXCEPTIONS, {
+    message: `At most ${SCHEDULE_MAX_EXCEPTIONS} breaks or holidays`,
+    path: ['exceptions'],
+  }),
+});
+export type ScheduleCommit = z.infer<typeof ScheduleCommit>;
 
 /** One day's available hours in local time (FR-AVL-2). `end` must be after `start`. */
 export const AvailableHours = z
