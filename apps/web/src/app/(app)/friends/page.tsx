@@ -6,6 +6,7 @@ import { OfflineCopyPrompt } from '@/components/offline-friends/offline-copy-pro
 import { OfflineFriendsPanel } from '@/components/offline-friends/offline-friends-panel';
 import { appUrl } from '@/lib/config';
 import { getOfflineFriendsNow } from '@/lib/data/offline-friends';
+import { getMyFriendInvite } from '@/lib/data/invites';
 import { getFriendRequests, getFriends, getGroups, getNow, getViewer } from '@/lib/data/people';
 import { friendLinkUrl } from '@/lib/social/mappers';
 
@@ -19,14 +20,16 @@ export const metadata: Metadata = { title: 'Friends' };
 // they added of that person (FR-SOC-19).
 export default async function FriendsPage({ searchParams }: PageProps<'/friends'>) {
   const { add, friended } = await searchParams;
-  const [friends, requests, groups, viewer, offline, { now, timeZone }] = await Promise.all([
-    getFriends(),
-    getFriendRequests(),
-    getGroups(),
-    getViewer(),
-    getOfflineFriendsNow(),
-    getNow(),
-  ]);
+  const [friends, requests, groups, viewer, offline, { now, timeZone }, friendInvite] =
+    await Promise.all([
+      getFriends(),
+      getFriendRequests(),
+      getGroups(),
+      getViewer(),
+      getOfflineFriendsNow(),
+      getNow(),
+      getMyFriendInvite(),
+    ]);
   const free = friends.filter((f) => f.status === 'free').length;
   const newFriend =
     typeof friended === 'string' ? friends.find((f) => f.id === friended) : undefined;
@@ -40,7 +43,12 @@ export default async function FriendsPage({ searchParams }: PageProps<'/friends'
             <span className="font-semibold text-status-free-ink">{free} free right now</span>
           </>
         }
-        actions={<AddFriendButton friendLink={friendLinkUrl(viewer.id, appUrl())} />}
+        actions={
+          <AddFriendButton
+            friendLink={friendLinkUrl(viewer.id, appUrl())}
+            friendInvite={friendInvite}
+          />
+        }
       />
       {newFriend && offline?.length ? (
         <div className="mb-4">

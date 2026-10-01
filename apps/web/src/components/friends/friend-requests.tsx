@@ -6,7 +6,7 @@ import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { DEFAULT_TIER, type Tier } from '@whosfree/shared';
-import { Check, Copy, Search, UserPlus } from 'lucide-react';
+import { Check, Copy, Link2, Link2Off, RefreshCw, Search, UserPlus } from 'lucide-react';
 import { Button } from '@whosfree/ui/components/button';
 import {
   Dialog,
@@ -25,11 +25,15 @@ import { TierPicker } from '@whosfree/ui/components/tier-picker';
 import { formatAgo } from '@whosfree/ui/lib/time';
 import {
   cancelFriendRequest,
+  createFriendInvite,
   findPersonByHandle,
+  regenerateFriendInvite,
   respondToFriendRequest,
+  revokeFriendInvite,
   sendFriendRequestTo,
 } from '@/lib/actions/social';
 import { friendedHref } from '@/lib/offline-friends';
+import type { MyFriendInvite } from '@/lib/social/mappers';
 import type { FriendRequest, PublicPerson } from '@/lib/types';
 import { ActionButton } from '@/components/app/action-buttons';
 
@@ -148,9 +152,16 @@ type Message = { ok: boolean; text: string };
 
 /**
  * Add a friend (FR-SOC-1): look them up by handle, pick what they'll see (FR-VIS-1, T1
- * preselected), then send. Or share your own friend link / QR code, which opens /add/<you>.
+ * preselected), then send. Or share a link / QR code: your friend invite link (/i/<code>, WF-042)
+ * once you've made one, else your friend link, /add/<you>.
  */
-export function AddFriendButton({ friendLink }: { friendLink: string }) {
+export function AddFriendButton({
+  friendLink,
+  friendInvite,
+}: {
+  friendLink: string;
+  friendInvite: MyFriendInvite | null;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [handle, setHandle] = useState('');
@@ -265,7 +276,7 @@ export function AddFriendButton({ friendLink }: { friendLink: string }) {
         ) : null}
 
         <Separator />
-        <FriendLink link={friendLink} />
+        <FriendLink friendLink={friendLink} initialInvite={friendInvite} />
       </DialogContent>
     </Dialog>
   );
@@ -314,29 +325,63 @@ function FoundPerson({
 }
 
 /**
- * The viewer's friend link and its QR code (FR-SOC-1): whoever opens it sees the viewer's name
- * and can send a request, choosing their own tier.
+ * The link the viewer shares, and its QR code (FR-SOC-1). Their friend invite link (WF-042) when
+ * they have one: it works for people who aren't on Who's Free yet (it's remembered through
+ * sign-up) and can be replaced or turned off. Otherwise their friend link, /add/<id>, which
+ * always works for people already signed in. Whoever opens either sees the viewer's name and
+ * sends a request, choosing their own tier.
  */
-function FriendLink({ link }: { link: string }) {
+function FriendLink({
+  friendLink,
+  initialInvite,
+}: {
+  friendLink: string;
+  initialInvite: MyFriendInvite | null;
+}) {
+  const [invite, setInvite] = useState(initialInvite);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string>();
+  const [pending, startTransition] = useTransition();
+  const link = invite?.url ?? friendLink;
+
+  function run(
+    action: () => Promise<
+      { ok: true; invite: MyFriendInvite | null } | { ok: false; error: string }
+    >,
+  ) {
+    setError(undefined);
+    startTransition(async () => {
+      const res = await action();
+      if (!res.ok) return setError(res.error);
+      setInvite(res.invite);
+      setCopied(false);
+    });
+  }
+
   return (
     <section aria-labelledby="friend-link-title" className="flex flex-col gap-3">
       <h3 id="friend-link-title" className="text-sm font-semibold">
-        Or share your friend link
+        Or share {invite ? 'your invite link' : 'your friend link'}
       </h3>
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
         <div className="rounded-xl border bg-white p-3">
-          <QRCodeSVG value={link} size={128} title="QR code for your friend link" />
+          <QRCodeSVG
+            value={link}
+            size={128}
+            title={invite ? 'QR code for your invite link' : 'QR code for your friend link'}
+          />
         </div>
         <div className="flex w-full min-w-0 flex-col gap-2">
           <p className="text-[13px] text-muted-foreground">
-            Friends can scan this or open the link to send you a request.
+            {invite
+              ? 'Anyone can scan this or open the link to send you a request, even if they’re new to Who’s Free.'
+              : 'Friends can scan this or open the link to send you a request.'}
           </p>
           <div className="flex gap-2">
             <Input
               readOnly
               value={link}
-              aria-label="Your friend link"
+              aria-label={invite ? 'Your invite link' : 'Your friend link'}
               className="font-mono text-[12.5px]"
               onFocus={(e) => e.currentTarget.select()}
             />
@@ -351,6 +396,67 @@ function FriendLink({ link }: { link: string }) {
               {copied ? 'Copied' : 'Copy'}
             </Button>
           </div>
+          {invite ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={pending}
+                onClick={() =>
+                  run(async () => {
+                    const res = await regenerateFriendInvite();
+                    return res.ok ? { ok: true, invite: res.data.invite } : res;
+                  })
+                }
+              >
+                <RefreshCw aria-hidden="true" />
+                New link
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={pending}
+                onClick={() =>
+                  run(async () => {
+                    const res = await revokeFriendInvite();
+                    return res.ok ? { ok: true, invite: null } : res;
+                  })
+                }
+              >
+                <Link2Off aria-hidden="true" />
+                Turn off
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {invite.uses === 1 ? 'Used once' : `Used ${invite.uses} times`}
+              </span>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-fit"
+              disabled={pending}
+              onClick={() =>
+                run(async () => {
+                  const res = await createFriendInvite();
+                  return res.ok ? { ok: true, invite: res.data.invite } : res;
+                })
+              }
+            >
+              <Link2 aria-hidden="true" />
+              Make an invite link
+            </Button>
+          )}
+          <p className="text-xs text-muted-foreground">
+            {invite
+              ? 'Making a new link, or turning it off, stops this one working.'
+              : 'An invite link also works for people who aren’t on Who’s Free yet, and you can turn it off any time.'}
+          </p>
+          {error ? (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
         </div>
       </div>
     </section>

@@ -2,12 +2,27 @@
 
 import { cache } from 'react';
 import { cookies } from 'next/headers';
-import type { InviteSummary as DbInviteSummary } from '@whosfree/backend';
+import type {
+  FriendInvite as DbFriendInvite,
+  FriendInvitePreview as DbFriendInvitePreview,
+  FriendInviteSummary as DbFriendInviteSummary,
+  InviteSummary as DbInviteSummary,
+} from '@whosfree/backend';
+import { appUrl } from '@/lib/config';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { INVITE_COOKIE, isInviteCode } from '@/lib/social/invite-cookie';
-import { toInviteSummary, type InviteSummary } from '@/lib/social/mappers';
+import {
+  toFriendInvitePreview,
+  toFriendInviteSummary,
+  toInviteSummary,
+  toMyFriendInvite,
+  type FriendInvitePreview,
+  type FriendInviteSummary,
+  type InviteSummary,
+  type MyFriendInvite,
+} from '@/lib/social/mappers';
 
-export type { InviteSummary };
+export type { FriendInvitePreview, FriendInviteSummary, InviteSummary, MyFriendInvite };
 
 /**
  * What a visitor may see about an invite (FR-WEB-3): the inviter's name, the group's name and
@@ -31,3 +46,54 @@ export async function getRememberedInviteCode(): Promise<string | null> {
   const value = (await cookies()).get(INVITE_COOKIE)?.value;
   return isInviteCode(value) ? value : null;
 }
+
+/**
+ * What the public invite page may show about a friend invite link (WF-042, FR-WEB-3): whether it
+ * works and the inviter's name. Callable signed out, like `getInvite`; a signed-in visitor
+ * blocked either way gets "not found", the same as for a code that doesn't exist.
+ */
+export const getFriendInvite = cache(async (code: string): Promise<FriendInviteSummary> => {
+  if (!isInviteCode(code)) return toFriendInviteSummary(code, undefined);
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase.rpc('get_friend_invite_summary', { code });
+  if (error) throw new Error(`get_friend_invite_summary failed (${error.code})`);
+  return toFriendInviteSummary(code, (data as DbFriendInviteSummary[])[0]);
+});
+
+/** A code that opens /i/<code>: a group invite, or else a friend invite link (WF-042). */
+export type AnyInvite =
+  { kind: 'group'; invite: InviteSummary } | { kind: 'friend'; invite: FriendInviteSummary };
+
+/** Looks the code up as a group invite first, then as a friend link. */
+export const getAnyInvite = cache(async (code: string): Promise<AnyInvite> => {
+  const group = await getInvite(code);
+  if (group.state !== 'invalid' || group.reason !== 'not_found') {
+    return { kind: 'group', invite: group };
+  }
+  const friend = await getFriendInvite(code);
+  if (friend.state === 'invalid' && friend.reason === 'not_found') {
+    return { kind: 'group', invite: group };
+  }
+  return { kind: 'friend', invite: friend };
+});
+
+/**
+ * Who a friend invite link adds, for the signed-in viewer (`preview_friend_invite`): the
+ * inviter's public profile and relationship. "not_found" across a block, either way.
+ */
+export const previewFriendInvite = cache(async (code: string): Promise<FriendInvitePreview> => {
+  if (!isInviteCode(code)) return toFriendInvitePreview(code, undefined);
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase.rpc('preview_friend_invite', { code });
+  if (error) throw new Error(`preview_friend_invite failed (${error.code})`);
+  return toFriendInvitePreview(code, (data as DbFriendInvitePreview[])[0]);
+});
+
+/** The viewer's own friend invite link, or null when they haven't made one (or turned it off). */
+export const getMyFriendInvite = cache(async (): Promise<MyFriendInvite | null> => {
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase.rpc('get_my_friend_invite');
+  if (error) throw new Error(`get_my_friend_invite failed (${error.code})`);
+  const row = (data as DbFriendInvite[])[0];
+  return row ? toMyFriendInvite(row, appUrl()) : null;
+});

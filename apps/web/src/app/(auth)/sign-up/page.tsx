@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, UserPlus } from 'lucide-react';
 import { SignUp } from '@clerk/nextjs';
 import { GroupEmoji } from '@whosfree/ui/components/person-avatar';
 import { SignUpSteps } from '@/components/auth/sign-up-steps';
-import { getInvite, getRememberedInviteCode } from '@/lib/data/invites';
+import { getAnyInvite, getRememberedInviteCode } from '@/lib/data/invites';
 
 export const metadata: Metadata = { title: 'Sign up' };
 
@@ -16,11 +16,24 @@ export const metadata: Metadata = { title: 'Sign up' };
 export default async function SignUpPage({ searchParams }: PageProps<'/sign-up'>) {
   const { invite: param } = await searchParams;
   const code = (await getRememberedInviteCode()) ?? (typeof param === 'string' ? param : null);
-  const invite = code ? await getInvite(code) : null;
+  const found = code ? await getAnyInvite(code) : null;
+  const invite = found?.kind === 'group' ? found.invite : null;
+  // WF-042: a friend invite link. Once sign-up and onboarding are done, proxy.ts opens
+  // /join/<code> to send the request.
+  const friendInvite = found?.kind === 'friend' ? found.invite : null;
   return (
     <div className="flex flex-col">
       <SignUpSteps current={0} />
       <div className="flex flex-col gap-6">
+        {friendInvite?.state === 'ok' ? (
+          <p className="flex items-center gap-3 rounded-xl border bg-card p-3 text-sm">
+            <UserPlus aria-hidden="true" className="size-5 shrink-0 text-primary-ink" />
+            <span>
+              <span className="font-semibold">{friendInvite.inviterName}</span> invited you to be
+              friends. You&apos;ll choose what they can see once you&apos;re set up.
+            </span>
+          </p>
+        ) : null}
         {invite?.state === 'ok' ? (
           <p className="flex items-center gap-3 rounded-xl border bg-card p-3 text-sm">
             <GroupEmoji emoji={invite.emoji} size="sm" />

@@ -10,7 +10,12 @@ import type { NextRequest } from 'next/server';
 import { accountStep, gate, routeKind } from '@/lib/auth/gate';
 import type { AccountStep } from '@/lib/auth/gate';
 import { newProfile, TIMEZONE_COOKIE } from '@/lib/auth/profile';
-import { INVITE_COOKIE, inviteCodeFromPath, inviteCookieOptions } from '@/lib/social/invite-cookie';
+import {
+  INVITE_COOKIE,
+  inviteCodeFromPath,
+  inviteCookieOptions,
+  inviteToResume,
+} from '@/lib/social/invite-cookie';
 import { supabaseWithToken } from '@/lib/supabase/server';
 import type { ServerSupabase } from '@/lib/supabase/server';
 
@@ -30,6 +35,30 @@ function rememberInvite(req: NextRequest): NextResponse | undefined {
   if (!code) return undefined;
   const res = NextResponse.next();
   res.cookies.set(INVITE_COOKIE, code, inviteCookieOptions(req.nextUrl.protocol === 'https:'));
+  return res;
+}
+
+/**
+ * After sign-up and onboarding, picks a remembered friend invite link up again (WF-042): on the
+ * first visit to Now, if the code is a working friend link, opens /join/<code> (who it adds, the
+ * tier picker, the request) and forgets the code. Group invites are left to onboarding and
+ * /join (WF-045). Best effort: any error just shows Now.
+ */
+async function resumeFriendInvite(
+  req: NextRequest,
+  supabase: ServerSupabase,
+): Promise<NextResponse | undefined> {
+  const code = inviteToResume(req.nextUrl.pathname, req.cookies.get(INVITE_COOKIE)?.value);
+  if (!code) return undefined;
+  const { data, error } = await supabase.rpc('get_friend_invite_summary', { code });
+  // No row: a group invite (or a link this user can't use). Leave the cookie to the group flow.
+  const row = error ? undefined : data[0];
+  if (!row) return undefined;
+  const res =
+    row.status === 'valid'
+      ? NextResponse.redirect(new URL(`/join/${code}`, req.url))
+      : NextResponse.next();
+  res.cookies.delete(INVITE_COOKIE);
   return res;
 }
 
@@ -57,7 +86,7 @@ export default clerkMiddleware(async (auth, req) => {
 
   switch (decision.type) {
     case 'allow':
-      return;
+      return supabase ? resumeFriendInvite(req, supabase) : undefined;
     case 'sign-in':
       return redirectToSignIn({ returnBackUrl: req.url });
     case 'redirect':

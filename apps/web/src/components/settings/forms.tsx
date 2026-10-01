@@ -42,7 +42,6 @@ export function ProfileForm({
     handle: string;
     timeZone: string;
     email: string | null;
-    photoFromGoogle: boolean;
   };
 }) {
   const [name, setName] = useState(initial.name);
@@ -113,12 +112,9 @@ export function ProfileForm({
           ))}
         </select>
       </div>
-      {/* Google or email + password (FR-AUTH-1, D45). TODO(WF-040): photo upload needs storage. */}
-      {initial.email || initial.photoFromGoogle ? (
-        <p className="text-xs text-muted-foreground">
-          {initial.email ? `Signed in as ${initial.email}. ` : null}
-          {initial.photoFromGoogle ? 'Your photo comes from Google.' : null}
-        </p>
+      {/* Google or email + password (FR-AUTH-1, D45). The photo is edited above (AvatarEditor). */}
+      {initial.email ? (
+        <p className="text-xs text-muted-foreground">Signed in as {initial.email}.</p>
       ) : null}
       <div className="flex items-center gap-3">
         <Button type="submit" size="sm" disabled={pending}>

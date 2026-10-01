@@ -1,12 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import {
+  FRIEND_INVITE_RESUME_PATH,
   INVITE_COOKIE_MAX_AGE,
   inviteCodeFromPath,
   inviteCookieOptions,
+  inviteToResume,
   isInviteCode,
 } from './invite-cookie';
 
 const CODE = 'AbCdEfGhIjKlMnOpQr_-12';
+
+describe('inviteToResume (WF-042)', () => {
+  it('resumes a remembered code on Now only', () => {
+    expect(inviteToResume(FRIEND_INVITE_RESUME_PATH, CODE)).toBe(CODE);
+    expect(inviteToResume('/friends', CODE)).toBeNull();
+    expect(inviteToResume('/onboarding/visibility', CODE)).toBeNull();
+    expect(inviteToResume(`/join/${CODE}`, CODE)).toBeNull();
+  });
+
+  it('ignores a missing or mangled cookie', () => {
+    expect(inviteToResume(FRIEND_INVITE_RESUME_PATH, undefined)).toBeNull();
+    expect(inviteToResume(FRIEND_INVITE_RESUME_PATH, 'nope')).toBeNull();
+  });
+});
 
 describe('isInviteCode (WF-045)', () => {
   it('accepts the 22-character base64url codes the database makes', () => {

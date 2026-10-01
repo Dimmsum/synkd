@@ -67,4 +67,8 @@ describe('database error messages', () => {
     expect(hoursErrorMessage('22023')).toMatch(/end time must be after/);
     expect(statusErrorMessage('P0002')).toMatch(/signing up/);
   });
+
+  it('explains the status rate limit (WF-063, NFR-SEC-9)', () => {
+    expect(statusErrorMessage(DB_ERROR.rateLimited)).toMatch(/a lot this hour/);
+  });
 });

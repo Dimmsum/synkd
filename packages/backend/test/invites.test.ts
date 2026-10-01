@@ -102,13 +102,14 @@ describe('invite codes', () => {
     await expect(insert('A'.repeat(22))).rejects.toThrow(/invites_code_key/);
   });
 
-  it('every invite belongs to a group until friend invites exist', async () => {
+  it('an invite without a group is a friend link: no expiry or use limit (WF-042)', async () => {
     await expect(
-      db.admin.query(`insert into public.invites (code, inviter_id) values ($1, $2)`, [
-        'B'.repeat(22),
-        admin,
-      ]),
-    ).rejects.toThrow(/invites_group_required/);
+      db.admin.query(
+        `insert into public.invites (code, inviter_id, expires_at) values ($1, $2, now() + interval '1 day')`,
+        ['B'.repeat(22), admin],
+      ),
+    ).rejects.toThrow(/invites_friend_link_unlimited/);
+    // friend-invites.test.ts covers friend links themselves.
   });
 
   it('clients cannot read or write the invites table directly', async () => {

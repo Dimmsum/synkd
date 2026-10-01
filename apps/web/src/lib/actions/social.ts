@@ -5,14 +5,29 @@
 // the member cap) and rate-limits abusable writes (NFR-SEC-9, D41). The checks here only
 // catch obvious input mistakes early.
 
+import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { after } from 'next/server';
 import { DEFAULT_TIER, normalizeHandleInput, Tier, type GroupPermission } from '@whosfree/shared';
-import type { PublicProfile, SendFriendRequestResult } from '@whosfree/backend';
-import { createServerSupabase } from '@/lib/supabase/server';
-import { isAlreadyMember } from '@/lib/social/errors';
+import type {
+  FriendInvite,
+  PublicProfile,
+  RequestFriendByInviteResult,
+  SendFriendRequestResult,
+} from '@whosfree/backend';
+import { appUrl } from '@/lib/config';
+import { sendPushToUser } from '@/lib/push/send';
+import { createServerSupabase, type ServerSupabase } from '@/lib/supabase/server';
+import { isAlreadyMember, TRY_AGAIN } from '@/lib/social/errors';
 import { INVITE_COOKIE, isInviteCode } from '@/lib/social/invite-cookie';
-import { isUuid, toPublicPerson } from '@/lib/social/mappers';
+import {
+  isUuid,
+  toMyFriendInvite,
+  toPublicPerson,
+  type MyFriendInvite,
+} from '@/lib/social/mappers';
+import { friendAcceptedPushPayload, friendRequestPushPayload } from '@/lib/social/push';
 import { failFrom, refreshSocial } from '@/lib/social/server';
 import type { PublicPerson } from '@/lib/types';
 import { fail, ok, type ActionResult } from './result';
@@ -31,6 +46,28 @@ function handleOrNull(input: string): string | null {
 // ---------------------------------------------------------------------------
 // Friends (WF-040, WF-042, WF-047)
 // ---------------------------------------------------------------------------
+
+/** A friend request notification stays useful for a day (WF-091 defaults to a ping's 2 hours). */
+const FRIEND_PUSH_TTL_SECONDS = 24 * 60 * 60;
+
+/**
+ * Notifies `recipientId` that the signed-in user sent them a request (`pending`) or that they
+ * are now friends (`accepted`), by Web Push after the response (WF-091). Only call it right after
+ * a database function accepted that request as the signed-in user: Postgres has then checked
+ * blocks and limits for this pair (D41). The title carries the user's own display name, read
+ * from their own row under RLS, as a ping's does. Nothing is logged (NFR-SEC-11).
+ */
+async function notifyFriendRequest(
+  supabase: ServerSupabase,
+  recipientId: string,
+  status: SendFriendRequestResult,
+): Promise<void> {
+  const { data } = await supabase.from('users').select('name').maybeSingle();
+  const name = data?.name ?? '';
+  const payload =
+    status === 'accepted' ? friendAcceptedPushPayload(name) : friendRequestPushPayload(name);
+  after(() => sendPushToUser(recipientId, payload, { ttlSeconds: FRIEND_PUSH_TTL_SECONDS }));
+}
 
 /**
  * Looks someone up by exact handle before sending a request (FR-AUTH-2, WF-040). Returns null
@@ -62,11 +99,11 @@ export async function sendFriendRequest(
   const h = handleOrNull(handle);
   if (!h) return fail('That doesn’t look like a handle.');
   if (!validTier(tier)) return fail('Pick what they can see.');
-  const supabase = await createServerSupabase();
-  const { data, error } = await supabase.rpc('send_friend_request_by_handle', { handle: h, tier });
-  if (error) return failFrom('send_friend_request_by_handle', error);
-  refreshSocial();
-  return { ok: true, data: { status: data as SendFriendRequestResult } };
+  // By id, so the recipient can be notified (find_user_by_handle applies the same block rules).
+  const found = await findPersonByHandle(h);
+  if (!found.ok) return found;
+  if (!found.data.person) return fail(NOT_FOUND);
+  return sendFriendRequestTo(found.data.person.id, tier);
 }
 
 /** As `sendFriendRequest`, by user id: from a friend link or its QR code (WF-042). */
@@ -79,8 +116,10 @@ export async function sendFriendRequestTo(
   const supabase = await createServerSupabase();
   const { data, error } = await supabase.rpc('send_friend_request', { user_id: personId, tier });
   if (error) return failFrom('send_friend_request', error);
+  const status = data as SendFriendRequestResult;
+  await notifyFriendRequest(supabase, personId, status);
   refreshSocial();
-  return { ok: true, data: { status: data as SendFriendRequestResult } };
+  return { ok: true, data: { status } };
 }
 
 /**
@@ -104,8 +143,70 @@ export async function respondToFriendRequest(input: {
     : await supabase.rpc('decline_friend_request', { user_id: input.requestId });
   if (error)
     return failFrom(input.accept ? 'accept_friend_request' : 'decline_friend_request', error);
+  // Accepting is only possible while they had asked and nobody is blocked (checked above).
+  if (input.accept) await notifyFriendRequest(supabase, input.requestId, 'accepted');
   refreshSocial();
   return ok;
+}
+
+/**
+ * Your friend invite link (WF-042, FR-SOC-1): a revocable /i/<code> link that lets anyone who
+ * opens it, signed up already or not, send you a request with the tier they choose. Made on
+ * request, then kept until you replace or turn it off. 10 new links a day (NFR-SEC-9).
+ */
+export async function createFriendInvite(): Promise<ActionResult<{ invite: MyFriendInvite }>> {
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase.rpc('create_friend_invite');
+  if (error) return failFrom('create_friend_invite', error);
+  revalidatePath('/friends');
+  return { ok: true, data: { invite: toMyFriendInvite(data as FriendInvite, appUrl()) } };
+}
+
+/** Turns your friend invite link off and makes a new one (the old one stops working at once). */
+export async function regenerateFriendInvite(): Promise<ActionResult<{ invite: MyFriendInvite }>> {
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase.rpc('regenerate_friend_invite');
+  if (error) return failFrom('regenerate_friend_invite', error);
+  revalidatePath('/friends');
+  return { ok: true, data: { invite: toMyFriendInvite(data as FriendInvite, appUrl()) } };
+}
+
+/** Turns your friend invite link off. Your /add/<id> friend link and handle still work. */
+export async function revokeFriendInvite(): Promise<ActionResult> {
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.rpc('revoke_friend_invite');
+  if (error) return failFrom('revoke_friend_invite', error);
+  revalidatePath('/friends');
+  return ok;
+}
+
+/**
+ * Sends a friend request through someone's friend invite link (WF-042), with the tier they'll
+ * see once they accept (FR-VIS-1, T1 preselected). `request_friend_by_invite` checks the link,
+ * blocks and the friend request limits, and returns who to notify. `accepted` means they had
+ * already asked you. Clears the remembered invite (WF-045 cookie) once it has worked.
+ */
+export async function requestFriendByInvite(input: {
+  code: string;
+  tier: Tier;
+}): Promise<ActionResult<{ status: SendFriendRequestResult }>> {
+  if (!validTier(input.tier)) return fail('Pick what they can see.');
+  if (!isInviteCode(input.code)) return fail('That invite link doesn’t work.');
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase.rpc('request_friend_by_invite', {
+    code: input.code,
+    tier: input.tier,
+  });
+  if (error) return failFrom('request_friend_by_invite', error);
+  const row = (data as RequestFriendByInviteResult[])[0];
+  if (!row) {
+    console.error('request_friend_by_invite returned no row');
+    return fail(TRY_AGAIN);
+  }
+  await notifyFriendRequest(supabase, row.user_id, row.status);
+  (await cookies()).delete(INVITE_COOKIE);
+  refreshSocial();
+  return { ok: true, data: { status: row.status } };
 }
 
 /** Withdraws a request you sent (idempotent). */
