@@ -20,6 +20,7 @@
 | 0.6 | 2026-09-30 | **Backend moves from Convex to Supabase** (D40): Postgres with row-level security, Supabase Storage, Realtime and Cron. Clerk stays for sign-in, connected through Supabase's third-party auth. **Authorisation and tier redaction are enforced in Postgres**, and TypeScript server logic runs on the Next.js server (D41). Updated the architecture (§8), data model (§9), NFRs and risks to match. |
 | 0.7 | 2026-09-30 | Recorded decisions from building the availability engine (D42): recurrence and timezones are handled in-house instead of with `rrule` and `date-fns-tz`, `exdates` are occurrence start instants, and week numbers count from the Monday week containing the schedule's start date (FR-IMP-5). |
 | 0.8 | 2026-09-30 | Data model matches the first migrations (D43): blocks get their own directed `blocks` table instead of a `blocked` friendship status; `events` use `startsAt`/`endsAt`; group permissions are four boolean columns; a source's period is three columns. |
+| 0.11 | 2026-09-30 | Phone navigation is a **hamburger menu** in the header, not the design's bottom bar (FR-WEB-9). |
 | 0.10 | 2026-09-30 | Sign-in accepts **email and password** as well as Google (D45, FR-AUTH-1). |
 | 0.9 | 2026-09-30 | Added **offline friends** (D44, FR-SOC-14 to FR-SOC-19, J8): a user can add someone who isn't on whosfree and upload or type in that person's timetable, so the app is useful before their friends join. Private to the uploader, a nickname only, with a permission confirmation. Part of Milestone A. |
 
@@ -201,6 +202,7 @@ Shanice is why every group gets its own visibility tier, chosen when you join it
 | FR-WEB-6 | **Help/FAQ**, including a step-by-step guide to installing the app on iOS and a page explaining privacy tiers. | S |
 | FR-WEB-7 | **Link previews** (Open Graph) for invite links, so WhatsApp shows "Join *Flat 4* on whosfree". The group name becomes visible to anyone who has the link. | S |
 | FR-WEB-8 | A **404 page and error pages** that point people somewhere useful. | M |
+| FR-WEB-9 | **Navigation:** desktop uses the left sidebar from the design. On phones the app follows the design (`Who's Free scheduling UI/`) **except** for its bottom navigation bar: there is no bottom bar, and the same destinations and groups open from a **hamburger menu** in the top header, as a drawer. | M |
 
 ### 6.2 Authentication & profile (AUTH) (D19)
 | ID | Requirement | Priority |

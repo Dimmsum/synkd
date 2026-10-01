@@ -473,7 +473,7 @@ The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy
 - **PRD:** §8.3, FR-WEB-8, NFR-UX-2
 
 **Acceptance criteria**
-- [x] A signed-in layout with mobile bottom navigation (Now, Schedule, Groups, Inbox, Settings)
+- [x] A signed-in layout with navigation to Now, Schedule, Friends, Groups, Find a time, Inbox and Settings: the sidebar on desktop, and on phones a **hamburger menu** in the header that opens a drawer (FR-WEB-9; no bottom bar, owner decision 2026-09-30)
 - [x] Placeholder routes from PRD §8.3 exist and are protected
 - [x] The 404 and error pages point people somewhere useful
 - [x] Tap targets are at least 44×44 px
