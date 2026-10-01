@@ -12,7 +12,9 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'See which friends are free right now and ping them in one tap.',
     lang: 'en-JM',
     dir: 'ltr',
-    start_url: '/now',
+    // /onboarding resumes an unfinished setup (e.g. turning on notifications right after adding
+    // the app to the iPhone Home Screen) and goes straight to Now for everyone else (WF-068).
+    start_url: '/onboarding',
     scope: '/',
     display: 'standalone',
     background_color: '#f6f5fa',

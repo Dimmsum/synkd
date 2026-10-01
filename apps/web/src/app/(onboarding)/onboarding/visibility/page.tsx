@@ -1,27 +1,30 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { EyeOff, ShieldCheck } from 'lucide-react';
+import { CircleX, EyeOff, ShieldCheck } from 'lucide-react';
 import { TIERS } from '@whosfree/shared';
 import { buttonVariants } from '@whosfree/ui/components/button';
 import { GroupEmoji } from '@whosfree/ui/components/person-avatar';
 import { TIER_DETAILS } from '@whosfree/ui/lib/tiers';
 import { JoinGroupForm } from '@/components/onboarding/join-group';
 import { OnboardingShell } from '@/components/onboarding/shell';
+import { advanceOnboarding } from '@/lib/actions/onboarding';
 import { getInvite, getRememberedInviteCode } from '@/lib/data/invites';
-import { nextStepHref } from '@/lib/onboarding';
+import { getOnboardingState } from '@/lib/data/onboarding';
+import { nextStepHref, onboardingSteps } from '@/lib/onboarding';
 
 export const metadata: Metadata = { title: 'Who sees what' };
 
 // J1.7 (FR-VIS-1). With an invite, pick the group's tier and join; without one, explain
 // the default. The invite is the one remembered from /i/<code> (WF-045); `?invite=` still
-// works for links made before the cookie existed. Joining clears it.
+// works for links made before the cookie existed. Joining clears it, then records the step and
+// moves on (WF-068). The flow only comes here when arriving through an invite.
 export default async function OnboardingVisibilityPage({
   searchParams,
 }: PageProps<'/onboarding/visibility'>) {
   const { invite: param } = await searchParams;
   const code = (await getRememberedInviteCode()) ?? (typeof param === 'string' ? param : null);
-  const invite = code ? await getInvite(code) : null;
-  const next = nextStepHref('sharing');
+  const [invite, state] = await Promise.all([code ? getInvite(code) : null, getOnboardingState()]);
+  const advance = advanceOnboarding.bind(null, 'sharing');
 
   if (invite && invite.state === 'ok') {
     return (
@@ -35,7 +38,32 @@ export default async function OnboardingVisibilityPage({
           </span>
         }
       >
-        <JoinGroupForm code={invite.code} groupName={invite.groupName} next={next} />
+        <JoinGroupForm code={invite.code} groupName={invite.groupName} afterJoin={advance} />
+      </OnboardingShell>
+    );
+  }
+
+  if (invite) {
+    // Remembered, but the group filled up or the link stopped working since.
+    return (
+      <OnboardingShell
+        step="sharing"
+        title={invite.state === 'full' ? 'This group is full' : 'This invite link doesn’t work'}
+        subtitle={
+          invite.state === 'full'
+            ? `Ask ${invite.inviterName.split(' ')[0]} to make some room, then open the link again.`
+            : 'It may have been turned off or replaced. Ask whoever sent it for a new one.'
+        }
+      >
+        <p className="flex items-center gap-2 text-sm text-body-foreground">
+          <CircleX aria-hidden="true" className="size-4" /> You can join a group any time from an
+          invite link.
+        </p>
+        <form action={advance} className="flex flex-col">
+          <button type="submit" className={buttonVariants({ size: 'lg' })}>
+            Continue
+          </button>
+        </form>
       </OnboardingShell>
     );
   }
@@ -69,7 +97,10 @@ export default async function OnboardingVisibilityPage({
         <ShieldCheck aria-hidden="true" className="size-4" /> You pick a level each time you add a
         friend or join a group.
       </p>
-      <Link href={next} className={buttonVariants({ size: 'lg' })}>
+      <Link
+        href={nextStepHref('sharing', onboardingSteps(state))}
+        className={buttonVariants({ size: 'lg' })}
+      >
         Got it
       </Link>
     </OnboardingShell>
