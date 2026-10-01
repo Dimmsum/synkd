@@ -4,6 +4,9 @@
 
 import type {
   Friend as DbFriend,
+  FriendInvite as DbFriendInvite,
+  FriendInvitePreview as DbFriendInvitePreview,
+  FriendInviteSummary as DbFriendInviteSummary,
   FriendRequest as DbFriendRequest,
   GroupInvite as DbGroupInvite,
   GroupMember as DbGroupMember,
@@ -212,6 +215,56 @@ export function toInviteSummary(code: string, row: DbInviteSummary | undefined):
     };
   }
   return { state: 'invalid', code, reason: row.status };
+}
+
+/**
+ * What the public invite page may show about a friend invite link (FR-WEB-3, WF-042): only the
+ * inviter's name, never an id, handle or avatar.
+ */
+export type FriendInviteSummary =
+  | { state: 'ok'; code: string; inviterName: string }
+  | { state: 'invalid'; code: string; reason: 'not_found' | 'revoked' };
+
+/** `get_friend_invite_summary`'s row (none: not a friend link, or blocked) → the page's model. */
+export function toFriendInviteSummary(
+  code: string,
+  row: DbFriendInviteSummary | undefined,
+): FriendInviteSummary {
+  if (!row) return { state: 'invalid', code, reason: 'not_found' };
+  if (row.status === 'valid') return { state: 'ok', code, inviterName: row.inviter_name };
+  return { state: 'invalid', code, reason: 'revoked' };
+}
+
+/** Who a friend invite link adds, for a signed-in viewer (`preview_friend_invite`). */
+export type FriendInvitePreview =
+  | { state: 'ok'; code: string; person: PublicPerson }
+  | { state: 'invalid'; code: string; reason: 'not_found' | 'revoked' };
+
+export function toFriendInvitePreview(
+  code: string,
+  row: DbFriendInvitePreview | undefined,
+): FriendInvitePreview {
+  if (!row) return { state: 'invalid', code, reason: 'not_found' };
+  if (row.status === 'revoked') return { state: 'invalid', code, reason: 'revoked' };
+  return {
+    state: 'ok',
+    code,
+    person: {
+      ...toPerson({ id: row.user_id, name: row.name, handle: row.handle }),
+      relationship: row.relationship,
+    },
+  };
+}
+
+/** The viewer's own friend invite link (WF-042), as the Add friend dialog shows it. */
+export interface MyFriendInvite {
+  code: string;
+  url: string;
+  uses: number;
+}
+
+export function toMyFriendInvite(row: DbFriendInvite, appUrl: string): MyFriendInvite {
+  return { code: row.code, url: inviteUrl(row.code, appUrl), uses: row.uses };
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

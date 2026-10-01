@@ -22,6 +22,22 @@ export function inviteCodeFromPath(pathname: string): string | null {
   return isInviteCode(code) ? code : null;
 }
 
+/**
+ * Where a remembered friend invite link (WF-042) is picked up again: Now, where onboarding ends
+ * (J1.9). Group invites are joined during onboarding's sharing step; a friend invite has no step
+ * there, so proxy.ts opens /join/<code> on the first visit to Now and forgets the cookie.
+ */
+export const FRIEND_INVITE_RESUME_PATH = '/now';
+
+/**
+ * The remembered code to resume on this request, or null: only on FRIEND_INVITE_RESUME_PATH and
+ * only for a well-formed code. proxy.ts then checks it really is a working friend link.
+ */
+export function inviteToResume(pathname: string, cookieValue: string | undefined): string | null {
+  if (pathname !== FRIEND_INVITE_RESUME_PATH) return null;
+  return isInviteCode(cookieValue) ? cookieValue : null;
+}
+
 export function inviteCookieOptions(secure: boolean) {
   return {
     httpOnly: true,

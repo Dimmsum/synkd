@@ -18,11 +18,14 @@ import {
   mostRestrictiveGroup,
   pickInvite,
   toConnection,
+  toFriendInvitePreview,
+  toFriendInviteSummary,
   toFriendRequest,
   toGroupInvite,
   toGroupMember,
   toGroupSummary,
   toInviteSummary,
+  toMyFriendInvite,
   toPermissions,
   toPerson,
   toPublicPerson,
@@ -318,6 +321,60 @@ describe('invites (WF-045)', () => {
       code: CODE,
       reason: 'not_found',
     });
+  });
+});
+
+describe('friend invites (WF-042)', () => {
+  it('toFriendInviteSummary shows only the inviter’s name while the link works', () => {
+    expect(toFriendInviteSummary(CODE, { status: 'valid', inviter_name: 'Aaliyah' })).toEqual({
+      state: 'ok',
+      code: CODE,
+      inviterName: 'Aaliyah',
+    });
+    expect(toFriendInviteSummary(CODE, { status: 'revoked', inviter_name: null })).toEqual({
+      state: 'invalid',
+      code: CODE,
+      reason: 'revoked',
+    });
+    expect(toFriendInviteSummary(CODE, undefined)).toEqual({
+      state: 'invalid',
+      code: CODE,
+      reason: 'not_found',
+    });
+  });
+
+  it('toFriendInvitePreview maps the inviter to a public person', () => {
+    expect(
+      toFriendInvitePreview(CODE, {
+        status: 'valid',
+        user_id: ID_A,
+        name: 'Aaliyah',
+        handle: null,
+        avatar_url: 'https://example.com/a.webp',
+        relationship: 'none',
+      }),
+    ).toEqual({
+      state: 'ok',
+      code: CODE,
+      person: { id: ID_A, name: 'Aaliyah', handle: '', hue: hueFor(ID_A), relationship: 'none' },
+    });
+    expect(
+      toFriendInvitePreview(CODE, {
+        status: 'revoked',
+        user_id: null,
+        name: null,
+        handle: null,
+        avatar_url: null,
+        relationship: null,
+      }),
+    ).toEqual({ state: 'invalid', code: CODE, reason: 'revoked' });
+    expect(toFriendInvitePreview(CODE, undefined).state).toBe('invalid');
+  });
+
+  it('toMyFriendInvite builds the /i/ link', () => {
+    expect(
+      toMyFriendInvite({ id: ID_A, code: CODE, uses: 2, created_at: '2026-10-01T00:00:00Z' }, APP),
+    ).toEqual({ code: CODE, url: `${APP}/i/${CODE}`, uses: 2 });
   });
 });
 
