@@ -36,6 +36,14 @@ export const MANUAL_STATUS_LABELS = {
 export const STATUS_LABEL_MAX_LENGTH = 40;
 export const STATUS_OVERRIDE_MAX_DAYS = 7;
 
+/**
+ * Manual status changes per user per hour (FR-AVL-3, NFR-SEC-9, WF-063). Each one sends a
+ * Realtime "changed" signal to every connection, so it is limited like other abusable writes.
+ * `set_status` enforces it (backend migration 20261003200000_set_status_rate_limit.sql);
+ * `clear_status` is never limited.
+ */
+export const STATUS_CHANGES_PER_HOUR = 60;
+
 /** Visibility tiers (PRD §6.7, D1). T1 is the default and the minimum (D20). */
 export const TIERS = [1, 2, 3] as const;
 type Tier = (typeof TIERS)[number];

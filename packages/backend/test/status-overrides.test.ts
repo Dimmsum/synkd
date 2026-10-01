@@ -1,7 +1,7 @@
 // WF-063: manual status override (PRD §9 statusOverrides, FR-AVL-3, J5).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { MANUAL_STATUSES } from '@whosfree/shared';
+import { MANUAL_STATUSES, STATUS_CHANGES_PER_HOUR } from '@whosfree/shared';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
 import { addUser } from './harness/seed';
@@ -225,6 +225,60 @@ describe('set_status()', () => {
     expect(rows[0]?.args).toBe(
       'status text, label text DEFAULT NULL::text, ends_at timestamp with time zone DEFAULT NULL::timestamp with time zone',
     );
+  });
+});
+
+describe('set_status() rate limit (NFR-SEC-9)', () => {
+  /** As if `userId` had already set their status `count` times this hour. */
+  async function setHourlyCount(userId: string, count: number): Promise<void> {
+    await db.admin.query(
+      `insert into public.rate_limits (user_id, action, window_start, window_end, count)
+       select $1, 'status_change', w, w + interval '1 hour', $2
+       from (select date_bin(interval '1 hour', now(), timestamptz '2000-01-01 00:00:00+00') as w) t`,
+      [userId, count],
+    );
+  }
+
+  it(`allows STATUS_CHANGES_PER_HOUR (${STATUS_CHANGES_PER_HOUR}) changes an hour, then raises PT429`, async () => {
+    await setHourlyCount(alice, STATUS_CHANGES_PER_HOUR - 1);
+    await setStatus('user_alice', 'busy');
+
+    const error = await db
+      .asUser('user_alice')
+      .query(`select * from public.set_status('free')`)
+      .then(
+        () => null,
+        (e: unknown) => e as { code: string; message: string; detail?: string },
+      );
+    expect(error).toMatchObject({ code: 'PT429', message: 'Too many attempts' });
+    expect(JSON.parse(error?.detail ?? '{}')).toMatchObject({
+      action: 'status_change',
+      limit: STATUS_CHANGES_PER_HOUR,
+    });
+    // The refused change wrote nothing: busy is still the active status.
+    expect((await activeOf(alice)).map((r) => r.status)).toEqual(['busy']);
+  });
+
+  it('counts per user, and only changes that succeed', async () => {
+    await setHourlyCount(alice, STATUS_CHANGES_PER_HOUR);
+    await expect(setStatus('user_bob', 'away')).resolves.toMatchObject({ status: 'away' });
+
+    await expect(setStatus('user_bob', 'nope')).rejects.toMatchObject({ code: '22023' });
+    const { rows } = await db.admin.query<{ count: number }>(
+      `select count from public.rate_limits where user_id = $1 and action = 'status_change'`,
+      [bob],
+    );
+    expect(rows).toEqual([{ count: 1 }]);
+  });
+
+  it('never limits clear_status, so going back to automatic always works', async () => {
+    await setStatus('user_alice', 'dnd');
+    await db.admin.query(
+      `update public.rate_limits set count = $2 where user_id = $1 and action = 'status_change'`,
+      [alice, STATUS_CHANGES_PER_HOUR],
+    );
+    await db.asUser('user_alice').query(`select public.clear_status()`);
+    expect(await activeOf(alice)).toEqual([]);
   });
 });
 

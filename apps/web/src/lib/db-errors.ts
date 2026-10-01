@@ -46,7 +46,8 @@ export function statusErrorMessage(code: string | undefined): string {
     case PG.invalidParameter:
       return 'Check the end time and note, then try again.';
     case DB_ERROR.rateLimited:
-      return 'You’re changing your status a lot. Wait a moment and try again.';
+      // STATUS_CHANGES_PER_HOUR (NFR-SEC-9): the window is an hour, so "a moment" would mislead.
+      return 'You’ve changed your status a lot this hour. Try again a little later.';
     case DB_ERROR.noAccount:
     case PG.notFound:
       return NO_ACCOUNT;
