@@ -151,6 +151,26 @@ export const DEFAULT_AVAILABLE_HOURS = { start: '08:00', end: '22:00' } as const
 
 export const DEFAULT_TIMEZONE = 'America/Jamaica';
 
+/**
+ * Profile photos (FR-AUTH-2, WF-040). Users can replace the Google photo, or add one after email
+ * sign-up. The web server checks the file's type by its first bytes, then re-encodes it as a
+ * square WebP of AVATAR_SIZE_PX without any metadata (no EXIF, so no GPS: D35) and stores it in
+ * the public Storage bucket AVATAR_BUCKET under `<users.id>/<random>.webp` (backend migration
+ * 20261003200200_avatars_bucket.sql, which also caps stored files at AVATAR_STORED_MAX_BYTES and
+ * explains why the bucket is public).
+ */
+export const AVATAR_BUCKET = 'avatars';
+export const AVATAR_SIZE_PX = 256;
+export const AVATAR_STORED_MAX_BYTES = 256 * 1024;
+/**
+ * Largest photo the server accepts, in bytes. It fits in a Server Action request (1 MB by
+ * default); the browser shrinks bigger photos before sending them (NFR-PERF-6).
+ */
+export const AVATAR_UPLOAD_MAX_BYTES = 900 * 1024;
+/** File types accepted for a profile photo, checked by magic bytes on the server. */
+export const AVATAR_UPLOAD_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+export type AvatarUploadType = (typeof AVATAR_UPLOAD_TYPES)[number];
+
 /** Display name length, in characters (PRD §9 `users.name`, FR-AUTH-2). The database checks 1–100. */
 export const DISPLAY_NAME_MAX_LENGTH = 100;
 
