@@ -1,9 +1,12 @@
 // Builds view models from the mock data. Only lib/data/* should import this.
-// TODO(WF-064): delete with the rest of lib/mock.
+// The Now screen, statuses and the viewer are real since WF-064. What's left feeds the screens
+// that aren't wired yet: My schedule and group week/day timelines (WF-065/066), the slot
+// finder (WF-098), the inbox (WF-092), uploads (WF-027/029/032) and "Who can see me" (WF-048).
+// Delete each part with the issue that replaces it.
 
 import { DEFAULT_TIMEZONE } from '@whosfree/shared';
 import { addDays, dateKey } from '@whosfree/ui/lib/time';
-import type { Connection, GroupSummary, MemberBusyDay, Person, VisibleBlock } from '@/lib/types';
+import type { GroupSummary, MemberBusyDay, Person, VisibleBlock } from '@/lib/types';
 import { getMockNow } from './clock';
 import { GROUPS, PEOPLE, VIEWER, type MockGroup, type MockPerson } from './data';
 import { busyIntervals, eventsOn, redact, statusAt } from './engine';
@@ -26,28 +29,6 @@ export const toPerson = (p: MockPerson): Person => ({
 
 export const viewerGroups = () => GROUPS.filter((g) => g.memberIds.includes(VIEWER.id));
 export const groupsOf = (id: string) => viewerGroups().filter((g) => g.memberIds.includes(id));
-
-export function toConnection(p: MockPerson): Connection {
-  const { now, today, tz } = ctx();
-  const s = statusAt(p, now, today, tz);
-  return {
-    ...toPerson(p),
-    isFriend: p.isFriend,
-    tier: p.tierForViewer,
-    status: s.status,
-    until: s.until,
-    nextFreeAt: s.nextFreeAt,
-    activity: redact(s.activity, p.tierForViewer),
-    stale: Boolean(p.stale),
-    groupIds: groupsOf(p.id).map((g) => g.id),
-  };
-}
-
-/** Friends plus fellow group members (FR-SOC-5), without the viewer. */
-export function connections(): MockPerson[] {
-  const inGroups = new Set(viewerGroups().flatMap((g) => g.memberIds));
-  return PEOPLE.filter((p) => p.isFriend || inGroups.has(p.id));
-}
 
 export function toGroupSummary(g: MockGroup): GroupSummary {
   const members = g.memberIds.map(findPerson).filter((p): p is MockPerson => Boolean(p));

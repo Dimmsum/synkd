@@ -72,6 +72,54 @@ describe('describeStatus', () => {
     );
   });
 
+  it('leaves "until" off when nothing changes within the look-ahead', () => {
+    expect(describeStatus({ status: 'busy', until: null, nextFreeAt: null }, now, JM).label).toBe(
+      'Busy',
+    );
+    expect(describeStatus({ status: 'dnd', until: null, nextFreeAt: null }, now, JM).label).toBe(
+      'Do not disturb',
+    );
+  });
+
+  it('T2+: a manual "Studying/Focused" reads as such; T3 adds its note', () => {
+    expect(
+      describeStatus(
+        { status: 'busy', until: at3pm, nextFreeAt: at3pm, activity: { focused: true } },
+        now,
+        JM,
+      ),
+    ).toEqual({ tone: 'busy', label: 'Studying/Focused until 3:00 PM' });
+    expect(
+      describeStatus(
+        {
+          status: 'busy',
+          until: at3pm,
+          nextFreeAt: at3pm,
+          activity: { focused: true, title: 'Revising' },
+        },
+        now,
+        JM,
+      ),
+    ).toEqual({ tone: 'busy', label: 'Revising until 3:00 PM', detail: 'Studying/Focused' });
+  });
+
+  it('T3: the note on a manual free or away status goes underneath', () => {
+    expect(
+      describeStatus(
+        { status: 'free', until: at3pm, nextFreeAt: null, activity: { title: 'Come say hi' } },
+        now,
+        JM,
+      ),
+    ).toEqual({ tone: 'free', label: 'Free until 3:00 PM', detail: 'Come say hi' });
+  });
+
+  it('an unknown status still has words and its own icon tone (NFR-UX-1)', () => {
+    expect(describeStatus({ status: 'unknown', until: null, nextFreeAt: null }, now, JM)).toEqual({
+      tone: 'unknown',
+      label: 'Status unavailable right now',
+    });
+  });
+
   it('describes Free soon people by when they free up', () => {
     const s = describeStatus(
       { status: 'busy', until: at3pm, nextFreeAt: at3pm, activity: { category: 'lab' } },
@@ -90,6 +138,7 @@ describe('ping rules (FR-PING-1, D31)', () => {
     expect(pingPolicy('away')).toBe('confirm');
     expect(pingPolicy('dnd')).toBe('blocked');
     expect(pingPolicy('paused')).toBe('blocked');
+    expect(pingPolicy('unknown')).toBe('confirm');
   });
 
   it('counts emoji as one character', () => {

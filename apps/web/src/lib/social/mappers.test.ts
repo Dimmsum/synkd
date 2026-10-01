@@ -26,6 +26,7 @@ import {
   toPermissions,
   toPerson,
   toPublicPerson,
+  withPresence,
 } from './mappers';
 
 const ID_A = '11111111-1111-4111-8111-111111111111';
@@ -99,7 +100,7 @@ describe('people', () => {
     expect(friendToPerson(row)).toMatchObject({ id: ID_B, name: 'Shanice', handle: 'shan' });
   });
 
-  it('toConnection has no status yet and the minimum tier (TODO WF-064)', () => {
+  it('toConnection has no status yet and the minimum tier', () => {
     const c = toConnection(toPerson({ id: ID_A, name: 'K', handle: 'k' }), {
       isFriend: true,
       groupIds: [GROUP],
@@ -114,6 +115,45 @@ describe('people', () => {
       stale: false,
     });
     expect(c.activity).toBeUndefined();
+  });
+
+  it('withPresence takes status and resolved tier from the Now data (WF-064)', () => {
+    const base = toConnection(toPerson({ id: ID_A, name: 'K', handle: 'k' }), {
+      isFriend: true,
+      groupIds: [GROUP],
+    });
+    const fromNow = {
+      ...base,
+      name: 'Someone else',
+      isFriend: false,
+      groupIds: [],
+      tier: 3 as const,
+      status: 'busy' as const,
+      until: '2026-09-30T20:00:00.000Z',
+      nextFreeAt: '2026-09-30T20:00:00.000Z',
+      activity: { title: 'COMP2140 Lecture' },
+      upcoming: [],
+      refreshAt: null,
+    };
+    expect(withPresence(base, fromNow)).toEqual({
+      ...base,
+      tier: 3,
+      status: 'busy',
+      until: '2026-09-30T20:00:00.000Z',
+      nextFreeAt: '2026-09-30T20:00:00.000Z',
+      activity: { title: 'COMP2140 Lecture' },
+      upcoming: [],
+      refreshAt: null,
+    });
+  });
+
+  it('withPresence leaves the connection alone without a Now row for them', () => {
+    const base = toConnection(toPerson({ id: ID_A, name: 'K', handle: 'k' }), {
+      isFriend: true,
+      groupIds: [GROUP],
+    });
+    expect(withPresence(base, undefined)).toBe(base);
+    expect(withPresence(base, { ...base, id: ID_B, status: 'free' })).toBe(base);
   });
 });
 

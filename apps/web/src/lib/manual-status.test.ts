@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeOverride, describeOverride, nextLocalTime, parseStatusInput } from './manual-status';
+import { describeOverride, nextLocalTime, parseStatusInput } from './manual-status';
 
 const JM = 'America/Jamaica'; // UTC-5, no DST
 const now = '2026-09-30T19:30:00Z'; // 2:30 PM in Jamaica
@@ -88,37 +88,5 @@ describe('describeOverride (NFR-UX-1: words, not just colour)', () => {
       label: 'Do not disturb',
       detail: 'Exam',
     });
-  });
-});
-
-describe('activeOverride', () => {
-  const row = (status: string, startsAt: string, endsAt: string | null, label = null) => ({
-    status,
-    label,
-    starts_at: startsAt,
-    ends_at: endsAt,
-  });
-
-  it('ignores ended, future and unknown rows', () => {
-    expect(
-      activeOverride(
-        [
-          row('busy', inHours(-3), inHours(-1)),
-          row('free', inHours(1), null),
-          row('sleeping', inHours(-1), null),
-        ],
-        now,
-      ),
-    ).toBeNull();
-  });
-
-  it('the latest start wins, like the engine', () => {
-    expect(
-      activeOverride([row('dnd', inHours(-5), null), row('away', inHours(-1), inHours(1))], now),
-    ).toEqual({ status: 'away', label: null, endsAt: inHours(1) });
-  });
-
-  it('ends exactly at ends_at', () => {
-    expect(activeOverride([row('busy', inHours(-1), now)], now)).toBeNull();
   });
 });

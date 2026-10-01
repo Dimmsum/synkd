@@ -1,12 +1,7 @@
 'use client';
 
 import { useId, useState, useTransition } from 'react';
-import {
-  PING_TEMPLATES,
-  PING_TEXT_MAX_LENGTH,
-  type PingTemplate,
-  type Status,
-} from '@whosfree/shared';
+import { PING_TEMPLATES, PING_TEXT_MAX_LENGTH, type PingTemplate } from '@whosfree/shared';
 import { CircleCheck, Send } from 'lucide-react';
 import { Button } from '@whosfree/ui/components/button';
 import {
@@ -23,9 +18,10 @@ import { Textarea } from '@whosfree/ui/components/textarea';
 import { cn } from '@whosfree/ui/lib/utils';
 import { sendPing } from '@/lib/actions/pings';
 import { pingCharsLeft, pingPolicy } from '@/lib/ping-rules';
+import type { PresenceStatus } from '@/lib/types';
 
 export type PingTarget =
-  | { kind: 'person'; id: string; name: string; status: Status; statusLabel: string }
+  | { kind: 'person'; id: string; name: string; status: PresenceStatus; statusLabel: string }
   | { kind: 'group'; id: string; name: string; freeCount: number };
 
 /**

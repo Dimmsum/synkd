@@ -239,7 +239,7 @@ Everything else at P0, which adds:
 | WF-061 | Recurrence expansion and multi-user free intervals | feature | availability | P0 | 3 | A | done | 060 |
 | WF-062 | Available hours (onboarding slider and settings) | feature | web, backend | P0 | 3 | A | in-progress | 014, 060 |
 | WF-063 | Manual status override | feature | web, backend | P0 | 3 | A | in-progress | 060 |
-| WF-064 | Now screen (real-time, redacted) | feature | web, backend | P0 | 3 | A | in-progress | 041, 042, 043, 061 |
+| WF-064 | Now screen (real-time, redacted) | feature | web, backend | P0 | 3 | A | in-review | 041, 042, 043, 061 |
 | WF-065 | Friend detail and My schedule views | feature | web | P0 | 3 | B | todo | 064 |
 | WF-066 | Group timeline view | feature | web | P1 | 3 | stretch | todo | 064 |
 | WF-067 | Stale-data warning | feature | web, backend | P1 | 3 | stretch | todo | 064 |
@@ -311,6 +311,8 @@ Initialise git and set up a pnpm workspace with Turborepo, following the layout 
 Create `apps/web` (Next.js App Router, Tailwind, shadcn/ui) and `packages/ui`.
 
 > Merged: Next.js 16 app and `packages/ui` with every Milestone A screen on mock data (`apps/web/src/lib/data/*` and `lib/actions/*` are the wiring points, ~100 `TODO(WF-…)` markers). Loads the repo-root `.env`. **Blocked on the owner:** connecting the repo to Vercel.
+>
+> **For now the owner is deploying to Railway** (2026-09-30): `railway.json` at the repo root builds with Railpack (`pnpm --filter @whosfree/web build`, then `next start` on `$PORT`, health check `/offline`). Vercel is still the PRD target (§8.4); record a decision before making Railway permanent.
 
 **Acceptance criteria**
 - [x] `apps/web` runs locally with `pnpm dev`
@@ -958,7 +960,7 @@ The Find a time part waits for WF-098. The invite action uses friend invite link
 **Acceptance criteria**
 - [x] Onboarding asks "When are you usually up and about?" with a slider pre-set to **08:00–22:00 every day**
 - [x] In settings, hours can be edited separately for each day
-- [ ] Times outside these hours show as `away`
+- [x] Times outside these hours show as `away`
 
 #### WF-063 · Manual status override
 - **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
@@ -972,10 +974,10 @@ The Find a time part waits for WF-098. The invite action uses friend invite link
 **Acceptance criteria**
 - [x] A status chip is reachable from anywhere in the app. Options: Free, Busy, Do not disturb, Away, Studying/Focused.
 - [x] An override can have an end time ("until 4 PM") or last "until I change it"
-- [ ] It overrides calendar-based status everywhere
+- [x] It overrides calendar-based status everywhere
 
 #### WF-064 · Now screen (real-time, redacted)
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-041, WF-042, WF-043, WF-061
 - **PRD:** FR-VIEW-1, FR-VIEW-2, FR-VIEW-3, §8.5 (Now screen), NFR-PERF-1, NFR-PERF-3
 
@@ -985,13 +987,14 @@ The Find a time part waits for WF-098. The invite action uses friend invite link
 
 > Backend merged (migrations `20261002400000_now_for_viewer.sql`, `20261002400100_now_realtime_signals.sql`): `now_for_viewer(range_start, range_end)` returns each connection with tier, `paused`, `has_schedule`, shared `group_ids`, timezone, hours, overrides and redacted sources/events, in the engine's input shape (types `NowConnection` etc. in `@whosfree/backend`). Triggers send an empty `now_changed` Broadcast on private channel `user:<users.id>` (`userChannel()` in `@whosfree/shared`), once per transaction. Offline friends are excluded. **Left (web):** call it, run `statusAt` per connection (catch errors per connection), sections, group filter, subscribe to the channel (debounced re-fetch), client timer, non-colour status. Then remove the mock layer.
 
-**Acceptance criteria**
+> Web merged: `getNowForViewer` calls `now_for_viewer` and runs `statusAt` per connection on the server (one bad schedule shows that person as "Status unavailable", not a crash); the viewer's own status uses the same engine with offline-friend rows filtered. The client subscribes to `user:<id>` (`lib/supabase/browser.ts`, publishable key + Clerk token) and does a debounced `router.refresh()` on `now_changed`; a local timer moves people between sections at each "until X". Friends, friend detail and group pages show real statuses (as of page load). **Left:** verify the ≤ 5 s Realtime path live (needs the two `2026100240…` migrations applied and Realtime authorization enabled). The mock layer remains only for group week/slots (WF-066/098), schedule (WF-065), inbox (WF-092), imports (WF-027–032) and the visibility overview (WF-048).
+
 - [x] The `now_for_viewer` database function returns connections already redacted by `resolve_tier` and the redaction path (WF-041)
-- [ ] Sections: Free now, Free soon (within 60 minutes), Busy/Away, Not sharing yet. Each status shows "until X".
-- [ ] A group filter
+- [x] Sections: Free now, Free soon (within 60 minutes), Busy/Away, Not sharing yet. Each status shows "until X".
+- [x] A group filter
 - [ ] Status changes reach viewers in ≤ 5 s (Realtime Broadcast signal from a database trigger, then a re-fetch)
-- [ ] A timer on the client re-evaluates "until X" boundaries without polling the server
-- [ ] Status is never shown by colour alone (NFR-UX-1)
+- [x] A timer on the client re-evaluates "until X" boundaries without polling the server
+- [x] Status is never shown by colour alone (NFR-UX-1)
 
 #### WF-065 · Friend detail and My schedule views
 - **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`

@@ -9,6 +9,7 @@ import { createSerwistRoute } from '@serwist/turbopack';
 // A new revision per commit, so the precached /offline page is refreshed on every deploy.
 const revision =
   process.env.VERCEL_GIT_COMMIT_SHA ??
+  process.env.RAILWAY_GIT_COMMIT_SHA ??
   (spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf-8' }).stdout?.trim() ||
     crypto.randomUUID());
 
