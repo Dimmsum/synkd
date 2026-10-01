@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Download, LogOut, Trash } from 'lucide-react';
-import { SignOutButton } from '@clerk/nextjs';
-import { Button, buttonVariants } from '@whosfree/ui/components/button';
+import { Download, Trash } from 'lucide-react';
+import { buttonVariants } from '@whosfree/ui/components/button';
 import { Panel } from '@/components/app/page-header';
+import { SignOutButton } from '@/components/app/sign-out-button';
 import { SettingsPage } from '@/components/settings/settings-page';
 import { getConsentRecord } from '@/lib/data/settings';
 
@@ -69,12 +69,7 @@ export default async function PrivacyPage() {
         </div>
       </Panel>
       <Panel>
-        <SignOutButton redirectUrl="/">
-          <Button variant="ghost" size="sm">
-            <LogOut aria-hidden="true" />
-            Sign out
-          </Button>
-        </SignOutButton>
+        <SignOutButton size="sm" />
       </Panel>
     </SettingsPage>
   );

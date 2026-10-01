@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { BellRing, CirclePause } from 'lucide-react';
+import { CirclePause } from 'lucide-react';
 import { Button } from '@whosfree/ui/components/button';
 import { Input } from '@whosfree/ui/components/input';
 import { Label } from '@whosfree/ui/components/label';
 import { Switch } from '@whosfree/ui/components/switch';
 import { cn } from '@whosfree/ui/lib/utils';
+import { PushPermission } from '@/components/push/push-permission';
 import { saveNotificationSettings, saveProfile, setSharingPaused } from '@/lib/actions/settings';
 
 const TIMEZONES = [
@@ -156,7 +157,6 @@ export function NotificationsForm({
   initial: {
     types: Record<string, boolean>;
     quietHours: { enabled: boolean; start: string; end: string };
-    pushEnabled: boolean;
   };
 }) {
   const [types, setTypes] = useState(initial.types);
@@ -165,19 +165,8 @@ export function NotificationsForm({
   const [pending, start] = useTransition();
   return (
     <div className="flex flex-col gap-5">
-      {!initial.pushEnabled ? (
-        <div className="flex flex-col gap-3 rounded-xl bg-primary-soft p-4 sm:flex-row sm:items-center">
-          <BellRing aria-hidden="true" className="size-5 shrink-0 text-primary-ink" />
-          <p className="flex-1 text-sm text-body-foreground">
-            Notifications are off on this device. Turn them on to hear about pings straight away. On
-            iPhone, add Who&apos;s Free to your home screen first.
-          </p>
-          {/* TODO(WF-091): request permission only after this explanation (FR-PWA-4). */}
-          <Button size="sm" onClick={() => setStatus('Coming soon: push notifications (WF-091)')}>
-            Turn on
-          </Button>
-        </div>
-      ) : null}
+      {/* Push on this device (WF-091): explanation first, then the permission prompt (FR-PWA-4). */}
+      <PushPermission />
       <fieldset className="flex flex-col">
         <legend className="mb-1 text-sm font-semibold">Notify me about</legend>
         {TYPES.map((t) => (
