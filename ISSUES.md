@@ -214,8 +214,8 @@ Everything else at P0, which adds:
 | WF-027 | Parse job pipeline (queue, worker call, callback, retries) | feature | backend, worker | P0 | 1 | A | todo | 023, 025, 026 |
 | WF-028 | Recurring schedule extraction | feature | parser | P0 | 1 | A | todo | 027 |
 | WF-029 | Review screen (grid, confidence, side-by-side, editing) | feature | web | P0 | 1 | A | todo | 021, 027 |
-| WF-030 | Commit schedule to events (RRULE, date range, exceptions) | feature | backend | P0 | 1 | A | todo | 029 |
-| WF-031 | Manual schedule entry | feature | web | P0 | 1 | A | todo | 029 |
+| WF-030 | Commit schedule to events (RRULE, date range, exceptions) | feature | backend | P0 | 1 | A | in-progress | 029 |
+| WF-031 | Manual schedule entry | feature | web | P0 | 1 | A | in-review | 029 |
 | WF-032 | Pending uploads list (view, delete) | feature | web | P0 | 1 | B | todo | 026 |
 | WF-033 | Re-upload and schedule replacement | feature | backend, web | P0 | 1 | B | todo | 030 |
 | WF-034 | Re-parse a stored file | feature | backend | P1 | 1 | stretch | wontfix | 027 |
@@ -256,8 +256,8 @@ Everything else at P0, which adds:
 | WF-087 | Handle Google accounts managed by an organisation | feature | gcal | P1 | 4 | stretch | todo | 080 |
 | WF-090 | PWA manifest and service worker (Serwist) | infra | pwa | P0 | 5 | A | in-review | 002 |
 | WF-091 | Web Push infrastructure | infra | pwa, backend | P0 | 5 | A | in-review | 004, 090 |
-| WF-092 | Send pings and inbox | feature | ping | P0 | 5 | A | todo | 064, 091 |
-| WF-093 | Ping replies | feature | ping | P0 | 5 | A | todo | 092 |
+| WF-092 | Send pings and inbox | feature | ping | P0 | 5 | A | in-review | 064, 091 |
+| WF-093 | Ping replies | feature | ping | P0 | 5 | A | in-review | 092 |
 | WF-094 | Ping rate limits, mute, quiet hours | security | ping | P0 | 5 | Gate | todo | 092 |
 | WF-095 | Report and block, plus moderation queue | security | ping, backend | P0 | 5 | Gate | todo | 047, 092 |
 | WF-096 | Group ping | feature | ping | P1 | 5 | stretch | todo | 044, 092 |
@@ -620,25 +620,29 @@ Can Vercel (Node) functions on the Next.js server handle PDF rasterisation and H
 - [ ] Median time from upload to confirm is ≤ 3 minutes in testing
 
 #### WF-030 · Commit schedule to events (RRULE, date range, exceptions)
-- **Category:** `feature` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-progress`
 - **Depends on:** WF-029
 - **PRD:** FR-IMP-7, FR-IMP-8, §9 modelling decision
 
+> Merged (migration `20261002800000_commit_schedule.sql`): `commit_schedule(draft jsonb, source_type 'manual'|'upload', offline_friend_id)` validates a `ScheduleCommit` draft (unknown keys refused, so no location, D35), writes RRULE/UNTIL/EXDATE events plus a `sources` row with the period, and replaces the target's previous upload/manual source in the same transaction (gcal never touched). 20/day. Errors WF401 (invalid draft), WF402 (event never in the period). Jamaican holidays are pre-filled as removable exceptions. **Left for WF-027:** take a job id, move it to `committed`, delete the draft and file row in the same transaction, return the storage path for removal.
+
 **Acceptance criteria**
-- [ ] The `commit_schedule` database function writes recurring events as RRULE plus EXDATE, and creates a `sources` row with the date range
-- [ ] The user sets or confirms the date range. Exceptions such as breaks can be added.
-- [ ] Jamaican public holidays are pre-filled as exceptions (P1 part)
+- [x] The `commit_schedule` database function writes recurring events as RRULE plus EXDATE, and creates a `sources` row with the date range
+- [x] The user sets or confirms the date range. Exceptions such as breaks can be added.
+- [x] Jamaican public holidays are pre-filled as exceptions (P1 part)
 - [ ] The job moves to `committed`
 - [ ] The **draft and the file's row are deleted in the same transaction** as the commit, and the Storage object is removed straight after. The expiry cron retries any removal that fails (D38).
 
 #### WF-031 · Manual schedule entry
-- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-029
 - **PRD:** FR-IMP-12
 
+> Merged: "Type it in" opens the review editor on an empty 16-week draft (`/import/manual/review`, `/onboarding/review?job=manual`, plus buttons on My schedule and Settings → Calendars); confirm calls `commit_schedule`. My schedule reads the real saved schedule (offline-friend rows filtered). The failed-parse entry point is still mock until WF-027.
+
 **Acceptance criteria**
-- [ ] Users can build a schedule from scratch with the WF-029 event editor, without uploading anything
-- [ ] Available from onboarding, from a failed parse, and from My schedule
+- [x] Users can build a schedule from scratch with the WF-029 event editor, without uploading anything
+- [x] Available from onboarding, from a failed parse, and from My schedule
 
 #### WF-032 · Pending uploads list (view, delete)
 - **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
@@ -1191,27 +1195,31 @@ Could start at any point after WF-002. It's placed here because push notificatio
 - [x] An in-app inbox as a fallback for anyone without push
 
 #### WF-092 · Send pings and inbox
-- **Category:** `feature` · **Area:** `ping` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `ping` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-064, WF-091
 - **PRD:** FR-PING-1, FR-PING-2, FR-PING-3, J3, D14, D31
 
+> Merged (migration `20261003000000_pings.sql`): `send_ping(recipient, template, message, confirmed)` (connections only, blocks hidden, dnd/paused refused WF301, not-free needs confirmation WF302, 30/day), `list_inbox`, `mark_pings_read`, `unread_ping_count`, `inbox_changed` signal; web sends push via `after(sendPushToUser)` and the inbox updates live. **Open:** device test with live VAPID keys; the server's ping status is an approximation in SQL. Hooks: `TODO(WF-094)` per-recipient limit/mute/quiet hours, `TODO(WF-095)` report, `TODO(WF-096)` group ping.
+
 **Acceptance criteria**
-- [ ] Ping a friend or fellow group member using a template, free text of **140 characters or fewer**, or both
-- [ ] Pinging someone who is `busy` or `away` asks for confirmation first. Pinging someone who is `dnd` or `paused` is blocked. All of these are enforced on the server.
-- [ ] Text is shown **as plain text only**, and URLs aren't clickable
-- [ ] Pings arrive as push notifications and appear in `/inbox`
-- [ ] Ping text never appears in logs or analytics
+- [x] Ping a friend or fellow group member using a template, free text of **140 characters or fewer**, or both
+- [x] Pinging someone who is `busy` or `away` asks for confirmation first. Pinging someone who is `dnd` or `paused` is blocked. All of these are enforced on the server.
+- [x] Text is shown **as plain text only**, and URLs aren't clickable
+- [x] Pings arrive as push notifications and appear in `/inbox`
+- [x] Ping text never appears in logs or analytics
 
 #### WF-093 · Ping replies
-- **Category:** `feature` · **Area:** `ping` · **Priority:** P0 · **Milestone:** A · **Status:** `todo`
+- **Category:** `feature` · **Area:** `ping` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-092
 - **PRD:** FR-PING-4
 
+> Merged (migration `20261003000100_ping_replies.sql`): `reply_to_ping(ping_id, reply, message)`, notification reply buttons where supported (Chrome) and in-app buttons otherwise, sender notified by push and `inbox_changed`. **Open:** the 10 s end-to-end check on an Android device; late replies after expiry are WF-097.
+
 **Acceptance criteria**
-- [ ] One-tap replies ("I'm down", "In 10", "Can't right now") from notification buttons where the platform supports them, and from the app otherwise
-- [ ] A short free-text reply is possible
-- [ ] The sender is notified of the reply
-- [ ] A ping and its reply take under 10 s end to end on Android
+- [x] One-tap replies ("I'm down", "In 10", "Can't right now") from notification buttons where the platform supports them, and from the app otherwise
+- [x] A short free-text reply is possible
+- [x] The sender is notified of the reply
+- [ ] A ping and its reply take under 10 s end to end on Android (needs a device test)
 
 #### WF-094 · Ping rate limits, mute, quiet hours
 - **Category:** `security` · **Area:** `ping` · **Priority:** P0 · **Milestone:** Gate · **Status:** `todo`
