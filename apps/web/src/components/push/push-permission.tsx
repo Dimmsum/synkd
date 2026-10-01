@@ -18,11 +18,13 @@ import { Button } from '@whosfree/ui/components/button';
 import { cn } from '@whosfree/ui/lib/utils';
 import { sendTestPush } from '@/lib/actions/push';
 import { disablePush, enablePush } from '@/lib/push/client';
+import { IosInstallSteps, INSTALL_PAGE_HREF } from '@/components/pwa/install-prompt';
+import { useInstallState } from '@/components/pwa/install-store';
 import { usePushStatus } from './use-push-status';
 import type { PushStatus } from './use-push-status';
 
-/** The iPhone install steps. TODO(WF-111): point at the full install guide once it exists. */
-export const INSTALL_GUIDE_HREF = '/help#install' as Route;
+/** The install guide (WF-111): Settings → Install app. */
+export const INSTALL_GUIDE_HREF: Route = INSTALL_PAGE_HREF;
 
 const linkClass = 'font-semibold text-primary-ink underline-offset-2 hover:underline';
 
@@ -58,15 +60,7 @@ function explain(status: Exclude<PushStatus, 'loading'>): Explanation {
       return {
         icon: Smartphone,
         title: 'Add Who’s Free to your Home Screen first',
-        body: (
-          <>
-            On iPhone and iPad, notifications only work in the installed app. In Safari, tap Share,
-            then “Add to Home Screen”, open Who’s Free from there and turn them on.{' '}
-            <Link href={INSTALL_GUIDE_HREF} className={linkClass}>
-              How to install
-            </Link>
-          </>
-        ),
+        body: 'On iPhone and iPad, notifications only work in the installed app (iOS 16.4 or later). Add it to your Home Screen, open Who’s Free from there and turn them on.',
       };
     case 'ios-too-old':
       return {
@@ -97,10 +91,19 @@ function explain(status: Exclude<PushStatus, 'loading'>): Explanation {
 
 /**
  * The explanation screen and the on/off switch for push on this device. Put it wherever
- * notifications are offered: Settings → Notifications and the onboarding install step.
+ * notifications are offered: Settings → Notifications and the onboarding install step. On an
+ * iPhone or iPad that hasn't installed the app it shows the "Add to Home Screen" steps (WF-111),
+ * unless `iosSteps` is off because the page shows the install guide already.
  */
-export function PushPermission({ className }: { className?: string }) {
+export function PushPermission({
+  className,
+  iosSteps = true,
+}: {
+  className?: string;
+  iosSteps?: boolean;
+}) {
   const { status, setStatus } = usePushStatus({ resync: true });
+  const install = useInstallState();
   const [message, setMessage] = useState<string>();
   const [pending, start] = useTransition();
 
@@ -157,6 +160,18 @@ export function PushPermission({ className }: { className?: string }) {
           <p className="text-sm text-body-foreground">{body}</p>
           {status !== 'on' ? <p className="text-xs text-muted-foreground">{INBOX_NOTE}</p> : null}
         </div>
+        {status === 'ios-needs-install' && iosSteps ? (
+          install?.platform === 'ios-in-app' ? (
+            // An app's built-in browser can't install: the guide starts with opening Safari.
+            <p className="text-sm">
+              <Link href={INSTALL_GUIDE_HREF} className={linkClass}>
+                How to install
+              </Link>
+            </p>
+          ) : (
+            <IosInstallSteps browser={install?.platform === 'ios-browser' ? 'other' : 'safari'} />
+          )
+        ) : null}
         {status === 'off' ? (
           <div>
             <Button size="sm" disabled={pending} onClick={turnOn}>
