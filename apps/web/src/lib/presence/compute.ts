@@ -18,6 +18,8 @@ import type { NowConnection } from '@whosfree/backend';
 import {
   AvailableHours,
   DateRange,
+  DAYS_OF_WEEK,
+  DEFAULT_AVAILABLE_HOURS,
   EventCategory,
   LocalDate,
   ManualStatus,
@@ -191,18 +193,15 @@ export interface OwnRows {
   }[];
 }
 
-/**
- * The viewer's own schedule → the engine's input. Rows of their offline friends (D44, WF-127)
- * are dropped: RLS lets the owner read them too, but they are never the owner's own schedule
- * and must not make the viewer look busy or "have a schedule". The viewer sees their own
- * details in full.
- */
-export function ownPresenceInput(rows: OwnRows): PresenceInput {
-  const ownSources = rows.sources.filter((s) => s.offline_friend_id === null);
-  const sourceIds = new Set(ownSources.map((s) => s.id));
+/** Stored sources and their busy events → the engine's sources. Rows must already be one person's. */
+function storedSources(
+  sources: OwnRows['sources'],
+  events: OwnRows['events'],
+): { period: SchedulePeriod | null; events: ReturnType<typeof toEvent>[] }[] {
+  const sourceIds = new Set(sources.map((s) => s.id));
   const eventsBySource = new Map<string, ReturnType<typeof toEvent>[]>();
-  for (const e of rows.events) {
-    if (e.offline_friend_id !== null || !sourceIds.has(e.source_id) || !e.busy) continue;
+  for (const e of events) {
+    if (!sourceIds.has(e.source_id) || !e.busy) continue;
     const event = toEvent({
       id: e.id,
       start: Date.parse(e.starts_at),
@@ -214,6 +213,26 @@ export function ownPresenceInput(rows: OwnRows): PresenceInput {
     });
     eventsBySource.set(e.source_id, [...(eventsBySource.get(e.source_id) ?? []), event]);
   }
+  return sources.map((s) => ({
+    period:
+      s.period_start && s.period_end
+        ? toPeriod({
+            start: s.period_start,
+            end: s.period_end,
+            exceptions: Array.isArray(s.period_exceptions) ? s.period_exceptions : [],
+          })
+        : null,
+    events: eventsBySource.get(s.id) ?? [],
+  }));
+}
+
+/**
+ * The viewer's own schedule → the engine's input. Rows of their offline friends (D44, WF-127)
+ * are dropped: RLS lets the owner read them too, but they are never the owner's own schedule
+ * and must not make the viewer look busy or "have a schedule". The viewer sees their own
+ * details in full.
+ */
+export function ownPresenceInput(rows: OwnRows): PresenceInput {
   return buildInput(
     {
       timeZone: rows.timezone,
@@ -222,17 +241,10 @@ export function ownPresenceInput(rows: OwnRows): PresenceInput {
         ? {}
         : { availableHours: AvailableHours.array().parse(rows.weekly) }),
     },
-    ownSources.map((s) => ({
-      period:
-        s.period_start && s.period_end
-          ? toPeriod({
-              start: s.period_start,
-              end: s.period_end,
-              exceptions: Array.isArray(s.period_exceptions) ? s.period_exceptions : [],
-            })
-          : null,
-      events: eventsBySource.get(s.id) ?? [],
-    })),
+    storedSources(
+      rows.sources.filter((s) => s.offline_friend_id === null),
+      rows.events.filter((e) => e.offline_friend_id === null),
+    ),
     rows.overrides.flatMap((o) => {
       const parsed = toOverride({
         id: o.id,
@@ -243,6 +255,32 @@ export function ownPresenceInput(rows: OwnRows): PresenceInput {
       });
       return parsed ? [parsed] : [];
     }),
+  );
+}
+
+/** Every day 08:00–22:00 (D24): an offline friend has no hours of their own (WF-128). */
+export const OFFLINE_FRIEND_HOURS: AvailableHours[] = DAYS_OF_WEEK.map((day) => ({
+  day,
+  ...DEFAULT_AVAILABLE_HOURS,
+}));
+
+/**
+ * One offline friend's schedule → the engine's input (D44, WF-128). Only rows with their
+ * `offline_friend_id` count. They have no account, so no timezone, hours, manual status or
+ * pause of their own: they're read in the owner's timezone with the default available hours.
+ * The owner added the schedule, so they see its details in full (FR-SOC-15).
+ */
+export function offlineFriendPresenceInput(
+  offlineFriendId: string,
+  rows: Pick<OwnRows, 'timezone' | 'sources' | 'events'>,
+): PresenceInput {
+  return buildInput(
+    { timeZone: rows.timezone, sharingPaused: false, availableHours: OFFLINE_FRIEND_HOURS },
+    storedSources(
+      rows.sources.filter((s) => s.offline_friend_id === offlineFriendId),
+      rows.events.filter((e) => e.offline_friend_id === offlineFriendId),
+    ),
+    [],
   );
 }
 

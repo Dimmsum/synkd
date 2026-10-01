@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { cn } from '@whosfree/ui/lib/utils';
 import { NowBoard } from '@/components/now/now-board';
 import { getViewerRow } from '@/lib/data/now';
+import { getOfflineFriendsNow } from '@/lib/data/offline-friends';
 import { getNow, getNowForViewer } from '@/lib/data/people';
 import type { GroupSummary } from '@/lib/types';
 
@@ -14,10 +15,13 @@ export const metadata: Metadata = { title: 'Now' };
 // Realtime "changed" signals (re-fetch) and a timer for "until X" boundaries (no polling).
 export default async function NowPage({ searchParams }: PageProps<'/now'>) {
   const { group } = await searchParams;
-  const [{ connections, groups }, { now, timeZone }, viewer] = await Promise.all([
+  const [{ connections, groups }, { now, timeZone }, viewer, offlineFriends] = await Promise.all([
     getNowForViewer(),
     getNow(),
     getViewerRow(),
+    // People the viewer added who aren't on whosfree (WF-128): their own section, never part of
+    // the viewer's own status.
+    getOfflineFriendsNow(),
   ]);
   const groupId = typeof group === 'string' && groups.some((g) => g.id === group) ? group : null;
 
@@ -25,6 +29,7 @@ export default async function NowPage({ searchParams }: PageProps<'/now'>) {
     <NowBoard
       viewerId={viewer.id}
       connections={connections}
+      offlineFriends={offlineFriends}
       groups={groups}
       groupId={groupId}
       now={now}

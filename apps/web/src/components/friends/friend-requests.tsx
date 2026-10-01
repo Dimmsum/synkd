@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import type { Route } from 'next';
+import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { DEFAULT_TIER, type Tier } from '@whosfree/shared';
 import { Check, Copy, Search, UserPlus } from 'lucide-react';
@@ -28,6 +29,7 @@ import {
   respondToFriendRequest,
   sendFriendRequestTo,
 } from '@/lib/actions/social';
+import { friendedHref } from '@/lib/offline-friends';
 import type { FriendRequest, PublicPerson } from '@/lib/types';
 import { ActionButton } from '@/components/app/action-buttons';
 
@@ -85,6 +87,7 @@ export function FriendRequests({ requests, now }: { requests: FriendRequest[]; n
 }
 
 function AcceptDialog({ request }: { request: FriendRequest }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [tier, setTier] = useState<Tier>(DEFAULT_TIER);
   const [done, setDone] = useState(false);
@@ -128,6 +131,7 @@ function AcceptDialog({ request }: { request: FriendRequest }) {
                 if (res.ok) {
                   setDone(true);
                   setOpen(false);
+                  router.replace(friendedHref(request.id), { scroll: false });
                 } else setError(res.error);
               })
             }
@@ -147,6 +151,7 @@ type Message = { ok: boolean; text: string };
  * preselected), then send. Or share your own friend link / QR code, which opens /add/<you>.
  */
 export function AddFriendButton({ friendLink }: { friendLink: string }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [handle, setHandle] = useState('');
   const [found, setFound] = useState<PublicPerson | null>(null);
@@ -190,6 +195,7 @@ export function AddFriendButton({ friendLink }: { friendLink: string }) {
         ok: true,
         text: nowFriends ? `You and ${first} are now friends.` : `Request sent to ${first}.`,
       });
+      if (nowFriends) router.replace(friendedHref(person.id), { scroll: false });
     });
   }
 
