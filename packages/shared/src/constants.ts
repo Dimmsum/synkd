@@ -189,6 +189,123 @@ export const PARSE_JOB_STATUSES = [
 ] as const;
 export type ParseJobStatus = (typeof PARSE_JOB_STATUSES)[number];
 
+// ---------------------------------------------------------------------------
+// Schedule files and parsing (FR-IMP-1, FR-IMP-13–16, FR-IMP-19, NFR-SEC-6, NFR-PERF-6, D38, D46)
+// ---------------------------------------------------------------------------
+
+/** Largest schedule file, in bytes (FR-IMP-1). The Storage bucket enforces the same limit. */
+export const SCHEDULE_FILE_MAX_BYTES = 10 * 1024 * 1024;
+
+/** Most pages in a PDF schedule (FR-IMP-1, NFR-COST-1). */
+export const SCHEDULE_FILE_MAX_PDF_PAGES = 5;
+
+/**
+ * Media types a schedule file may be stored as (FR-IMP-1). The Storage bucket's
+ * `allowed_mime_types` and `schedule_files.mime_type` use the same list; the server still
+ * checks the file's magic bytes before reading it (NFR-SEC-6).
+ */
+export const SCHEDULE_FILE_MIME_TYPES = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+] as const;
+export type ScheduleFileMimeType = (typeof SCHEDULE_FILE_MIME_TYPES)[number];
+
+/**
+ * Longest edge of an image after on-device compression (NFR-PERF-6), and of the images the
+ * server sends to the model (WF-024).
+ */
+export const SCHEDULE_IMAGE_MAX_EDGE_PX = 2000;
+
+/** Days an unconfirmed file is kept before it's deleted (FR-IMP-15, D38). */
+export const SCHEDULE_FILE_RETENTION_DAYS = 7;
+
+/** The private Storage bucket schedule files are uploaded to (WF-026, NFR-SEC-6). */
+export const SCHEDULE_FILES_BUCKET = 'schedule-files';
+
+/** Longest file name kept for an upload, so the user can recognise it in Pending uploads. */
+export const SCHEDULE_FILE_NAME_MAX_LENGTH = 120;
+
+/**
+ * Parse attempts per user per day (FR-IMP-19, NFR-COST-1, WF-035): starting a parse or retrying
+ * a failed one. Offline friends' parses count too (WF-127). Re-using a pending job for an
+ * identical file (same sha256) doesn't. `start_parse_job` enforces it ('parse').
+ */
+export const PARSE_ATTEMPTS_PER_DAY = 5;
+
+/**
+ * Uploads started per user per day (NFR-SEC-9), including ones never parsed, so Storage can't be
+ * filled up. `create_schedule_upload` enforces it ('schedule_upload').
+ */
+export const SCHEDULE_UPLOADS_PER_DAY = 20;
+
+/** Most unconfirmed uploads one user can have at a time (FR-IMP-16). */
+export const MAX_PENDING_UPLOADS = 10;
+
+/**
+ * Model runs per parse job before it's marked failed (NFR-REL-2, WF-027): one LLM attempt per
+ * run, retried through the queue with backoff (D46).
+ */
+export const PARSE_JOB_MAX_ATTEMPTS = 3;
+
+/**
+ * The parser that produced a draft, recorded on `parse_jobs.parser_version` (PRD §9, WF-027):
+ * the code version (prompt + post-processing) and the prompt it used. Bump it whenever the
+ * prompt, the title scrubber or the normalisation changes, so eval runs and jobs stay comparable.
+ */
+export const PARSE_PROMPT_VERSION = 'v2';
+export const PARSER_VERSION = `1.0+prompt.${PARSE_PROMPT_VERSION}`;
+
+/**
+ * OpenRouter models for schedule parsing (D15, PRD §8.4): a cheap vision model with structured
+ * output, and a fallback from another provider family that OpenRouter tries when the first
+ * fails. Both are PROVISIONAL, picked from OpenRouter's catalogue and one synthetic smoke test
+ * on 2026-09-30; WF-023 must confirm them on the eval set (≥ 70 % acceptance, ≤ US$0.05 a
+ * parse, NFR-COST-1) before launch.
+ *
+ * Every model listed must have a zero-data-retention endpoint (NFR-SEC-8, see
+ * https://openrouter.ai/api/v1/endpoints/zdr) that supports `temperature` and
+ * `response_format`: requests set `require_parameters`, so a model without them (e.g.
+ * gemini-3.5-flash-lite, gpt-5.4-nano on 2026-09-30) gets no endpoint at all (HTTP 404).
+ *
+ * Smoke test (2026-09-30, synthetic-week.png, ZDR on): with gemini-3.1-flash-lite first,
+ * OpenRouter served mistral-small-2603, which returned the expected draft exactly (4 events,
+ * the period and its break) for US$0.0005. So the model that has actually answered goes first;
+ * gemini-3.1-flash-lite is unverified.
+ */
+export const PARSE_MODEL_PRIMARY = 'mistralai/mistral-small-2603';
+export const PARSE_MODEL_FALLBACK = 'google/gemini-3.1-flash-lite';
+
+/**
+ * Why a parse job failed, stored on `parse_jobs.error` (FR-IMP-14). A code only, never model
+ * output or anything from the file (NFR-SEC-11); the UI turns it into a message.
+ *   unsupported_file   not a PDF, PNG, JPEG, WebP or HEIC by its magic bytes (NFR-SEC-6), or
+ *                      not the file that was uploaded
+ *   file_too_large     over SCHEDULE_FILE_MAX_BYTES
+ *   too_many_pages     a PDF over SCHEDULE_FILE_MAX_PDF_PAGES
+ *   image_too_large    an image or PDF page too big to decode safely (WF-024 §8)
+ *   unreadable_file    damaged, empty or password-protected
+ *   file_missing       the upload never reached Storage
+ *   no_schedule_found  the model found no events
+ *   parse_failed       the model failed every attempt (errors, invalid output)
+ *   timed_out          the last run never finished (crash or timeout)
+ */
+export const PARSE_ERROR_CODES = [
+  'unsupported_file',
+  'file_too_large',
+  'too_many_pages',
+  'image_too_large',
+  'unreadable_file',
+  'file_missing',
+  'no_schedule_found',
+  'parse_failed',
+  'timed_out',
+] as const;
+export type ParseErrorCode = (typeof PARSE_ERROR_CODES)[number];
+
 /**
  * Realtime "changed" signals (PRD §8.1, FR-VIEW-3, NFR-PERF-3, D41). Each user has one private
  * Broadcast channel, `user:<users.id>`, that only they can join. Database triggers send
@@ -204,6 +321,13 @@ export const NOW_CHANGED_EVENT = 'now_changed';
  * carries the ping, its text or who sent it (D41, NFR-SEC-11).
  */
 export const INBOX_CHANGED_EVENT = 'inbox_changed';
+
+/**
+ * Sent on the same private channel, with an empty payload, when one of the user's parse jobs or
+ * pending uploads changes (FR-IMP-13, WF-027): queued, processing, ready for review, failed,
+ * committed or deleted. The upload card and Pending uploads then re-read the job.
+ */
+export const PARSE_JOB_CHANGED_EVENT = 'parse_job_changed';
 
 /** The private Realtime channel topic of the user with this `users.id`. */
 export function userChannel(userId: string): string {
