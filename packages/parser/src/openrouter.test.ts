@@ -33,6 +33,15 @@ describe('API key handling (NFR-SEC-8)', () => {
 });
 
 describe('buildRequestBody', () => {
+  it("sends today's date with the instruction, outside the prompt (prompt v3, rule 8)", () => {
+    const body = buildRequestBody({ ...req, today: '2026-09-30' }) as {
+      messages: { role: string; content: unknown }[];
+    };
+    expect(body.messages[0]).toEqual({ role: 'system', content: TEST_PROMPT.text });
+    expect(JSON.stringify(body.messages[1])).toContain("Today's date is 2026-09-30.");
+    expect(JSON.stringify(buildRequestBody(req))).not.toContain("Today's date");
+  });
+
   it('sends images as a data URL with the prompt as the system message', () => {
     const body = buildRequestBody(req) as {
       model: string;

@@ -33,6 +33,8 @@ export interface ParseImagesInput {
   attempt: number;
   models?: { primary: string; fallback: string };
   prompt?: Prompt;
+  /** Today's date (`YYYY-MM-DD`) where the person is, for date ranges that show no year. */
+  today?: string;
   fetch?: typeof globalThis.fetch;
   timeoutMs?: number;
 }
@@ -140,6 +142,7 @@ export async function parseScheduleImages(input: ParseImagesInput): Promise<Pars
       model: first,
       fallbackModels: [second],
       prompt: input.prompt ?? PRODUCTION_PROMPT,
+      ...(input.today ? { today: input.today } : {}),
     },
     {
       apiKey: input.apiKey,

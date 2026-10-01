@@ -93,7 +93,11 @@ export type CheckedSchedule = { ok: true; draft: ScheduleCommit } | { ok: false;
  * editor-only fields (ids, the holiday flag) and anything unknown stripped. Error messages
  * name an event by its title, which is fine on screen (never log them, NFR-SEC-11).
  */
-export function checkSchedule(input: { events: unknown[]; period: unknown }): CheckedSchedule {
+export function checkSchedule(
+  input: { events: unknown[]; period: unknown },
+  /** Today (`YYYY-MM-DD`): a schedule that ended before it is refused (it would never show). */
+  today?: string,
+): CheckedSchedule {
   if (input.events.length === 0) return { ok: false, error: 'Add at least one event first.' };
   const parsed = ScheduleCommit.safeParse(input);
   if (!parsed.success) {
@@ -118,6 +122,9 @@ export function checkSchedule(input: { events: unknown[]; period: unknown }): Ch
     }
     return { ok: false, error: 'Check the start and end dates of your schedule.' };
   }
+  if (today !== undefined && parsed.data.period.end < today) {
+    return { ok: false, error: endedMessage(parsed.data.period) };
+  }
   const outside = firstEventOutsidePeriod(parsed.data.events, parsed.data.period);
   if (outside >= 0) {
     return {
@@ -127,6 +134,17 @@ export function checkSchedule(input: { events: unknown[]; period: unknown }): Ch
   }
   return { ok: true, draft: parsed.data };
 }
+
+/**
+ * "These dates ended on Dec 12, 2025. …": a schedule entirely in the past never shows anywhere,
+ * usually because the file had no year and the wrong one was picked.
+ */
+export function endedMessage(period: { start: string; end: string }): string {
+  return `These dates ended on ${formatMonthDay(period.end)}, ${period.end.slice(0, 4)}, so this schedule would never show. Check the year of the start and end dates.`;
+}
+
+/** Whether a schedule's dates are all before `today`. */
+export const periodHasEnded = (period: { end: string }, today: string) => period.end < today;
 
 /** "“Lab” doesn't happen between Aug 31 and Dec 12. Check its days and the dates." */
 export function outsideMessage(

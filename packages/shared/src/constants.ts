@@ -293,8 +293,8 @@ export const PARSE_JOB_MAX_ATTEMPTS = 3;
  * the code version (prompt + post-processing) and the prompt it used. Bump it whenever the
  * prompt, the title scrubber or the normalisation changes, so eval runs and jobs stay comparable.
  */
-export const PARSE_PROMPT_VERSION = 'v2';
-export const PARSER_VERSION = `1.0+prompt.${PARSE_PROMPT_VERSION}`;
+export const PARSE_PROMPT_VERSION = 'v3';
+export const PARSER_VERSION = `1.1+prompt.${PARSE_PROMPT_VERSION}`;
 
 /**
  * OpenRouter models for schedule parsing (D15, PRD §8.4): a cheap vision model with structured

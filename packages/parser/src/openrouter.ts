@@ -36,6 +36,11 @@ export interface ParseRequest {
    */
   fallbackModels?: readonly string[];
   prompt: Prompt;
+  /**
+   * Today's date (`YYYY-MM-DD`), sent with the instruction so the model can give a date range
+   * that shows no year the right one (prompt v3, rule 8). Not part of the prompt or its hash.
+   */
+  today?: string;
 }
 
 export interface OpenRouterOptions {
@@ -142,7 +147,8 @@ export function buildRequestBody(
       ? { type: 'file', file: { filename: file.filename, file_data: dataUrl } }
       : { type: 'image_url', image_url: { url: dataUrl } };
   });
-  const instruction = files.length > 1 ? USER_INSTRUCTION_PAGES : USER_INSTRUCTION;
+  const base = files.length > 1 ? USER_INSTRUCTION_PAGES : USER_INSTRUCTION;
+  const instruction = req.today ? `${base} Today's date is ${req.today}.` : base;
   const body: Record<string, unknown> = {
     model: req.model,
     ...(req.fallbackModels?.length ? { models: [req.model, ...req.fallbackModels] } : {}),

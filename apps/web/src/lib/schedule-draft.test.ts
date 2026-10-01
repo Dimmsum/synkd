@@ -5,6 +5,7 @@ import { scheduleErrorMessage, TRY_AGAIN } from './db-errors';
 import {
   checkSchedule,
   defaultManualPeriod,
+  endedMessage,
   firstEventOutsidePeriod,
   formatDateRange,
   withHolidays,
@@ -83,6 +84,18 @@ describe('firstEventOutsidePeriod', () => {
 });
 
 describe('checkSchedule (WF-030)', () => {
+  it('refuses a schedule that ended before today, so it would never show', () => {
+    const lastYear = { start: '2025-08-31', end: '2025-12-12' };
+    expect(checkSchedule({ events: [lecture], period: lastYear }, '2026-09-30')).toEqual({
+      ok: false,
+      error: endedMessage(lastYear),
+    });
+    expect(endedMessage(lastYear)).toMatch(/ended on Dec 12, 2025/);
+    // Ending today is fine, and so is a schedule that starts later.
+    expect(checkSchedule({ events: [lecture], period: semester }, '2026-12-12').ok).toBe(true);
+    expect(checkSchedule({ events: [lecture], period: semester }, '2026-01-05').ok).toBe(true);
+  });
+
   const holiday = { start: '2026-10-19', end: '2026-10-19', label: 'Heroes', holiday: true };
 
   it('returns the draft without editor-only fields', () => {

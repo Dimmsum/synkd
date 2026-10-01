@@ -35,17 +35,24 @@ async function ownSources(supabase: ServerSupabase): Promise<StoredSource[]> {
  * TODO(WF-080): Google Calendar events arrive here once synced; TODO(WF-065) shares the
  * expansion with the friend and group views.
  */
-export async function getMySchedule(dates: string[]): Promise<MyEvent[]> {
+export async function getMySchedule(
+  dates: string[],
+): Promise<{ events: MyEvent[]; periods: { start: string; end: string }[] }> {
   const first = dates[0];
   const last = dates[dates.length - 1];
-  if (first === undefined || last === undefined) return [];
+  if (first === undefined || last === undefined) return { events: [], periods: [] };
   const supabase = await createServerSupabase();
   // The viewer's users row is read once per request and shared with the status chip.
   const [{ timezone: timeZone }, sources] = await Promise.all([
     getViewerRow(),
     ownSources(supabase),
   ]);
-  if (sources.length === 0) return [];
+  if (sources.length === 0) return { events: [], periods: [] };
+  // The dates each uploaded or typed-in schedule covers, so an empty week can say where it is.
+  const periods = sources.flatMap((s) => {
+    const period = periodOf(s);
+    return period ? [{ start: period.start, end: period.end }] : [];
+  });
 
   // Rows that can have an occurrence in the range: recurring ones that started before its end
   // (the period and UNTIL bound them), and one-off events overlapping it.
@@ -58,7 +65,7 @@ export async function getMySchedule(dates: string[]): Promise<MyEvent[]> {
     .lt('starts_at', rangeEnd)
     .or(`rrule.not.is.null,ends_at.gt."${rangeStart}"`);
   if (error) throw new Error(`Reading your events failed (${error.code})`);
-  return scheduleOnDates(sources, data as StoredEvent[], dates, timeZone);
+  return { events: scheduleOnDates(sources, data as StoredEvent[], dates, timeZone), periods };
 }
 
 /** Where the viewer's schedule comes from, with its dates and health (FR-GCAL-10). */

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { describeSources, formatPeriod, scheduleOnDates } from './my-schedule';
+import {
+  describeSources,
+  formatPeriod,
+  scheduleOnDates,
+  scheduleOutsideRange,
+} from './my-schedule';
 import type { StoredEvent, StoredSource } from './my-schedule';
 
 const JM = 'America/Jamaica'; // UTC-5, no DST
@@ -97,5 +102,34 @@ describe('describeSources (FR-GCAL-10)', () => {
     expect(formatPeriod({ start: '2026-12-01', end: '2027-01-05' })).toBe(
       'Dec 1, 2026 – Jan 5, 2027',
     );
+  });
+});
+
+describe('scheduleOutsideRange (an empty week on My schedule)', () => {
+  const week = [
+    '2026-09-28',
+    '2026-09-29',
+    '2026-09-30',
+    '2026-10-01',
+    '2026-10-02',
+    '2026-10-03',
+    '2026-10-04',
+  ];
+  const lastYear = { start: '2025-08-31', end: '2025-12-12' };
+  const nextTerm = { start: '2027-01-11', end: '2027-05-01' };
+  const current = { start: '2026-08-31', end: '2026-12-12' };
+
+  it('is null when a schedule covers any of the dates, or there is none', () => {
+    expect(scheduleOutsideRange([lastYear, current], week)).toBeNull();
+    expect(scheduleOutsideRange([], week)).toBeNull();
+    expect(scheduleOutsideRange([{ start: '2026-10-04', end: '2026-10-10' }], week)).toBeNull();
+  });
+
+  it('points at an upcoming schedule first, else the one that ended last', () => {
+    expect(scheduleOutsideRange([lastYear, nextTerm], week)).toEqual({
+      kind: 'upcoming',
+      period: nextTerm,
+    });
+    expect(scheduleOutsideRange([lastYear], week)).toEqual({ kind: 'ended', period: lastYear });
   });
 });

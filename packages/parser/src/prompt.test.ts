@@ -25,12 +25,13 @@ describe('prompts', () => {
     expect(PRODUCTION_PROMPT).toEqual(file);
   });
 
-  it('v2 covers the layouts and patterns of WF-028 and keeps D35', () => {
+  it('the production prompt covers the layouts and patterns of WF-028 and keeps D35', () => {
     const { text } = PRODUCTION_PROMPT;
     expect(text).toMatch(/days as columns and the times as rows, or the days as rows/);
     expect(text).toMatch(/Week A or week 1 is odd/);
     expect(text).toMatch(/"weeks", "weeks"/);
     expect(text).toMatch(/suggestedPeriod/);
+    expect(text).toMatch(/closest to today, never one that makes it end before today/);
     expect(text).toMatch(/confidence/);
     expect(text).toMatch(/Never include where something happens/);
     expect(text).toMatch(/Never include personal details/);

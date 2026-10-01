@@ -159,3 +159,24 @@ export function formatPeriod(period: { start: string; end: string }): string {
     ? `${formatDateRange(period)}, ${period.end.slice(0, 4)}`
     : `${formatDateRange({ start: period.start, end: period.start })}, ${period.start.slice(0, 4)} – ${formatDateRange({ start: period.end, end: period.end })}, ${period.end.slice(0, 4)}`;
 }
+
+/**
+ * Why a range of dates on My schedule is empty although the viewer has a schedule: it ends
+ * before them or starts after them. The schedule nearest the range wins, an upcoming one first.
+ * Null when a schedule covers any of the dates (then the range is simply free) or there's none.
+ */
+export function scheduleOutsideRange(
+  periods: readonly { start: string; end: string }[],
+  dates: readonly string[],
+): { kind: 'upcoming' | 'ended'; period: { start: string; end: string } } | null {
+  const first = dates[0];
+  const last = dates[dates.length - 1];
+  if (first === undefined || last === undefined || periods.length === 0) return null;
+  if (periods.some((p) => p.start <= last && p.end >= first)) return null;
+  const upcoming = periods
+    .filter((p) => p.start > last)
+    .sort((a, b) => a.start.localeCompare(b.start))[0];
+  if (upcoming) return { kind: 'upcoming', period: upcoming };
+  const ended = [...periods].sort((a, b) => b.end.localeCompare(a.end))[0];
+  return ended ? { kind: 'ended', period: ended } : null;
+}

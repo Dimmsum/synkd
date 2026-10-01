@@ -3,7 +3,12 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { DateRange, DAYS_OF_WEEK, SCHEDULE_EXCEPTION_LABEL_MAX_LENGTH } from '@whosfree/shared';
+import {
+  DateRange,
+  DAYS_OF_WEEK,
+  DEFAULT_TIMEZONE,
+  SCHEDULE_EXCEPTION_LABEL_MAX_LENGTH,
+} from '@whosfree/shared';
 import {
   CalendarOff,
   ExternalLink,
@@ -21,13 +26,20 @@ import { Button, buttonVariants } from '@whosfree/ui/components/button';
 import { Checkbox } from '@whosfree/ui/components/checkbox';
 import { Input } from '@whosfree/ui/components/input';
 import { Label } from '@whosfree/ui/components/label';
-import { formatClockRange } from '@whosfree/ui/lib/time';
+import { dateKey, formatClockRange } from '@whosfree/ui/lib/time';
 import { cn } from '@whosfree/ui/lib/utils';
 import { blockPosition, TimeGrid, type GridColumn } from '@/components/calendar/time-grid';
 import { confirmSchedule } from '@/lib/actions/imports';
 import { mergeEvents, splitEvent, splitKind } from '@/lib/draft-edit';
 import { formatPeriod } from '@/lib/my-schedule';
-import { formatDateRange, withHolidays, type EditableException } from '@/lib/schedule-draft';
+import {
+  defaultManualPeriod,
+  endedMessage,
+  formatDateRange,
+  periodHasEnded,
+  withHolidays,
+  type EditableException,
+} from '@/lib/schedule-draft';
 import { CATEGORY_LABELS } from '@/lib/status';
 import type { DraftEvent, OfflineFriendRef, ParseJob } from '@/lib/types';
 import { describeWhen, EventEditorDialog } from './event-editor';
@@ -70,6 +82,7 @@ export function ReviewEditor({
   const router = useRouter();
   const [events, setEvents] = useState<DraftEvent[]>(job.events);
   const [period, setPeriod] = useState({ start: job.period.start, end: job.period.end });
+  const today = dateKey(new Date(), DEFAULT_TIMEZONE);
   const [ownExceptions, setOwnExceptions] = useState<EditableException[]>(
     job.period.exceptions ?? [],
   );
@@ -384,6 +397,23 @@ export function ReviewEditor({
               ? 'We found these dates in the file. Check them.'
               : 'We didn’t find dates in the file, so these are a guess. Set the real ones.'}
         </p>
+        {periodHasEnded(period, today) ? (
+          // A schedule entirely in the past never shows: usually a file without a year.
+          <div
+            role="alert"
+            className="mb-3 flex flex-col items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+          >
+            <p>{endedMessage(period)}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setPeriod(defaultManualPeriod(today))}
+            >
+              Start it today instead
+            </Button>
+          </div>
+        ) : null}
         <div className="grid max-w-md grid-cols-2 gap-3">
           <div className="flex flex-col gap-2">
             <Label htmlFor="period-start">From</Label>

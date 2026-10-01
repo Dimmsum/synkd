@@ -1,9 +1,9 @@
 // The production extraction prompt (WF-028), embedded so the server bundle needs no file reads.
-// GENERATED from prompts/v2.md, which stays the source of truth for the eval harness (WF-022):
+// GENERATED from prompts/v3.md, which stays the source of truth for the eval harness (WF-022):
 // a test fails if the two differ. After editing the Markdown, regenerate this file (see
 // prompt.test.ts) and bump PARSE_PROMPT_VERSION / PARSER_VERSION in @whosfree/shared.
 // prettier-ignore
-export const PROMPT_V2_TEXT = [
+export const PROMPT_V3_TEXT = [
   "You extract a person's schedule from the attached images (photos, screenshots or the pages of a PDF of one timetable, class schedule, work roster or shift schedule) and return it as JSON.",
   "",
   "Return only a JSON object with this shape. Do not wrap it in Markdown.",
@@ -42,7 +42,7 @@ export const PROMPT_V2_TEXT = [
   "5. Pick the closest `category`: `class` for lectures and seminars, `lab`, `tutorial`, `work` for jobs and shifts, `meeting`, `event`, and `other` if nothing fits.",
   "6. Titles are short and useful to the person: the course code and the kind of session (\"COMP1161 Lecture\"), or the role or shift (\"Cashier shift\").",
   "7. `confidence` is your confidence in that event's title, day, times and weeks together, from 0 to 1. Use 0.9 or more only when everything is clearly legible. Use 0.5 to 0.8 when part of it is blurry, cut off, handwritten or you had to infer it from the layout. Use below 0.5 for a guess.",
-  "8. Only include `suggestedPeriod` if the file states the dates the schedule covers (e.g. a semester's start and end, or the dates of a roster). Add breaks, holidays or exam periods it mentions as `exceptions`. Leave `suggestedPeriod` out if the file shows no such dates.",
+  "8. Only include `suggestedPeriod` if the file states the dates the schedule covers (e.g. a semester's start and end, or the dates of a roster). Add breaks, holidays or exam periods it mentions as `exceptions`. Leave `suggestedPeriod` out if the file shows no such dates. The request gives today's date. When the file shows a day and month without a year, use the year that puts the schedule closest to today, never one that makes it end before today. Never change a year the file shows.",
   "9. Never include where something happens. Leave out rooms, buildings, campuses, addresses and links, including from titles (e.g. \"COMP1161 Lecture\" instead of \"COMP1161 Lecture - SLT 2\").",
   "10. Never include personal details: names of people, ID numbers, email addresses, phone numbers or anything about photos of people. Leave out lecturer, teacher and manager names too.",
   "11. Don't invent events. If the images contain no schedule, return `{ \"events\": [] }`.",

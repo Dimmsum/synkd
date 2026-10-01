@@ -8,6 +8,8 @@
 
 import 'server-only';
 import { ConvertError, convertUpload, parseScheduleImages } from '@whosfree/parser/node';
+import { DEFAULT_TIMEZONE } from '@whosfree/shared';
+import { dateKey } from '@whosfree/ui/lib/time';
 import { requireParseAdmin, type ParseAdmin } from './admin';
 import { internalBaseUrl, internalSecret, PARSE_RUN_PATH } from './internal';
 import { processRun, type ConvertOutcome, type RunResult } from './run';
@@ -35,6 +37,8 @@ export function processClaimedRun(
     convert,
     parse: parseScheduleImages,
     apiKey: process.env.OPENROUTER_API_KEY?.trim() || null,
+    // The upload's owner's timezone isn't loaded here; Jamaica's date is off by a day at most.
+    today: () => dateKey(new Date(), DEFAULT_TIMEZONE),
   });
 }
 

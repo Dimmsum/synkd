@@ -25,9 +25,12 @@ export interface RunDeps {
     images: { bytes: Uint8Array }[];
     apiKey: string;
     attempt: number;
+    today?: string;
   }): Promise<ParseOutcome>;
   /** OPENROUTER_API_KEY, server-only (NFR-SEC-8). */
   apiKey: string | null;
+  /** Today's date (`YYYY-MM-DD`), so a date range in the file without a year gets the right one. */
+  today?: () => string;
 }
 
 export type RunResult = 'ready' | 'retry' | 'failed' | 'stale';
@@ -89,6 +92,7 @@ export async function processRun(run: ParseRun, deps: RunDeps): Promise<RunResul
     images: converted.images,
     apiKey: deps.apiKey,
     attempt: run.attempt,
+    ...(deps.today ? { today: deps.today() } : {}),
   });
   if (!outcome.ok) {
     console.warn('Parse run: model attempt failed', outcome.kind, outcome.status ?? '');

@@ -9,6 +9,7 @@ import { ScheduleGrid } from '@/components/calendar/schedule-grid';
 import { CalendarToolbar, readCalendarParams } from '@/components/calendar/toolbar';
 import { getNow } from '@/lib/data/people';
 import { getMySchedule } from '@/lib/data/schedule';
+import { formatPeriod, scheduleOutsideRange } from '@/lib/my-schedule';
 
 export const metadata: Metadata = { title: 'My schedule' };
 
@@ -19,7 +20,8 @@ export default async function SchedulePage({ searchParams }: PageProps<'/schedul
   const { view, date } = readCalendarParams(await searchParams, today);
   const dates =
     view === 'day' ? [date] : Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(date), i));
-  const events = await getMySchedule(dates);
+  const { events, periods } = await getMySchedule(dates);
+  const outside = events.length === 0 ? scheduleOutsideRange(periods, dates) : null;
 
   return (
     <>
@@ -59,7 +61,32 @@ export default async function SchedulePage({ searchParams }: PageProps<'/schedul
         timeZone={timeZone}
         label={view === 'day' ? 'Your day' : 'Your week'}
       />
-      {events.length === 0 ? (
+      {outside ? (
+        // The schedule exists but covers other dates (e.g. a file without a year, or next term).
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          {outside.kind === 'upcoming'
+            ? `Your schedule runs ${formatPeriod(outside.period)}, so nothing shows yet. `
+            : `Your schedule ran ${formatPeriod(outside.period)} and has ended. `}
+          <Link
+            href={`/schedule?view=${view}&date=${outside.period.start}`}
+            className="font-semibold text-primary underline-offset-4 hover:underline"
+          >
+            Go to its first {view === 'day' ? 'day' : 'week'}
+          </Link>
+          {outside.kind === 'ended' ? (
+            <>
+              {' or '}
+              <Link
+                href="/import"
+                className="font-semibold text-primary underline-offset-4 hover:underline"
+              >
+                add your current schedule
+              </Link>
+            </>
+          ) : null}
+          .
+        </p>
+      ) : events.length === 0 ? (
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Nothing on {view === 'day' ? 'this day' : 'this week'}. You show as free inside your
           available hours.

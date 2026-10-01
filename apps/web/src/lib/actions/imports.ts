@@ -13,12 +13,14 @@
 import { after } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import {
+  DEFAULT_TIMEZONE,
   SCHEDULE_FILE_MAX_BYTES,
   SCHEDULE_FILE_MIME_TYPES,
   type ParseErrorCode,
   type ParseJobStatus,
 } from '@whosfree/shared';
 import type { Json } from '@whosfree/backend';
+import { dateKey } from '@whosfree/ui/lib/time';
 import { getParseJobState } from '@/lib/data/imports';
 import { scheduleErrorMessage, TRY_AGAIN, uploadErrorMessage } from '@/lib/db-errors';
 import { removeNow, requireParseAdmin } from '@/lib/parse/admin';
@@ -139,7 +141,7 @@ export async function confirmSchedule(input: {
   /** Manual entry only: save it as this offline friend's schedule (WF-127). */
   offlineFriendId?: string | null;
 }): Promise<ActionResult> {
-  const checked = checkSchedule(input);
+  const checked = checkSchedule(input, dateKey(new Date(), DEFAULT_TIMEZONE));
   if (!checked.ok) return fail(checked.error);
   const offlineFriendId = input.offlineFriendId ?? null;
   if (offlineFriendId !== null && !isUuid(offlineFriendId)) {
