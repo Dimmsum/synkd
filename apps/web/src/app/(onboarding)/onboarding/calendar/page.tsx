@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { CalendarDays, Check } from 'lucide-react';
 import { buttonVariants } from '@whosfree/ui/components/button';
 import { OnboardingShell } from '@/components/onboarding/shell';
-import { nextStepHref } from '@/lib/onboarding';
+import { advanceOnboarding } from '@/lib/actions/onboarding';
 
 export const metadata: Metadata = { title: 'Connect Google Calendar' };
 
@@ -35,12 +34,11 @@ export default function OnboardingCalendarPage() {
         <CalendarDays aria-hidden="true" />
         Connect Google Calendar (coming soon)
       </button>
-      <Link
-        href={nextStepHref('calendar')}
-        className={buttonVariants({ variant: 'outline', size: 'lg' })}
-      >
-        Not now
-      </Link>
+      <form action={advanceOnboarding.bind(null, 'calendar')} className="flex flex-col">
+        <button type="submit" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+          Not now
+        </button>
+      </form>
     </OnboardingShell>
   );
 }

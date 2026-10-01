@@ -138,6 +138,15 @@ export const PING_EXPIRY_MINUTES = 120;
  */
 export const PING_DAILY_LIMIT = 30;
 
+/**
+ * Onboarding steps after sign-up, in order (J1, FR-WEB-5, WF-068): available hours, schedule
+ * upload/review, Google Calendar, the group tier picker (only when arriving through an invite)
+ * and install + notifications. `users.onboarding_steps` records which ones the user has done or
+ * skipped, and accepts exactly these (backend migration 20261003400000_onboarding_progress.sql).
+ */
+export const ONBOARDING_STEPS = ['hours', 'schedule', 'calendar', 'sharing', 'install'] as const;
+export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
+
 /** Available hours default: 08:00–22:00 every day (D24). */
 export const DEFAULT_AVAILABLE_HOURS = { start: '08:00', end: '22:00' } as const;
 

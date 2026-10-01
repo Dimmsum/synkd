@@ -3,10 +3,12 @@ import Link from 'next/link';
 import { TIER_DETAILS } from '@whosfree/ui/lib/tiers';
 import { TIERS } from '@whosfree/shared';
 import { InfoPage, textLinkClass } from '@/components/public/info-page';
+import { InstallPrompt, IosInstallSteps } from '@/components/pwa/install-prompt';
 
 export const metadata: Metadata = { title: 'Help' };
 
-// FR-WEB-6 (Should). TODO(WF-111): fuller iOS install guide with screenshots.
+// FR-WEB-6 (Should). The install section (WF-111, FR-PWA-3) shows the prompt or guide for the
+// visitor's device, dismissed or not, then the steps for each platform.
 export default function HelpPage() {
   return (
     <InfoPage title="Help" intro="Quick answers to common questions.">
@@ -24,10 +26,24 @@ export default function HelpPage() {
         <p className="mt-2">Your location is never shared at any level.</p>
       </section>
       <section id="install" className="scroll-mt-20">
-        <h2>How do I install it on iPhone?</h2>
+        <h2>How do I install it?</h2>
         <p>
-          Open Who&apos;s Free in Safari, tap the Share button, then “Add to Home Screen”. Open it
-          from your home screen to turn on notifications (iOS 16.4 or later).
+          Who&apos;s Free is a web app you add to your home screen. Installed, it opens like any
+          other app and can notify you when a friend pings you.
+        </p>
+        <InstallPrompt surface="requested" className="mt-4" />
+        <h3 className="mt-6 font-semibold text-foreground">iPhone and iPad</h3>
+        <p className="mb-3">
+          Notifications only work once the app is on your Home Screen, on iOS 16.4 or later. Until
+          then, pings show up in your inbox.
+        </p>
+        <IosInstallSteps />
+        <h3 className="mt-6 font-semibold text-foreground">Android</h3>
+        <p>
+          In Chrome, tap <strong className="text-foreground">Install</strong> when Who&apos;s Free
+          offers it, or open the menu ⋮ and tap{' '}
+          <strong className="text-foreground">Install app</strong>. Then turn on notifications in
+          Settings.
         </p>
       </section>
       <section>

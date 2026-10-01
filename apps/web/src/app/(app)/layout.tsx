@@ -4,6 +4,7 @@ import { GroupEmoji, PersonAvatar } from '@whosfree/ui/components/person-avatar'
 import { Eyebrow, Logo, LogoMark } from '@whosfree/ui/components/misc';
 import { MobileNav, SidebarNav } from '@/components/app/nav';
 import { StatusChip } from '@/components/app/status-chip';
+import { InstallBanner } from '@/components/pwa/install-prompt';
 import { getGroups, getNow, getViewer } from '@/lib/data/people';
 import { getUnreadCount } from '@/lib/data/inbox';
 import { describeOverride } from '@/lib/manual-status';
@@ -102,6 +103,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           id="main"
           className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] md:px-6 md:pt-6 md:pb-10"
         >
+          {/* Install nudge on phones, until installed or dismissed (WF-111, FR-PWA-3). */}
+          <InstallBanner />
           {children}
         </main>
       </div>

@@ -1,13 +1,15 @@
-import Link from 'next/link';
 import { Logo } from '@whosfree/ui/components/misc';
 import { cn } from '@whosfree/ui/lib/utils';
-import { nextStepHref, ONBOARDING_STEPS, type OnboardingStep } from '@/lib/onboarding';
+import { advanceOnboarding } from '@/lib/actions/onboarding';
+import { getOnboardingState } from '@/lib/data/onboarding';
+import { onboardingSteps, type OnboardingStep } from '@/lib/onboarding';
 
 /**
- * Frame for each onboarding step: progress, title, and "Skip for now" (every step after
- * sign-up can be skipped and picked up later, WF-068).
+ * Frame for each onboarding step: progress, title, and "Skip for now". Every step after sign-up
+ * can be skipped and picked up later (WF-068): skipping records the step as passed, so
+ * /onboarding resumes after it, and skipping the last step lands on Now.
  */
-export function OnboardingShell({
+export async function OnboardingShell({
   step,
   title,
   subtitle,
@@ -20,22 +22,25 @@ export function OnboardingShell({
   children: React.ReactNode;
   skippable?: boolean;
 }) {
-  const current = ONBOARDING_STEPS.findIndex((s) => s.key === step);
+  const steps = onboardingSteps(await getOnboardingState());
+  const current = steps.findIndex((s) => s.key === step);
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-4 py-5 sm:py-8">
       <div className="mb-6 flex items-center justify-between gap-3">
         <Logo />
         {skippable ? (
-          <Link
-            href={nextStepHref(step)}
-            className="inline-flex min-h-11 items-center rounded-md px-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
-          >
-            Skip for now
-          </Link>
+          <form action={advanceOnboarding.bind(null, step)}>
+            <button
+              type="submit"
+              className="inline-flex min-h-11 items-center rounded-md px-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
+            >
+              Skip for now
+            </button>
+          </form>
         ) : null}
       </div>
       <ol aria-label="Setup progress" className="mb-8 flex gap-2">
-        {ONBOARDING_STEPS.map((s, i) => (
+        {steps.map((s, i) => (
           <li
             key={s.key}
             aria-current={i === current ? 'step' : undefined}

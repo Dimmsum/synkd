@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import type { Route } from 'next';
 import { DAYS_OF_WEEK, DEFAULT_AVAILABLE_HOURS } from '@whosfree/shared';
 import { Moon, Sun } from 'lucide-react';
 import { Button } from '@whosfree/ui/components/button';
 import { Slider } from '@whosfree/ui/components/slider';
 import { formatClock } from '@whosfree/ui/lib/time';
+import { advanceOnboarding } from '@/lib/actions/onboarding';
 import { saveAvailableHours } from '@/lib/actions/settings';
 
 const toMin = (t: string) => {
@@ -17,9 +16,11 @@ const toMin = (t: string) => {
 const toHHMM = (m: number) =>
   `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 
-/** "When are you usually up and about?" pre-set to 08:00–22:00 every day (D24). */
-export function HoursSlider({ next }: { next: Route }) {
-  const router = useRouter();
+/**
+ * "When are you usually up and about?" pre-set to 08:00–22:00 every day (D24). Continue saves
+ * the hours, then goes on to the next onboarding step (WF-068).
+ */
+export function HoursSlider() {
   const [range, setRange] = useState<[number, number]>([
     toMin(DEFAULT_AVAILABLE_HOURS.start),
     toMin(DEFAULT_AVAILABLE_HOURS.end),
@@ -74,7 +75,8 @@ export function HoursSlider({ next }: { next: Route }) {
                 end: toHHMM(range[1]),
               })),
             );
-            if (res.ok) router.push(next);
+            // Records the step and goes on to the next one (WF-068).
+            if (res.ok) await advanceOnboarding('hours');
             else setError(res.error);
           })
         }

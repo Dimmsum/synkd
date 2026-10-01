@@ -9,6 +9,7 @@ import {
   DEFAULT_MEMBER_PERMISSIONS,
   DEFAULT_TIER,
   EVENT_CATEGORIES,
+  ONBOARDING_STEPS,
   PING_REPLIES,
   PING_TEMPLATES,
   SOURCE_TYPES,
@@ -223,6 +224,7 @@ const CLIENT_DEFINER_FUNCTIONS = [
   'list_my_groups()',
   'mark_pings_read(uuid[])',
   'now_for_viewer(timestamp with time zone,timestamp with time zone)',
+  'record_onboarding_step(text,boolean)',
   'regenerate_group_invite(uuid)',
   'remove_group_member(uuid,uuid)',
   'reply_to_ping(uuid,text,text)',
@@ -528,6 +530,14 @@ describe('database constraints match @whosfree/shared', () => {
     for (const r of PING_REPLIES) await insert(PING_TEMPLATES[0], r);
     await expect(insert('Wanna fight?', null)).rejects.toThrow(/pings_template_check/);
     await expect(insert(PING_TEMPLATES[0], 'Nah')).rejects.toThrow(/pings_reply_check/);
+  });
+
+  it('users.onboarding_steps accepts exactly ONBOARDING_STEPS (WF-068)', async () => {
+    const u = await addUser(db, `user_onb_${Date.now()}`);
+    const set = (steps: string[]) =>
+      db.admin.query(`update public.users set onboarding_steps = $2 where id = $1`, [u, steps]);
+    await set([...ONBOARDING_STEPS]);
+    await expect(set(['hours', 'tour'])).rejects.toThrow(/users_onboarding_steps_check/);
   });
 
   it('sources.type accepts exactly SOURCE_TYPES', async () => {

@@ -626,6 +626,8 @@ export type Database = {
           handle: string | null;
           id: string;
           name: string;
+          onboarded_at: string | null;
+          onboarding_steps: string[];
           sharing_paused: boolean;
           timezone: string;
         };
@@ -640,6 +642,8 @@ export type Database = {
           handle?: string | null;
           id?: string;
           name: string;
+          onboarded_at?: string | null;
+          onboarding_steps?: string[];
           sharing_paused?: boolean;
           timezone?: string;
         };
@@ -654,6 +658,8 @@ export type Database = {
           handle?: string | null;
           id?: string;
           name?: string;
+          onboarded_at?: string | null;
+          onboarding_steps?: string[];
           sharing_paused?: boolean;
           timezone?: string;
         };
@@ -753,6 +759,8 @@ export type Database = {
           handle: string | null;
           id: string;
           name: string;
+          onboarded_at: string | null;
+          onboarding_steps: string[];
           sharing_paused: boolean;
           timezone: string;
         };
@@ -932,6 +940,7 @@ export type Database = {
           user_id: string;
         }[];
       };
+      record_onboarding_step: { Args: { finish: boolean; step: string }; Returns: undefined };
       regenerate_group_invite: {
         Args: { invite_id: string };
         Returns: Database['public']['CompositeTypes']['group_invite'];

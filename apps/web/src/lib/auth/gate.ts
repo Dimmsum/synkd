@@ -4,7 +4,8 @@
 //
 // Order for a signed-in user: create the users row → confirm age (18+) → accept the current
 // terms/privacy version → app. Onboarding follows consent (the consent action sends new users
-// to /onboarding); there is no "onboarding finished" flag in the database, so it isn't gated.
+// to /onboarding) but isn't gated: every step can be skipped, and /onboarding itself resumes an
+// unfinished setup or sends finished users to Now (users.onboarded_at, WF-068).
 
 import type { AccountStatus } from '@whosfree/backend';
 

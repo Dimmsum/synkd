@@ -10,6 +10,7 @@ import {
   Clock,
   Eye,
   ShieldCheck,
+  Smartphone,
   UserRound,
   type LucideIcon,
 } from 'lucide-react';
@@ -50,6 +51,12 @@ export const SETTINGS_SECTIONS: {
     label: 'Schedules and calendars',
     hint: 'Uploads and Google Calendar',
     icon: CalendarDays,
+  },
+  {
+    href: '/settings/install',
+    label: 'Install app',
+    hint: 'Home screen app, iPhone guide',
+    icon: Smartphone,
   },
   {
     href: '/settings/privacy',

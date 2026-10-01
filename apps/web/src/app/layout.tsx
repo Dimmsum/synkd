@@ -3,6 +3,7 @@ import { JetBrains_Mono, Onest } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
 import { clerkAppearance } from '@/lib/auth/clerk-appearance';
 import { SerwistProvider } from '@serwist/turbopack/react';
+import { InstallCapture } from '@/components/pwa/install-capture';
 import { SW_URL, pwaMetadata } from '@/lib/pwa';
 import './globals.css';
 
@@ -58,6 +59,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           >
             {children}
           </SerwistProvider>
+          {/* Catches the install prompt on any page (WF-111). */}
+          <InstallCapture />
         </ClerkProvider>
       </body>
     </html>
