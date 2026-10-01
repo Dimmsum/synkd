@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { GroupEmoji, PersonAvatar } from '@whosfree/ui/components/person-avatar';
 import { Eyebrow, Logo, LogoMark } from '@whosfree/ui/components/misc';
-import { BottomNav, SidebarNav } from '@/components/app/nav';
+import { MobileNav, SidebarNav } from '@/components/app/nav';
 import { StatusChip } from '@/components/app/status-chip';
 import { getGroups, getNow, getViewer } from '@/lib/data/people';
 import { getUnreadCount } from '@/lib/data/inbox';
@@ -84,25 +84,27 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b bg-card/95 px-4 py-2 backdrop-blur md:hidden">
+        {/* Phone header: menu, logo, status chip. No bottom bar (WF-014, FR-WEB-9). */}
+        <header className="sticky top-0 z-30 flex items-center gap-1 border-b bg-card/95 px-4 py-2 backdrop-blur md:hidden">
+          <MobileNav unread={unread} groups={groups} />
           <Link
             href="/now"
             aria-label="Who's Free, go to Now"
-            className="-ml-1.5 flex size-11 items-center justify-center rounded-lg"
+            className="flex size-11 items-center justify-center rounded-lg"
           >
             <LogoMark />
           </Link>
-          <StatusChip {...chip} />
+          <div className="ml-auto">
+            <StatusChip {...chip} />
+          </div>
         </header>
         <main
           id="main"
-          className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-4 pb-28 md:px-6 md:pt-6 md:pb-10"
+          className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] md:px-6 md:pt-6 md:pb-10"
         >
           {children}
         </main>
       </div>
-
-      <BottomNav unread={unread} />
     </div>
   );
 }
