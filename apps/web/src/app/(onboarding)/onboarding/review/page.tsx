@@ -17,7 +17,8 @@ export default async function OnboardingReviewPage({
     typeof jobId === 'string' ? getParseJob(jobId) : null,
     getScheduleToReplace(),
   ]);
-  if (!job) redirect('/onboarding/upload');
+  // A parse that isn't ready (still running, failed, already saved) goes back to the upload step.
+  if (!job || job.status !== 'needs_review') redirect('/onboarding/upload');
   return (
     <OnboardingShell
       step="schedule"

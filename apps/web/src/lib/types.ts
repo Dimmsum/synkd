@@ -10,6 +10,7 @@ import type {
   GroupPermissions,
   LocalTime,
   ManualStatus,
+  ParseErrorCode,
   ParseJobStatus,
   PingReply,
   PingTemplate,
@@ -258,14 +259,27 @@ export interface ScheduleSource {
   periodEnd?: string;
 }
 
+/** An offline friend an upload or schedule is for (WF-127, D44): only what the screens show. */
+export interface OfflineFriendRef {
+  id: string;
+  nickname: string;
+}
+
+/** An unconfirmed upload (FR-IMP-16, WF-032), with its parse job if it has one. */
 export interface PendingUpload {
+  /** The schedule_files id. */
   id: string;
   fileName: string;
   uploadedAt: Iso;
+  /** When it's deleted if never confirmed: 7 days after upload (D38). */
   deleteAt: Iso;
-  jobId: string;
-  jobStatus: ParseJobStatus;
-  error?: string;
+  /** null while the upload hasn't finished (no parse started). */
+  jobId: string | null;
+  jobStatus: ParseJobStatus | null;
+  /** Why the parse failed (FR-IMP-14), when it did. A code; the UI words it. */
+  error: ParseErrorCode | null;
+  /** Set when it's an offline friend's timetable (WF-127). */
+  offlineFriend: OfflineFriendRef | null;
 }
 
 export interface DraftEvent extends EventDraft {
@@ -274,9 +288,21 @@ export interface DraftEvent extends EventDraft {
 
 export interface ParseJob {
   id: string;
+  /** The uploaded file's name; empty for manual entry (WF-031). */
   fileName: string;
   status: ParseJobStatus;
+  /** Why the parse failed, when `status` is failed (FR-IMP-14). */
+  error?: ParseErrorCode | null;
   events: DraftEvent[];
   /** The dates the schedule covers, suggested by the parser or defaulted (FR-IMP-7). */
   period: { start: string; end: string; exceptions?: DateRange[] };
+  /** Whether the parser found the dates in the file (FR-IMP-7), or they're a default to check. */
+  periodFromFile?: boolean;
+  /**
+   * The original file, to compare against (FR-IMP-10): a same-origin URL that redirects to a
+   * short-lived signed URL, its media type and page count.
+   */
+  original?: { url: string; mimeType: string; pages: number | null };
+  /** Whose schedule this becomes: an offline friend's (WF-127), or the viewer's when null. */
+  offlineFriend?: OfflineFriendRef | null;
 }

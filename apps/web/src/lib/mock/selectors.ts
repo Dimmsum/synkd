@@ -1,7 +1,7 @@
 // Builds view models from the mock data. Only lib/data/* should import this.
 // The Now screen, statuses and the viewer are real since WF-064. What's left feeds the screens
 // that aren't wired yet: My schedule and group week/day timelines (WF-065/066), the slot
-// finder (WF-098), the inbox (WF-092), uploads (WF-027/029/032) and "Who can see me" (WF-048).
+// finder (WF-098), the inbox (WF-092) and "Who can see me" (WF-048).
 // Delete each part with the issue that replaces it.
 
 import { DEFAULT_TIMEZONE } from '@whosfree/shared';
@@ -83,5 +83,3 @@ export function excludedPeople(people: MockPerson[]) {
 
 export const nextDates = (from: string, n: number) =>
   Array.from({ length: n }, (_, i) => addDays(from, i));
-
-export const minutesAgo = (m: number) => new Date(ctx().now.getTime() - m * 60_000).toISOString();

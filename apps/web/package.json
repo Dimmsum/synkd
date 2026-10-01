@@ -17,6 +17,7 @@
     "@supabase/supabase-js": "^2.117.2",
     "@whosfree/availability": "workspace:*",
     "@whosfree/backend": "workspace:*",
+    "@whosfree/parser": "workspace:*",
     "@whosfree/shared": "workspace:*",
     "@whosfree/ui": "workspace:*",
     "lucide-react": "^1.49.0",

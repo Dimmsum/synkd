@@ -41,6 +41,9 @@ importers:
       '@whosfree/backend':
         specifier: workspace:*
         version: link:../../packages/backend
+      '@whosfree/parser':
+        specifier: workspace:*
+        version: link:../../packages/parser
       '@whosfree/shared':
         specifier: workspace:*
         version: link:../../packages/shared

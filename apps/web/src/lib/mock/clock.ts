@@ -2,7 +2,7 @@ import { DEFAULT_TIMEZONE } from '@whosfree/shared';
 import { dateKey, zonedTimeToInstant } from '@whosfree/ui/lib/time';
 
 /**
- * The mock clock, for the mock data that's left (group timelines and slots, the inbox, uploads;
+ * The mock clock, for the mock data that's left (group timelines and slots, the inbox;
  * see selectors.ts). By default it's **today at 2:30 PM in Jamaica**, the moment the design
  * uses. Real screens (Now, statuses, the viewer) use the real clock since WF-064 (`getNow`).
  *
