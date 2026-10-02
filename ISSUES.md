@@ -31,7 +31,7 @@ The single tracker for **everything that needs doing** on whosfree: features, se
 ### IDs
 - Every issue has a permanent ID: `WF-###`. **IDs are never reused or renumbered.**
 - Numbers are grouped by phase (Phase 0 = 001–019, Phase 1 = 020–039, and so on). That makes an ID easy to place, but the gaps aren't meaningful.
-- **New issues (including bugs) take the next free number after the highest existing ID.** The next free number is **WF-131**.
+- **New issues (including bugs) take the next free number after the highest existing ID.** The next free number is **WF-132**.
 - Use the ID in branch names and commit messages, e.g. `feat(parser): recurring extraction (WF-028)`.
 
 ### Category (the kind of work)
@@ -107,7 +107,7 @@ These have no unfinished dependencies:
 | [WF-070](#wf-070--short-gap-rule) | Short-gap rule (stretch) | `feature` |
 | [WF-050](#wf-050--pause-sharing) | Pause sharing (stretch; the column and redaction already exist) | `feature` |
 
-**Milestone A code is merged** (2026-09-30). What's `in-review` is waiting for the owner's migrations, environment variables and a real run on a deploy and on phones: WF-004, 005, 006, 015, 026–032, 035, 040, 042–045, 047, 062, 063, 064, 068, 090–093, 111, 127, 130. Still `in-progress`: WF-010 (legal values), WF-013 (OpenRouter settings), WF-037 (event and ping purges), WF-128 (slot-finder part, waits for WF-098). **Waiting on the owner:** WF-002 (hosting: Railway for now, Vercel is the PRD target), WF-003 (apply migrations), WF-006 (branch protection).
+**Milestone A code is merged** (2026-09-30). What's `in-review` is waiting for the owner's migrations, environment variables and a real run on a deploy and on phones: WF-004, 005, 006, 015, 026–032, 035, 040, 042–045, 047, 062, 063, 064, 068, 090–093, 111, 127, 130, 131. Still `in-progress`: WF-010 (legal values), WF-013 (OpenRouter settings), WF-037 (event and ping purges), WF-128 (slot-finder part, waits for WF-098). **Waiting on the owner:** WF-002 (hosting: Railway for now, Vercel is the PRD target), WF-003 (apply migrations), WF-006 (branch protection).
 
 > WF-020 (collecting samples) still gates WF-023's model choice and WF-028's accuracy target. The parser runs on provisional models until then.
 
@@ -283,6 +283,7 @@ Everything else at P0, which adds:
 | WF-128 | Show offline friends on Now, detail page and Find a time | feature | web, availability | P0 | 3 | A | in-progress | 064, 127 |
 | WF-129 | Creating a group fails with "You don't have permission" (42501) | bug | backend | P0 | 2 | A | done | — |
 | WF-130 | Generated handle for every new user | feature | backend, web | P0 | 2 | A | in-review | 040 |
+| WF-131 | Offline friend's upload stays on "Waiting in line" (parse job never dispatched) | bug | web | P0 | 2 | A | in-review | — |
 
 ---
 
@@ -1550,6 +1551,25 @@ Log bugs here using the [bug template](#bug-template). Each bug takes the next f
 - [x] Root cause identified
 - [x] Fix merged with a test that fails without it (`schema.test.ts` requires the trigger function to be security definer; PGlite can't reproduce the firing role itself)
 
+
+#### WF-131 · Offline friend's upload stays on "Waiting in line" (parse job never dispatched)
+- **Category:** `bug` · **Area:** `web` · **Severity:** S2 · **Status:** `in-review`
+- **Found in:** dev + hosted Supabase · 2026-10-01
+- **Related to:** WF-027 (dispatch, NFR-REL-4), WF-127, PRD D46
+- **Depends on:** —
+
+**Steps to reproduce**
+1. Open an offline friend → Add their schedule, choose a photo, Upload.
+2. Wait.
+
+**Expected:** Waiting in line → Reading → Ready to review within about a minute (FR-IMP-13).
+**Actual:** it stays on "Waiting in line". Three such jobs sat `queued` with `attempts = 0`, so nothing ever claimed them.
+
+**Notes:** Nothing here is specific to offline friends: dispatching one of the stuck jobs by hand parsed it to `needs_review` on the first attempt. What failed was dispatch, and nothing tried again. `dispatchParseJob` only warned when the POST to the run route failed (wrong `NEXT_PUBLIC_APP_URL`, a `CRON_SECRET` mismatch, server unreachable). In production without `CRON_SECRET` it did nothing at all, and the sweep that should retry needs that same secret plus a cron. The viewer's own upload worked because it went through the in-process dev path. Fix: dispatch falls back to claiming and running the job in this process whenever the route isn't configured or doesn't accept the job. A job that sits queued for 20 s, or outlives its lease, is dispatched again whenever someone is looking at it (the upload card's 5 s poll, and Pending uploads). The claim is idempotent, so a job never runs twice.
+
+**Fix criteria**
+- [x] Root cause identified
+- [x] Fix merged with a test that fails without it (`lib/parse/dispatch.test.ts`: falls back to running the job here; stalled jobs are nudged)
 
 ---
 

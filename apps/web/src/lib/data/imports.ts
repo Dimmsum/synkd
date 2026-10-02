@@ -6,7 +6,7 @@ import 'server-only';
 import { DEFAULT_TIMEZONE, ParseDraft, PARSE_ERROR_CODES } from '@whosfree/shared';
 import type { ParseErrorCode, ParseJobStatus } from '@whosfree/shared';
 import { dateKey } from '@whosfree/ui/lib/time';
-import type { OfflineFriendRef, ParseJob, PendingUpload } from '@/lib/types';
+import type { Iso, OfflineFriendRef, ParseJob, PendingUpload } from '@/lib/types';
 import { defaultManualPeriod, MANUAL_JOB_ID } from '@/lib/schedule-draft';
 import { isUuid } from '@/lib/social/mappers';
 import { createServerSupabase } from '@/lib/supabase/server';
@@ -105,7 +105,7 @@ export async function getPendingUploads(): Promise<PendingUpload[]> {
   const { data, error } = await supabase
     .from('schedule_files')
     .select(
-      'id, file_name, uploaded_at, delete_at, offline_friend_id, job:parse_jobs (id, status, error)',
+      'id, file_name, uploaded_at, delete_at, offline_friend_id, job:parse_jobs (id, status, error, updated_at)',
     )
     .order('uploaded_at', { ascending: false });
   if (error) throw new Error(`Reading pending uploads failed (${error.code})`);
@@ -133,23 +133,33 @@ export async function getPendingUploads(): Promise<PendingUpload[]> {
       deleteAt: f.delete_at,
       jobId: job?.id ?? null,
       jobStatus: (job?.status as ParseJobStatus | undefined) ?? null,
+      jobUpdatedAt: job?.updated_at ?? null,
       error: asErrorCode(job?.error ?? null),
       offlineFriend: f.offline_friend_id ? (friends.get(f.offline_friend_id) ?? null) : null,
     };
   });
 }
 
-/** The state of one of the viewer's parse jobs (the upload card follows it, FR-IMP-13). */
+/**
+ * The state of one of the viewer's parse jobs (the upload card follows it, FR-IMP-13), with when
+ * it last changed (to tell a stalled job, WF-131).
+ */
 export async function getParseJobState(
   id: string,
-): Promise<{ status: ParseJobStatus; error: ParseErrorCode | null } | null> {
+): Promise<{ status: ParseJobStatus; error: ParseErrorCode | null; updatedAt: Iso } | null> {
   if (!isUuid(id)) return null;
   const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from('parse_jobs')
-    .select('status, error')
+    .select('status, error, updated_at')
     .eq('id', id)
     .maybeSingle();
   if (error) throw new Error(`Reading a parse job failed (${error.code})`);
-  return data ? { status: data.status as ParseJobStatus, error: asErrorCode(data.error) } : null;
+  return data
+    ? {
+        status: data.status as ParseJobStatus,
+        error: asErrorCode(data.error),
+        updatedAt: data.updated_at,
+      }
+    : null;
 }

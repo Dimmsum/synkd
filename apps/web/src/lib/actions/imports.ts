@@ -24,7 +24,7 @@ import { dateKey } from '@whosfree/ui/lib/time';
 import { getParseJobState } from '@/lib/data/imports';
 import { scheduleErrorMessage, TRY_AGAIN, uploadErrorMessage } from '@/lib/db-errors';
 import { removeNow, requireParseAdmin } from '@/lib/parse/admin';
-import { dispatchParseJob } from '@/lib/parse/runner';
+import { dispatchParseJob, isStalledJob } from '@/lib/parse/runner';
 import { checkSchedule, MANUAL_JOB_ID } from '@/lib/schedule-draft';
 import { isUuid } from '@/lib/social/mappers';
 import { createServerSupabase } from '@/lib/supabase/server';
@@ -117,11 +117,18 @@ export async function startParse(fileId: string): Promise<ActionResult<{ jobId: 
   return { ok: true, data: { jobId } };
 }
 
-/** Where one of the viewer's parse jobs is (the upload card follows it, FR-IMP-13). */
+/**
+ * Where one of the viewer's parse jobs is (the upload card follows it, FR-IMP-13). A job that
+ * has sat queued, or outlived its run's lease, is dispatched again (WF-131): the read is the
+ * viewer's own under RLS, and the claim runs it at most once.
+ */
 export async function getParseState(
   jobId: string,
 ): Promise<{ status: ParseJobStatus; error: ParseErrorCode | null } | null> {
-  return getParseJobState(jobId);
+  const state = await getParseJobState(jobId);
+  if (!state) return null;
+  if (isStalledJob(state, new Date())) after(() => dispatchParseJob(jobId));
+  return { status: state.status, error: state.error };
 }
 
 /**

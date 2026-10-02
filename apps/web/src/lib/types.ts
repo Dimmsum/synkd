@@ -291,6 +291,8 @@ export interface PendingUpload {
   /** null while the upload hasn't finished (no parse started). */
   jobId: string | null;
   jobStatus: ParseJobStatus | null;
+  /** When the parse job last changed, to tell a stalled one (WF-131). */
+  jobUpdatedAt: Iso | null;
   /** Why the parse failed (FR-IMP-14), when it did. A code; the UI words it. */
   error: ParseErrorCode | null;
   /** Set when it's an offline friend's timetable (WF-127). */

@@ -1,5 +1,6 @@
 import type { Metadata, Route } from 'next';
 import Link from 'next/link';
+import { after } from 'next/server';
 import { ExternalLink, FileText, LoaderCircle, TriangleAlert } from 'lucide-react';
 import { buttonVariants } from '@whosfree/ui/components/button';
 import { EmptyState } from '@whosfree/ui/components/misc';
@@ -14,18 +15,29 @@ import {
 import { getPendingUploads, originalFileHref } from '@/lib/data/imports';
 import { getNow, getViewer } from '@/lib/data/people';
 import { canRetry, jobStateLabel, parseFailureMessage } from '@/lib/parse-messages';
+import { dispatchParseJob, isStalledJob } from '@/lib/parse/runner';
 
 export const metadata: Metadata = { title: 'Pending uploads' };
 
 // Pending uploads (FR-IMP-16, WF-032, D38): files that haven't been confirmed yet, each with
 // the date it's deleted, its parse state, and view / review / retry / delete. Confirmed files are
-// deleted straight away, so they never show here. Live while a parse runs (FR-IMP-13).
+// deleted straight away, so they never show here. Live while a parse runs (FR-IMP-13). A parse
+// left waiting (a lost dispatch, a restarted server) is started again on a visit (WF-131).
 export default async function UploadsPage() {
   const [uploads, { now, timeZone }, viewer] = await Promise.all([
     getPendingUploads(),
     getNow(),
     getViewer(),
   ]);
+  const stalled = uploads.flatMap((u) =>
+    u.jobId &&
+    u.jobStatus &&
+    u.jobUpdatedAt &&
+    isStalledJob({ status: u.jobStatus, updatedAt: u.jobUpdatedAt }, new Date(now))
+      ? [u.jobId]
+      : [],
+  );
+  if (stalled.length > 0) after(() => Promise.all(stalled.map((id) => dispatchParseJob(id))));
   return (
     <div className="mx-auto max-w-2xl">
       <UploadsLive viewerId={viewer.id} />

@@ -3,14 +3,16 @@
 //
 // dispatchParseJob is the single seam between "a job is queued" and "a run happens" (spike §7):
 // it POSTs to the internal run route, which claims the job and works in `after()` within its
-// own maxDuration. Without CRON_SECRET (local development) it runs the job in this process
-// instead; in production it only warns, and the job waits for the secret to be set.
+// own maxDuration. Without CRON_SECRET, or when that request fails, it runs the job in this
+// process instead (dispatch.ts), so a job is never left queued by a missing or wrong setting
+// (WF-131).
 
 import 'server-only';
 import { ConvertError, convertUpload, parseScheduleImages } from '@whosfree/parser/node';
 import { DEFAULT_TIMEZONE } from '@whosfree/shared';
 import { dateKey } from '@whosfree/ui/lib/time';
 import { requireParseAdmin, type ParseAdmin } from './admin';
+import { dispatch, isStalled } from './dispatch';
 import { internalBaseUrl, internalSecret, PARSE_RUN_PATH } from './internal';
 import { processRun, type ConvertOutcome, type RunResult } from './run';
 
@@ -42,7 +44,7 @@ export function processClaimedRun(
   });
 }
 
-/** Claims and runs a job in this process (local development without CRON_SECRET). */
+/** Claims and runs a job in this process (no CRON_SECRET, or the run route couldn't be reached). */
 async function runHere(jobId: string): Promise<void> {
   try {
     const admin = requireParseAdmin();
@@ -56,30 +58,34 @@ async function runHere(jobId: string): Promise<void> {
 let warnedNoSecret = false;
 
 /**
- * Starts a run of `jobId` without waiting for the parse. Never throws: if dispatch fails, the
- * sweep picks the queued job up (NFR-REL-4).
+ * Starts a run of `jobId`. Never throws. If this run is lost anyway (the server restarts mid-run),
+ * the sweep (NFR-REL-4) or the next look at the job ({@link isStalled}) dispatches it again.
  */
 export async function dispatchParseJob(jobId: string): Promise<void> {
   const secret = internalSecret();
   const base = internalBaseUrl();
-  if (!secret || !base) {
-    if (process.env.NODE_ENV !== 'production') return runHere(jobId);
-    if (!warnedNoSecret) {
-      warnedNoSecret = true;
-      console.error('Parse dispatch is off: CRON_SECRET or NEXT_PUBLIC_APP_URL is not set');
-    }
-    return;
+  if ((!secret || !base) && process.env.NODE_ENV === 'production' && !warnedNoSecret) {
+    warnedNoSecret = true;
+    console.warn('CRON_SECRET or NEXT_PUBLIC_APP_URL is not set: parse jobs run in-process');
   }
-  try {
-    const res = await fetch(`${base}${PARSE_RUN_PATH}`, {
-      method: 'POST',
-      headers: { authorization: `Bearer ${secret}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ jobId }),
-      signal: AbortSignal.timeout(15_000),
-      cache: 'no-store',
-    });
-    if (!res.ok) console.warn('Parse dispatch failed', res.status);
-  } catch (err) {
-    console.warn('Parse dispatch failed', (err as Error).name);
-  }
+  await dispatch(jobId, PARSE_RUN_PATH, {
+    secret,
+    base,
+    async post(url, bearer, id) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${bearer}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ jobId: id }),
+        signal: AbortSignal.timeout(15_000),
+        cache: 'no-store',
+      });
+      if (!res.ok) console.warn('Parse dispatch failed; running it here', res.status);
+      return res.ok;
+    },
+    runHere,
+  });
 }
+
+/** Whether a job the viewer is looking at should be dispatched again (see dispatch.ts). */
+export const isStalledJob = (job: Parameters<typeof isStalled>[0], now: Date): boolean =>
+  isStalled(job, now, PARSE_LEASE_SECONDS);
