@@ -1,67 +1,37 @@
-import type { Metadata, Route } from 'next';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { CalendarSearch, Settings } from 'lucide-react';
+import { CalendarDays, CalendarSearch, Settings } from 'lucide-react';
 import { buttonVariants } from '@whosfree/ui/components/button';
-import { AvatarStack, GroupEmoji, PersonAvatar } from '@whosfree/ui/components/person-avatar';
-import { StatusBadge, STATUS_TONES } from '@whosfree/ui/components/status-badge';
-import {
-  formatClockRange,
-  formatDayLabel,
-  formatDuration,
-  formatMonthDay,
-  formatTime,
-  minutesIntoDay,
-  weekdayShort,
-} from '@whosfree/ui/lib/time';
+import { GroupEmoji, PersonAvatar } from '@whosfree/ui/components/person-avatar';
+import { StatusBadge } from '@whosfree/ui/components/status-badge';
+import { formatTime } from '@whosfree/ui/lib/time';
+import { ComingSoon } from '@/components/app/coming-soon';
 import { Panel } from '@/components/app/page-header';
 import { PingButton } from '@/components/app/ping-dialog';
-import { GroupDay } from '@/components/calendar/group-day';
-import { defaultMinFree, minFreeChoices, OverlapWeek } from '@/components/calendar/overlap-week';
-import { CalendarToolbar, readCalendarParams } from '@/components/calendar/toolbar';
-import {
-  getGroup,
-  getGroupDay,
-  getGroupUpcomingSlots,
-  getGroupWeek,
-  getNow,
-} from '@/lib/data/people';
+import { getGroup, getNow } from '@/lib/data/people';
 import { describeStatus } from '@/lib/status';
+import { countOf } from '@/lib/plural';
 
 export async function generateMetadata({ params }: PageProps<'/groups/[id]'>): Promise<Metadata> {
   const group = await getGroup((await params).id);
   return { title: group?.name ?? 'Group' };
 }
 
-// Group calendar (FR-VIEW-6, WF-066), modelled on the design's Calendar page. Day view:
-// one column per member at their tier. Week view: the design's overlap style only.
-export default async function GroupPage({ params, searchParams }: PageProps<'/groups/[id]'>) {
+// Group page (FR-VIEW-6), modelled on the design's Calendar page: who's in the group and their
+// status now. The group calendar and the free-time panels say they're coming instead of
+// showing results until their data lands (WF-134).
+// TODO(WF-066): the calendar (day view: one column per member at their tier; week view: the
+// design's overlap style only), with the toolbar to switch between them.
+// TODO(WF-098): "Next time everyone's free" and "Best times this week" from the slot finder.
+export default async function GroupPage({ params }: PageProps<'/groups/[id]'>) {
   const { id } = await params;
-  const [group, { now, today, timeZone }] = await Promise.all([getGroup(id), getNow()]);
+  const [group, { now, timeZone }] = await Promise.all([getGroup(id), getNow()]);
   if (!group) notFound();
-
-  const sp = await searchParams;
-  const { view, date } = readCalendarParams(sp, today, 'week');
-  const nowMinute = minutesIntoDay(now, timeZone);
-  // Safe: `id` belongs to a group the viewer is in (checked above).
-  const path = `/groups/${id}` as Route;
-  const [week, day, slots] = await Promise.all([
-    view === 'week' ? getGroupWeek(id, date) : null,
-    view === 'day' ? getGroupDay(id, date) : null,
-    getGroupUpcomingSlots(id),
-  ]);
 
   const statusText = new Map(
     group.members.map((m) => [m.id, describeStatus(m, now, timeZone)] as const),
   );
-  const total = week?.people.length ?? 0;
-  const minRaw = Number(sp.free);
-  const minFree = minFreeChoices(total).includes(minRaw) ? minRaw : defaultMinFree(total);
-  const nextAll = slots.find((s) => s.missing.length === 0);
-  // Best slot per day (slots are already ranked), then the top three days.
-  const bestDays = slots
-    .filter((s, i) => slots.findIndex((x) => x.date === s.date) === i)
-    .slice(0, 3);
 
   return (
     <>
@@ -87,7 +57,7 @@ export default async function GroupPage({ params, searchParams }: PageProps<'/gr
               </Link>
             </div>
             <p className="text-[13.5px] text-muted-foreground">
-              {group.memberCount} members ·{' '}
+              {countOf(group.memberCount, 'member')} ·{' '}
               <span className="font-semibold text-status-free-ink">
                 {group.freeNowCount} free right now
               </span>
@@ -113,39 +83,15 @@ export default async function GroupPage({ params, searchParams }: PageProps<'/gr
         </div>
       </header>
 
-      <CalendarToolbar path={path} view={view} date={date} today={today} />
-
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
         <section className="overflow-hidden rounded-2xl border bg-card" aria-label="Group calendar">
-          {week ? (
-            <OverlapWeek
-              week={week}
-              today={today}
-              nowMinute={nowMinute}
-              minFree={minFree}
-              path={path}
-            />
-          ) : null}
-          {day ? (
-            <GroupDay
-              members={day.members}
-              busy={day.busy}
-              nowMinute={date === today ? nowMinute : null}
-              status={
-                new Map(
-                  group.members.map((m) => {
-                    const t = statusText.get(m.id);
-                    const word =
-                      t?.tone === 'free' ? 'Free now' : STATUS_TONES[t?.tone ?? 'busy'].word;
-                    return [
-                      m.id,
-                      { tone: t?.tone ?? 'busy', word: m.isViewer ? `You · ${word}` : word },
-                    ];
-                  }),
-                )
-              }
-            />
-          ) : null}
+          <ComingSoon
+            icon={CalendarDays}
+            title="The group calendar is coming soon"
+            className="border-0"
+          >
+            You’ll see everyone’s week side by side, and the times you’re all free.
+          </ComingSoon>
         </section>
 
         <aside className="flex flex-col gap-4" aria-label="Group summary">
@@ -177,69 +123,6 @@ export default async function GroupPage({ params, searchParams }: PageProps<'/gr
                 );
               })}
             </ul>
-          </Panel>
-
-          <section
-            aria-labelledby="next-all"
-            className="rounded-2xl border border-overlap-few-border bg-overlap-few p-4 md:p-5"
-          >
-            <h2
-              id="next-all"
-              className="text-[11px] font-semibold tracking-[0.06em] text-overlap-few-ink uppercase"
-            >
-              Next time everyone’s free
-            </h2>
-            {nextAll ? (
-              <>
-                <p className="mt-2 text-2xl font-bold tracking-[-0.02em]">
-                  {formatClockRange(nextAll.start, nextAll.end)}
-                </p>
-                <p className="text-[13.5px] text-body-foreground">
-                  {formatDayLabel(nextAll.date, today)}, {formatMonthDay(nextAll.date)} ·{' '}
-                  {formatDuration(nextAll.end - nextAll.start)}
-                </p>
-                <AvatarStack people={nextAll.free} size="md" max={8} className="mt-3" />
-                <Link
-                  href={{ pathname: '/find-a-time', query: { group: id } }}
-                  className={buttonVariants({ className: 'mt-4 w-full' })}
-                >
-                  Share this time
-                </Link>
-              </>
-            ) : (
-              <p className="mt-2 text-sm text-body-foreground">
-                No time this week works for everyone. Try Find a time with fewer people.
-              </p>
-            )}
-          </section>
-
-          <Panel id="best-times" title="Best times this week">
-            {bestDays.length ? (
-              <ul className="flex flex-col gap-3">
-                {bestDays.map((s) => (
-                  <li key={s.date} className="flex items-center gap-3">
-                    <span className="flex w-10 flex-col items-center rounded-lg bg-background py-1">
-                      <span className="text-[10px] font-semibold text-muted-foreground uppercase">
-                        {weekdayShort(s.date)}
-                      </span>
-                      <span className="text-base font-bold">{Number(s.date.slice(8))}</span>
-                    </span>
-                    <span className="flex flex-col">
-                      <span className="text-sm font-semibold">
-                        {formatClockRange(s.start, s.end)}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {s.missing.length === 0
-                          ? 'Everyone free'
-                          : `All but ${s.missing.map((p) => p.name.split(' ')[0]).join(', ')}`}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted-foreground">Nothing lines up this week.</p>
-            )}
           </Panel>
         </aside>
       </div>

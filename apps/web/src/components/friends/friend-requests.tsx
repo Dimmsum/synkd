@@ -36,8 +36,7 @@ import { friendedHref } from '@/lib/offline-friends';
 import type { MyFriendInvite } from '@/lib/social/mappers';
 import type { FriendRequest, PublicPerson } from '@/lib/types';
 import { ActionButton } from '@/components/app/action-buttons';
-
-const firstName = (name: string) => name.split(' ')[0] ?? name;
+import { shortName } from '@/lib/names';
 
 /**
  * Incoming and outgoing friend requests (FR-SOC-1). Accepting asks what they'll see
@@ -97,7 +96,7 @@ function AcceptDialog({ request }: { request: FriendRequest }) {
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
-  const first = firstName(request.person.name);
+  const first = shortName(request.person);
 
   if (done) {
     return (
@@ -188,7 +187,7 @@ export function AddFriendButton({
 
   function send(person: PublicPerson) {
     startTransition(async () => {
-      const first = firstName(person.name);
+      const first = shortName(person);
       let nowFriends: boolean;
       if (person.relationship === 'request_received') {
         // They already asked: accept, with the tier you picked (FR-VIS-1).
@@ -269,7 +268,7 @@ export function AddFriendButton({
           <DialogFooter>
             <Button disabled={pending} onClick={() => send(found)}>
               {found.relationship === 'request_received'
-                ? `Accept ${firstName(found.name)}`
+                ? `Accept ${shortName(found)}`
                 : 'Send request'}
             </Button>
           </DialogFooter>
@@ -291,7 +290,7 @@ function FoundPerson({
   tier: Tier;
   onTier: (t: Tier) => void;
 }) {
-  const first = firstName(person.name);
+  const first = shortName(person);
   const note = {
     self: 'That’s you!',
     friend: null,

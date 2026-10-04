@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from '@clerk/nextjs';
 import { userChannel } from '@whosfree/shared';
 import { debounce } from '@/lib/presence/debounce';
+import { subscribeUserSignals } from '@/lib/realtime/subscribe';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
 
 /**
@@ -25,9 +26,9 @@ export function useRefetch(): () => void {
 
 /**
  * Subscribes to the viewer's private Realtime channel (`user:<users.id>`) and calls `onChange`
- * for every `event` signal, and once after a reconnect (signals sent while disconnected are
- * lost). The Clerk session token is read on every Realtime heartbeat, so token refreshes are
- * picked up. If the subscription fails, the page keeps working on what it has and a status is
+ * for every `event` signal, and once after a reconnect or a failed first join (signals sent
+ * while not joined are lost). The token is fetched before joining (WF-133), and read again on
+ * every Realtime heartbeat, so token refreshes are picked up. If the subscription fails, the page keeps working on what it has and a status is
  * logged under `label`, never a token or anything the signal is about (NFR-SEC-11).
  */
 export function useUserSignals(
@@ -50,22 +51,12 @@ export function useUserSignals(
       console.warn(`${label}: live updates unavailable`, 'no_config');
       return;
     }
-    let joined = false;
-    const channel = supabase
-      .channel(userChannel(viewerId), { config: { private: true } })
-      .on('broadcast', { event }, () => changed())
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          // A re-join after a dropped connection: catch up on anything missed meanwhile.
-          if (joined) changed();
-          joined = true;
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          // The status only: the error itself can carry connection details.
-          console.warn(`${label}: live updates unavailable`, status);
-        }
-      });
-    return () => {
-      void supabase.removeChannel(channel);
-    };
+    return subscribeUserSignals(supabase, {
+      topic: userChannel(viewerId),
+      event,
+      onChange: () => changed(),
+      // The status only: the error itself can carry connection details.
+      onProblem: (status) => console.warn(`${label}: live updates unavailable`, status),
+    });
   }, [isLoaded, sessionId, viewerId, event, label]);
 }

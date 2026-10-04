@@ -1,16 +1,16 @@
-// Settings reads (WF-015, WF-040, WF-062). Own rows only: RLS lets the signed-in user read just
-// their own `users` and `availability_prefs` rows (D41), so these read the tables directly.
+// Settings reads (WF-015, WF-040, WF-048, WF-062). Own rows read the tables directly: RLS lets
+// the signed-in user read just their own `users` and `availability_prefs` rows (D41). "Who can
+// see me" reads the social database functions (lib/data/social.ts).
 
 import { redirect } from 'next/navigation';
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { DEFAULT_TIER, type Tier } from '@whosfree/shared';
-import type { AvailableHoursDay, Iso, VisibilityRow } from '@/lib/types';
+import type { AvailableHoursDay, Iso } from '@/lib/types';
 import { weeklyToDays } from '@/lib/available-hours';
 import { isStoredAvatarUrl } from '@/lib/avatars/paths';
 import { hueFor } from '@/lib/hue';
 import { createServerSupabase } from '@/lib/supabase/server';
-import { PEOPLE } from '@/lib/mock/data';
-import { groupsOf, toGroupSummary, toPerson, viewerGroups } from '@/lib/mock/selectors';
+import { listFriends, listGroupMembers, listMyGroups } from '@/lib/data/social';
+import { toVisibilityOverview, type VisibilityOverview } from '@/lib/social/visibility';
 
 /**
  * The signed-in user's available hours, one row per day (FR-AVL-2, WF-062). A day missing from
@@ -28,57 +28,16 @@ export async function getAvailableHours(): Promise<AvailableHoursDay[]> {
 }
 
 /**
- * "Who can see me" (FR-VIS-8, WF-048): every friend and group with the tier that
- * actually applies. A tier set on a friend wins; otherwise the most restrictive shared
- * group applies, and we say which group lowered it (FR-VIS-3, FR-VIS-3a).
- * TODO(WF-048): the server resolves this with `resolve_tier` so it can't drift.
+ * "Who can see me" (FR-VIS-8, WF-048): every friend, group and fellow group member with the
+ * tier that actually applies, from the viewer's own friends, groups and group members
+ * (lib/social/visibility.ts).
  */
-export async function getVisibilityOverview(): Promise<{
-  friends: VisibilityRow[];
-  groups: VisibilityRow[];
-  members: VisibilityRow[];
-}> {
-  const resolve = (
-    id: string,
-    own: Tier | null,
-  ): Pick<VisibilityRow, 'tier' | 'effectiveTier' | 'loweredBy'> => {
-    if (own !== null) return { tier: own, effectiveTier: own };
-    const lowest = [...groupsOf(id)].sort((a, b) => a.viewerTier - b.viewerTier)[0];
-    if (!lowest) return { tier: null, effectiveTier: DEFAULT_TIER };
-    const others = groupsOf(id).filter((g) => g.id !== lowest.id);
-    const lowered = others.some((g) => g.viewerTier > lowest.viewerTier);
-    return {
-      tier: null,
-      effectiveTier: lowest.viewerTier,
-      loweredBy: lowered ? toGroupSummary(lowest) : undefined,
-    };
-  };
-
-  const inMyGroups = new Set(viewerGroups().flatMap((g) => g.memberIds));
-  return {
-    friends: PEOPLE.filter((p) => p.isFriend).map((p) => ({
-      target: { type: 'friend', person: toPerson(p) },
-      ...resolve(p.id, p.viewerTier),
-    })),
-    groups: viewerGroups().map((g) => ({
-      target: { type: 'group', group: toGroupSummary(g) },
-      tier: g.viewerTier,
-      effectiveTier: g.viewerTier,
-    })),
-    members: PEOPLE.filter((p) => !p.isFriend && inMyGroups.has(p.id)).map((p) => ({
-      target: { type: 'friend', person: toPerson(p) },
-      ...resolve(p.id, null),
-    })),
-  };
-}
-
-/** TODO(FR-SET-3, WF-094): notification preferences. */
-export async function getNotificationSettings() {
-  return {
-    types: { pings: true, friendRequests: true, groupInvites: true, scheduleReminders: true },
-    quietHours: { enabled: true, start: '23:00', end: '07:00' },
-    // Whether push is on is per device, so the browser works it out (WF-091, PushPermission).
-  };
+export async function getVisibilityOverview(): Promise<VisibilityOverview> {
+  const [friends, groups] = await Promise.all([listFriends(), listMyGroups()]);
+  const memberLists = await Promise.all(
+    groups.map(async (g) => ({ groupId: g.id, members: (await listGroupMembers(g.id)) ?? [] })),
+  );
+  return toVisibilityOverview(friends, groups, memberLists);
 }
 
 /** The signed-in user's own users row (RLS allows only that one), with the fields settings show. */

@@ -131,23 +131,35 @@ export interface VisibleBlock extends Activity {
   end: number;
 }
 
-export interface DayTimeline {
+/**
+ * A stretch of someone else's day when they aren't free, for their day or week calendar
+ * (FR-VIEW-4, WF-065). Split at local midnight so each block belongs to one date.
+ */
+export interface ScheduleBlock extends VisibleBlock {
+  id: string;
   date: string;
-  blocks: VisibleBlock[];
-  /** Outside available hours (shown as Away). */
-  hours: { start: number; end: number } | null;
+  status: 'busy' | 'dnd' | 'away';
+  /** Away because it's outside their available hours (drawn as hatching, not a block). */
+  outsideHours: boolean;
+}
+
+/** A connection's calendar for some dates, or why there's nothing to show. */
+export interface ConnectionSchedule {
+  state: 'ok' | 'paused' | 'no_schedule' | 'unavailable';
+  blocks: ScheduleBlock[];
+  /** The tier they show the viewer, already resolved (FR-VIS-3). */
+  tier: Tier;
 }
 
 export interface FriendDetail {
   person: Connection;
-  timeline: DayTimeline[];
   sharedGroups: GroupSummary[];
   /** The tier the viewer shows this friend, or null to use group settings. */
   viewerTierForThem: Tier | null;
   /** What applies without a friend-level tier: the most restrictive shared group (FR-VIS-3). */
   groupTier: { tier: Tier; groupName: string } | null;
-  /** Upcoming times you're both free. */
-  freeTogether: { date: string; start: number; end: number }[];
+  /** Upcoming times you're both free. Null until the slot finder lands (WF-098). */
+  freeTogether: { date: string; start: number; end: number }[] | null;
 }
 
 export interface FriendRequest {

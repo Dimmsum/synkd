@@ -146,11 +146,13 @@ export function formatHourLabel(minutes: number): string {
 
 /**
  * "9:00 – 10:30 AM" when both ends share AM/PM, otherwise "11:00 AM – 1:00 PM".
- * Uses an en dash with thin spacing like the design.
+ * Uses an en dash with thin spacing like the design. A range that ends at or before its start,
+ * or after midnight (1440), runs overnight: "10:00 PM – 2:00 AM (next day)" (WF-136).
  */
 export function formatClockRange(startMinutes: number, endMinutes: number): string {
   const s = formatClock(startMinutes);
   const e = formatClock(endMinutes);
+  if (endMinutes <= startMinutes || endMinutes > 1440) return `${s} – ${e} (next day)`;
   const sameMeridiem = s.slice(-2) === e.slice(-2);
   return `${sameMeridiem ? s.slice(0, -3) : s} – ${e}`;
 }

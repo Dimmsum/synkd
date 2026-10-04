@@ -1,6 +1,6 @@
 // The first-sign-in profile (WF-004): what `ensure_current_user` gets from the Clerk user.
 
-import { DEFAULT_TIMEZONE, DISPLAY_NAME_MAX_LENGTH } from '@whosfree/shared';
+import { DEFAULT_DISPLAY_NAME, DEFAULT_TIMEZONE, DISPLAY_NAME_MAX_LENGTH } from '@whosfree/shared';
 
 /**
  * Cookie holding the browser's IANA timezone, set on the sign-in/sign-up pages so the users
@@ -66,7 +66,7 @@ export function newProfile(user: ClerkProfile, timezoneCookie: string | undefine
       : undefined;
   return {
     // The user can change it later (WF-050); the database needs 1–100 characters.
-    name: name || 'New member',
+    name: name || DEFAULT_DISPLAY_NAME,
     ...(avatar ? { avatar_url: avatar } : {}),
     timezone: pickTimezone(timezoneCookie),
   };

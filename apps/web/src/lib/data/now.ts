@@ -19,6 +19,7 @@ import {
   errorCode,
   nowRowToConnection,
   ownPresenceInput,
+  settleOwnNow,
   UNKNOWN_PRESENCE,
   type ComputedPresence,
 } from '@/lib/presence/compute';
@@ -135,7 +136,8 @@ export const getOwnPresence = cache(async (): Promise<ComputedPresence> => {
         sources: sources.data ?? [],
         events: events.data ?? [],
       }),
-      now,
+      // Right after the status chip changes it, by the database's clock (WF-132).
+      settleOwnNow(now, overrides.data ?? []),
     );
   } catch (err) {
     console.warn('Now: own status could not be worked out', errorCode(err));

@@ -22,8 +22,8 @@ import {
 import { Button, buttonVariants } from '@whosfree/ui/components/button';
 import { cn } from '@whosfree/ui/lib/utils';
 import { useUserSignals } from '@/components/realtime/use-user-signals';
-import { getParseState, startParse, startUpload } from '@/lib/actions/imports';
-import { canRetry, parseFailureMessage } from '@/lib/parse-messages';
+import { deletePendingUpload, getParseState, startParse, startUpload } from '@/lib/actions/imports';
+import { canRetry, isRejectedFile, parseFailureMessage } from '@/lib/parse-messages';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
 import type { OfflineFriendRef } from '@/lib/types';
 import { checkFile, prepareForUpload, sha256Hex } from '@/lib/upload-file';
@@ -58,8 +58,9 @@ function JobSignals({ viewerId, onChange }: { viewerId: string; onChange: () => 
  * Upload a timetable or roster (WF-026) and follow the parse job live (WF-027, FR-IMP-13).
  * Photos are compressed on the device first (NFR-PERF-6) and go straight to private Storage.
  * On failure: try again, use a different file, or enter it by hand (FR-IMP-14). The file is
- * deleted once the schedule is confirmed, or after 7 days (D38). With `offlineFriend`, the
- * upload is that friend's timetable (WF-127) all the way to confirm.
+ * deleted once the schedule is confirmed, straight away if it can't be used (WF-136), or after
+ * 7 days (D38). With `offlineFriend`, the upload is that friend's timetable (WF-127) all the
+ * way to confirm.
  */
 export function UploadCard({
   flow,
@@ -87,6 +88,8 @@ export function UploadCard({
   const [viewerId, setViewerId] = useState<string>();
   const [dragging, setDragging] = useState(false);
   const jobRef = useRef<string | undefined>(undefined);
+  // The file the followed job reads, to delete it if it turns out unusable (WF-136).
+  const fileRef = useRef<string | undefined>(undefined);
 
   const refresh = useCallback(async () => {
     const current = jobRef.current;
@@ -96,6 +99,14 @@ export function UploadCard({
     if (!state || jobRef.current !== current) return;
     setPhase(PHASE_OF[state.status]);
     setFailure(state.status === 'failed' ? state.error : null);
+    if (state.status === 'failed' && isRejectedFile(state.error) && fileRef.current) {
+      // Nothing can be done with it, so it leaves Pending uploads now, not in 7 days (D38). The
+      // run already removed its bytes; this card keeps saying why.
+      const rejected = fileRef.current;
+      fileRef.current = undefined;
+      setFileId(undefined);
+      void deletePendingUpload(rejected);
+    }
   }, []);
 
   const busy =
@@ -119,6 +130,7 @@ export function UploadCard({
     setFile(undefined);
     setFailure(null);
     setFileId(undefined);
+    fileRef.current = undefined;
     jobRef.current = undefined;
     setJobId(undefined);
     if (!f) return;
@@ -136,6 +148,7 @@ export function UploadCard({
       setPhase(jobRef.current ? 'failed' : 'idle');
       return;
     }
+    fileRef.current = uploadedFileId;
     follow(started.data.jobId);
     await refresh();
   }

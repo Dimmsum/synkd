@@ -6,6 +6,8 @@ import {
   nowRowInput,
   nowRowToConnection,
   ownPresenceInput,
+  settleOwnNow,
+  DB_CLOCK_TOLERANCE_MS,
   type OwnRows,
 } from './compute';
 
@@ -440,5 +442,67 @@ describe("ownPresenceInput: the viewer's own status (WF-064, WF-127)", () => {
     const p = computePresence(ownPresenceInput(rows), now);
     expect(p).toMatchObject({ status: 'dnd', activity: { title: 'Exam' } });
     expect(p.override).toEqual({ status: 'dnd', label: 'Exam', endsAt: iso(now + HOUR) });
+  });
+});
+
+describe('settleOwnNow: a status change the database stamped a moment "ahead" (WF-132)', () => {
+  // The app server's clock is 300 ms behind the database's: the re-render right after the chip
+  // changes the status reads rows stamped with a `now()` that is still in its future.
+  const stamp = now + 300;
+  const changed = [
+    { id: 'old', status: 'free', label: null, starts_at: iso(now - HOUR), ends_at: iso(stamp) },
+    { id: 'new', status: 'busy', label: null, starts_at: iso(stamp), ends_at: iso(stamp + HOUR) },
+  ];
+
+  it('shows the new status, not the old one ending "now"', () => {
+    const rows = own({ overrides: changed });
+    const p = computePresence(ownPresenceInput(rows), settleOwnNow(now, rows.overrides));
+    expect(p.status).toBe('busy');
+    expect(p.until).toBe(iso(stamp + HOUR));
+    expect(p.override).toMatchObject({ status: 'busy' });
+  });
+
+  it('shows the calendar again right after "Back to automatic"', () => {
+    const cleared = [
+      {
+        id: 'old',
+        status: 'busy',
+        label: 'Revising',
+        starts_at: iso(now - HOUR),
+        ends_at: iso(stamp),
+      },
+    ];
+    const rows = own({ overrides: cleared });
+    const p = computePresence(ownPresenceInput(rows), settleOwnNow(now, rows.overrides));
+    expect(p.status).toBe('free');
+    expect(p.override).toBeNull();
+  });
+
+  it('leaves `now` alone when nothing changed just now', () => {
+    expect(settleOwnNow(now, [])).toBe(now);
+    const later = [
+      {
+        id: 'a',
+        status: 'busy',
+        label: null,
+        starts_at: iso(now - HOUR),
+        ends_at: iso(now + 60_000),
+      },
+      { id: 'b', status: 'busy', label: null, starts_at: iso(now - 2 * HOUR), ends_at: null },
+    ];
+    expect(settleOwnNow(now, later)).toBe(now);
+    const past = [
+      { id: 'c', status: 'busy', label: null, starts_at: iso(now - HOUR), ends_at: iso(now - 1) },
+    ];
+    expect(settleOwnNow(now, past)).toBe(now);
+  });
+
+  it('only reaches as far as the tolerance', () => {
+    const edge = now + DB_CLOCK_TOLERANCE_MS;
+    const rows = [
+      { id: 'a', status: 'busy', label: null, starts_at: iso(edge), ends_at: null },
+      { id: 'b', status: 'busy', label: null, starts_at: iso(edge + 1), ends_at: null },
+    ];
+    expect(settleOwnNow(now, rows)).toBe(edge);
   });
 });

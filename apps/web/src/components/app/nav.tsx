@@ -184,7 +184,7 @@ export function MobileNav({ unread, groups }: { unread: number; groups: GroupLin
               <span className="truncate">{g.name}</span>
               <span className="ml-auto text-xs text-muted-foreground">
                 {g.memberCount}
-                <span className="sr-only"> members</span>
+                <span className="sr-only"> {g.memberCount === 1 ? 'member' : 'members'}</span>
               </span>
             </Link>
           ))}

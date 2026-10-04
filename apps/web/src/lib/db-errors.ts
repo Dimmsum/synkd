@@ -56,6 +56,23 @@ export function profileErrorMessage(code: string | undefined): string {
   }
 }
 
+/** Which profile field a `set_handle` or profile update error is about, if one (WF-136). */
+export function profileErrorField(code: string | undefined): 'name' | 'handle' | 'timeZone' | null {
+  switch (code) {
+    case DB_ERROR.handleInvalid:
+    case DB_ERROR.handleReserved:
+    case DB_ERROR.handleTaken:
+    case DB_ERROR.rateLimited:
+      return 'handle';
+    case PG.checkViolation:
+      return 'name';
+    case PG.invalidParameter:
+      return 'timeZone';
+    default:
+      return null;
+  }
+}
+
 /** `set_status` and `clear_status` (FR-AVL-3, WF-063). */
 export function statusErrorMessage(code: string | undefined): string {
   switch (code) {

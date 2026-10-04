@@ -60,7 +60,7 @@ export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
                 href={key === 'sent' ? '/inbox?tab=sent' : '/inbox'}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex min-h-10 items-center gap-2 rounded-lg px-4 text-[13.5px] font-semibold text-body-foreground md:min-h-8',
+                  'flex min-h-11 items-center gap-2 rounded-lg px-4 text-[13.5px] font-semibold text-body-foreground md:min-h-8',
                   active && 'bg-card text-foreground shadow-[0_1px_2px_rgb(23_21_42/0.12)]',
                 )}
               >

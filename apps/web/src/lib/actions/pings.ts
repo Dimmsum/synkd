@@ -24,7 +24,7 @@ import { pingPushPayload, replyPushPayload } from '@/lib/pings/push';
 import { isUuid } from '@/lib/social/mappers';
 import { failFrom, refreshSocial } from '@/lib/social/server';
 import { TRY_AGAIN, type DbError } from '@/lib/social/errors';
-import { fail, mockDelay, ok, type ActionResult } from './result';
+import { fail, ok, type ActionResult } from './result';
 
 /** What sendPing returns: `needsConfirmation` asks the sender "Ping anyway?" (FR-PING-1). */
 export type SendPingResult = { ok: true } | { ok: false; error: string; needsConfirmation?: true };
@@ -164,11 +164,14 @@ export async function markPingsRead(pingIds: string[]): Promise<ActionResult> {
   return ok;
 }
 
+/**
+ * Not built yet, so it says so instead of reporting a success (WF-134). The inbox doesn't offer
+ * it until it is.
+ */
 export async function reportPing(_pingId: string): Promise<ActionResult> {
   // TODO(FR-PING-8, WF-095): send the ping with context to the moderation queue (a `reports`
   // row referencing pings.id).
-  await mockDelay();
-  return ok;
+  return fail('Reporting isn’t available yet. You can block them instead.');
 }
 
 /**
@@ -185,8 +188,8 @@ export async function blockPerson(personId: string): Promise<ActionResult> {
   return ok;
 }
 
+/** Not built yet, so it says so instead of reporting a success (WF-134); nothing offers it. */
 export async function nudgeToAddSchedule(_personId: string): Promise<ActionResult> {
   // TODO(WF-069): "Nudge them to add a schedule" notification (FR-VIEW-7).
-  await mockDelay();
-  return ok;
+  return fail('Nudges aren’t available yet.');
 }

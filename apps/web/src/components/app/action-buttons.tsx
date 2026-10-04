@@ -8,8 +8,7 @@ import type { ActionResult } from '@/lib/actions/result';
 import { nudgeToAddSchedule } from '@/lib/actions/pings';
 
 /**
- * A button that runs a server action and then shows a done state. Keeps mock mutations
- * visible without pretending data changed.
+ * A button that runs a server action and then shows a done state, or the action's error.
  */
 export function ActionButton({
   action,
@@ -60,7 +59,7 @@ export function ActionButton({
   );
 }
 
-/** FR-VIEW-7: nudge someone who hasn't added a schedule yet. */
+/** FR-VIEW-7: nudge someone who hasn't added a schedule yet. Not shown until WF-069 lands. */
 export function NudgeButton({ personId, name }: { personId: string; name: string }) {
   return (
     <ActionButton

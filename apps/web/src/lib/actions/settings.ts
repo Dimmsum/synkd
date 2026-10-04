@@ -7,10 +7,10 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@clerk/nextjs/server';
 import type { AvailableHoursDay } from '@/lib/types';
 import { daysToWeekly } from '@/lib/available-hours';
-import { hoursErrorMessage, profileErrorMessage } from '@/lib/db-errors';
-import { parseProfileInput } from '@/lib/profile-form';
+import { hoursErrorMessage, profileErrorField, profileErrorMessage } from '@/lib/db-errors';
+import { parseProfileInput, type ProfileField } from '@/lib/profile-form';
 import { createServerSupabase } from '@/lib/supabase/server';
-import { fail, mockDelay, ok, type ActionResult } from './result';
+import { fail, ok, type ActionResult } from './result';
 
 /**
  * Saves the whole week of available hours (FR-AVL-2, D24), from the onboarding slider or the
@@ -50,6 +50,14 @@ export async function saveAvailableHours(days: AvailableHoursDay[]): Promise<Act
   return ok;
 }
 
+/** What saveProfile returns: on failure, the field it's about if any, to mark it invalid. */
+export type SaveProfileResult =
+  { ok: true } | { ok: false; error: string; field?: ProfileField | null };
+
+function profileFailure(code: string | undefined): SaveProfileResult {
+  return { ok: false, error: profileErrorMessage(code), field: profileErrorField(code) };
+}
+
 /**
  * Saves the display name, handle and timezone (FR-AUTH-2, FR-AUTH-3, WF-040). The handle is
  * required (D47) and goes through `set_handle`, which checks the format, reserved words and
@@ -61,9 +69,9 @@ export async function saveProfile(input: {
   name: string;
   handle: string;
   timeZone: string;
-}): Promise<ActionResult> {
+}): Promise<SaveProfileResult> {
   const parsed = parseProfileInput(input);
-  if (!parsed.ok) return fail(parsed.error);
+  if (!parsed.ok) return { ok: false, error: parsed.error, field: parsed.field };
 
   const { userId } = await auth();
   if (!userId) return fail('Sign in again to save your profile.');
@@ -75,7 +83,7 @@ export async function saveProfile(input: {
     if (!/^(WF1\d\d|PT429)$/.test(handleError.code)) {
       console.error('set_handle failed', handleError.code);
     }
-    return fail(profileErrorMessage(handleError.code));
+    return profileFailure(handleError.code);
   }
 
   const { data: saved, error } = await supabase
@@ -85,7 +93,7 @@ export async function saveProfile(input: {
     .select('id');
   if (error || saved.length !== 1) {
     console.error('Saving the profile failed', error?.code ?? 'no row updated');
-    return fail(profileErrorMessage(error?.code));
+    return profileFailure(error?.code);
   }
 
   // The name shows in the app shell on every page.
@@ -93,17 +101,17 @@ export async function saveProfile(input: {
   return ok;
 }
 
+/** Not built yet, so it says so instead of reporting a success (WF-134); nothing offers it. */
 export async function setSharingPaused(_paused: boolean): Promise<ActionResult> {
   // TODO(WF-050): set users.sharingPaused; everyone sees "Sharing paused".
-  await mockDelay();
-  return ok;
+  return fail('Pausing sharing isn’t available yet.');
 }
 
+/** Not built yet, so it says so instead of reporting a success (WF-134); nothing offers it. */
 export async function saveNotificationSettings(_input: {
   types: Record<string, boolean>;
   quietHours: { enabled: boolean; start: string; end: string };
 }): Promise<ActionResult> {
   // TODO(FR-SET-3, WF-094): save per-type preferences and quiet hours.
-  await mockDelay();
-  return ok;
+  return fail('Notification preferences aren’t available yet.');
 }

@@ -40,7 +40,7 @@ const OK: ParseOutcome = {
 };
 
 function deps(overrides: Partial<RunDeps> = {}, admin: Partial<RunDeps['admin']> = {}) {
-  const calls = { complete: vi.fn(), fail: vi.fn(), parse: vi.fn() };
+  const calls = { complete: vi.fn(), fail: vi.fn(), parse: vi.fn(), remove: vi.fn() };
   const d: RunDeps = {
     admin: {
       download: async () => BYTES,
@@ -51,6 +51,10 @@ function deps(overrides: Partial<RunDeps> = {}, admin: Partial<RunDeps['admin']>
       fail: async (input) => {
         calls.fail(input);
         return input.retryable && RUN.attempt < 3 ? 'queued' : 'failed';
+      },
+      remove: async (paths) => {
+        calls.remove(paths);
+        return true;
       },
       ...admin,
     },
@@ -192,5 +196,42 @@ describe('processRun (WF-027)', () => {
       }).d,
     );
     expect(logs.join('\n')).not.toMatch(/SECRET|PDF|u\/f/);
+  });
+});
+
+describe('processRun: a rejected file is deleted straight away (WF-136, D38)', () => {
+  it('removes the stored bytes when the file itself is unusable', async () => {
+    const { d, calls } = deps({ convert: async () => ({ ok: false, code: 'unsupported_file' }) });
+    expect(await processRun(RUN, d)).toBe('failed');
+    expect(calls.fail).toHaveBeenCalledWith(expect.objectContaining({ error: 'unsupported_file' }));
+    expect(calls.remove).toHaveBeenCalledWith([RUN.storage_path]);
+  });
+
+  it('keeps the file when trying again could still help, or nothing was found in it', async () => {
+    const retry = deps({}, { download: async () => Promise.reject(new Error('network')) });
+    expect(await processRun(RUN, retry.d)).toBe('retry');
+    expect(retry.calls.remove).not.toHaveBeenCalled();
+
+    const empty = deps({
+      parse: async (): Promise<ParseOutcome> => ({
+        ok: false,
+        code: 'no_schedule_found',
+        retryable: false,
+        kind: 'no_events',
+        model: 'test/model',
+        parserVersion: 'v-test',
+        costUsd: 0.001,
+      }),
+    });
+    expect(await processRun(RUN, empty.d)).toBe('failed');
+    expect(empty.calls.remove).not.toHaveBeenCalled();
+  });
+
+  it('still reports the failure when the removal fails', async () => {
+    const { d } = deps(
+      { convert: async () => ({ ok: false, code: 'unreadable_file' }) },
+      { remove: async () => Promise.reject(new Error('storage down')) },
+    );
+    expect(await processRun(RUN, d)).toBe('failed');
   });
 });

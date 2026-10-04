@@ -7,6 +7,7 @@ import { StatusBadge } from '@whosfree/ui/components/status-badge';
 import { PageHeader } from '@/components/app/page-header';
 import { NewGroupDialog } from '@/components/groups/new-group-dialog';
 import { getGroups } from '@/lib/data/people';
+import { countOf } from '@/lib/plural';
 
 export const metadata: Metadata = { title: 'Groups' };
 
@@ -38,7 +39,9 @@ export default async function GroupsPage({ searchParams }: PageProps<'/groups'>)
                       </span>
                     ) : null}
                   </span>
-                  <span className="text-xs text-muted-foreground">{g.memberCount} members</span>
+                  <span className="text-xs text-muted-foreground">
+                    {countOf(g.memberCount, 'member')}
+                  </span>
                   <StatusBadge tone="free" className="text-xs">
                     {g.freeNowCount} free right now
                   </StatusBadge>

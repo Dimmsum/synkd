@@ -100,6 +100,8 @@ export function ReviewEditor({
   const unsure = events.filter((e) => e.confidence < LOW_CONFIDENCE);
   const manual = !job.fileName;
   const whose = offlineFriend ? `${offlineFriend.nickname}’s` : 'your';
+  // Headings: "Your week", or "Kemar’s week" for an offline friend's timetable (WF-136).
+  const whoseTitle = offlineFriend ? whose : 'Your';
   const picked = events.filter((e) => selected.includes(e.id));
   const merged = picked.length >= 2 ? mergeEvents(picked) : null;
 
@@ -182,7 +184,9 @@ export function ReviewEditor({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    // Side by side only when this column is wide enough, not the screen: in the 640 px onboarding
+    // column the week would scroll sideways with Fri–Sun off-screen (WF-136).
+    <div className="@container flex flex-col gap-4">
       {unsure.length ? (
         <p className="flex items-start gap-2 rounded-xl bg-status-soon-soft p-3 text-sm text-status-soon-ink">
           <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
@@ -194,19 +198,19 @@ export function ReviewEditor({
       <div
         className={cn(
           'grid grid-cols-[minmax(0,1fr)] gap-4',
-          !manual && 'xl:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]',
+          !manual && '@4xl:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]',
         )}
       >
         {!manual ? (
           <section aria-labelledby="original-title" className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <h2 id="original-title" className="text-[15px] font-semibold">
-                Your file
+                {whoseTitle} file
               </h2>
               <Button
                 variant="ghost"
                 size="sm"
-                className="xl:hidden"
+                className="@4xl:hidden"
                 aria-expanded={showOriginal}
                 onClick={() => setShowOriginal((s) => !s)}
               >
@@ -216,7 +220,7 @@ export function ReviewEditor({
             <div
               className={cn(
                 'h-[min(70dvh,560px)] flex-col gap-2 rounded-2xl border bg-card p-3',
-                showOriginal ? 'flex' : 'hidden xl:flex',
+                showOriginal ? 'flex' : 'hidden @4xl:flex',
               )}
             >
               <div className="flex items-center gap-2 px-1">
@@ -246,11 +250,11 @@ export function ReviewEditor({
 
         <section aria-labelledby="preview-title" className="flex flex-col gap-2">
           <h2 id="preview-title" className="text-[15px] font-semibold">
-            Your week
+            {whoseTitle} week
           </h2>
           <div className="rounded-2xl border bg-card">
             <TimeGrid
-              label="Preview of your week"
+              label={`Preview of ${whose} week`}
               columns={columns}
               startMin={gridStart}
               endMin={gridEnd}
@@ -460,7 +464,7 @@ export function ReviewEditor({
         <p className="text-xs text-muted-foreground">
           {manual
             ? 'Nothing is saved until you confirm.'
-            : 'Nothing is saved until you confirm. Your file is deleted as soon as you do.'}
+            : 'Nothing is saved until you confirm. The file is deleted as soon as you do.'}
         </p>
         <Button onClick={confirm} disabled={pending}>
           Confirm schedule
@@ -503,7 +507,7 @@ function OriginalFile({ original, name }: { original: ParseJob['original']; name
     return (
       <iframe
         src={original.url}
-        title={`Your file: ${name}`}
+        title={`Uploaded file: ${name}`}
         className="min-h-0 w-full flex-1 rounded-lg border bg-muted"
       />
     );
@@ -529,7 +533,7 @@ function OriginalFile({ original, name }: { original: ParseJob['original']; name
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={original.url}
-        alt={`Your file: ${name}`}
+        alt={`Uploaded file: ${name}`}
         className="h-auto w-full"
         onError={() => setBroken(true)}
       />

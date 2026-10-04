@@ -84,7 +84,7 @@ export default async function GroupSettingsPage({ params }: PageProps<'/groups/[
             />
           </Panel>
           <Panel id="leave" title={isAdmin ? 'Delete group' : 'Leave group'}>
-            <LeaveOrDelete groupId={id} viewerIsAdmin={isAdmin} />
+            <LeaveOrDelete groupId={id} groupName={group.name} viewerIsAdmin={isAdmin} />
           </Panel>
         </div>
       </div>

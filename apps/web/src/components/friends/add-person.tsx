@@ -5,6 +5,7 @@ import { buttonVariants } from '@whosfree/ui/components/button';
 import { PersonAvatar } from '@whosfree/ui/components/person-avatar';
 import { PageHeader } from '@/components/app/page-header';
 import { AddFromLinkForm } from '@/components/friends/add-from-link';
+import { shortName } from '@/lib/names';
 import type { PublicPerson } from '@/lib/types';
 
 /**
@@ -20,7 +21,7 @@ export function AddPersonView({
   /** Set when coming from a friend invite link: the request goes through it. */
   inviteCode?: string;
 }) {
-  const first = person.name.split(' ')[0] ?? person.name;
+  const first = shortName(person);
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col">
       <PageHeader title="Add a friend" back={{ href: '/friends' as Route, label: 'Friends' }} />

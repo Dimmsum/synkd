@@ -30,7 +30,7 @@ export function OfflineAvatar({
   status,
 }: {
   friend: Pick<OfflineFriendView, 'id' | 'nickname' | 'emoji'>;
-  size?: 'md' | 'xl';
+  size?: 'sm' | 'md' | 'xl';
   status?: StatusTone;
 }) {
   if (!friend.emoji) {
@@ -48,7 +48,7 @@ export function OfflineAvatar({
       <span
         className={cn(
           'flex items-center justify-center rounded-full bg-status-off-soft',
-          size === 'md' ? 'size-9 text-lg' : 'size-18 text-4xl',
+          { sm: 'size-7 text-sm', md: 'size-9 text-lg', xl: 'size-18 text-4xl' }[size],
         )}
       >
         {friend.emoji}

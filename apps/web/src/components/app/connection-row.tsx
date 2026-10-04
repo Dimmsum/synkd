@@ -5,7 +5,6 @@ import { StatusBadge } from '@whosfree/ui/components/status-badge';
 import { cn } from '@whosfree/ui/lib/utils';
 import type { Connection } from '@/lib/types';
 import { describeStatus } from '@/lib/status';
-import { NudgeButton } from './action-buttons';
 import { PingButton } from './ping-dialog';
 
 /**
@@ -63,9 +62,8 @@ export function ConnectionRow({
       </div>
       {showActions ? (
         <div className="relative z-10 shrink-0">
-          {c.status === 'no_schedule' ? (
-            <NudgeButton personId={c.id} name={c.name} />
-          ) : c.status === 'paused' ? null : (
+          {/* TODO(WF-069): a NudgeButton for 'no_schedule' once nudges are sent (WF-134). */}
+          {c.status === 'no_schedule' || c.status === 'paused' ? null : (
             <PingButton
               target={{
                 kind: 'person',

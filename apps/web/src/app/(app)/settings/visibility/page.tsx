@@ -34,6 +34,9 @@ export default async function VisibilityPage() {
         </p>
       </Panel>
       <Panel id="groups" title="Groups">
+        {groups.length ? null : (
+          <p className="text-sm text-muted-foreground">You’re not in any groups yet.</p>
+        )}
         <ul className="flex flex-col divide-y divide-border-subtle">
           {groups.map((row) => (
             <VisibilityItem
@@ -45,6 +48,7 @@ export default async function VisibilityPage() {
         </ul>
       </Panel>
       <Panel id="friends" title="Friends">
+        {friends.length ? null : <p className="text-sm text-muted-foreground">No friends yet.</p>}
         <ul className="flex flex-col divide-y divide-border-subtle">
           {friends.map((row) => (
             <VisibilityItem

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { DB_ERROR } from '@whosfree/backend';
-import { hoursErrorMessage, profileErrorMessage, statusErrorMessage, TRY_AGAIN } from './db-errors';
+import {
+  hoursErrorMessage,
+  profileErrorField,
+  profileErrorMessage,
+  statusErrorMessage,
+  TRY_AGAIN,
+} from './db-errors';
 import { parseProfileInput } from './profile-form';
 
 const base = { name: 'Kemar Brown', handle: 'kemar', timeZone: 'America/Jamaica' };
@@ -19,6 +25,7 @@ describe('parseProfileInput (FR-AUTH-2)', () => {
     expect(parseProfileInput({ ...base, handle: '  @ ' })).toEqual({
       ok: false,
       error: 'Choose a handle.',
+      field: 'handle',
     });
   });
 
@@ -26,6 +33,7 @@ describe('parseProfileInput (FR-AUTH-2)', () => {
     expect(parseProfileInput({ ...base, name: '  ' })).toEqual({
       ok: false,
       error: 'Add your name.',
+      field: 'name',
     });
     expect(parseProfileInput({ ...base, name: 'a'.repeat(101) }).ok).toBe(false);
     expect(parseProfileInput({ ...base, name: 'Ke\u0000mar' }).ok).toBe(false);
@@ -39,12 +47,16 @@ describe('parseProfileInput (FR-AUTH-2)', () => {
     expect(parseProfileInput({ ...base, handle: 'Admin' })).toEqual({
       ok: false,
       error: 'That handle is reserved.',
+      field: 'handle',
     });
     expect(parseProfileInput({ ...base, handle: 'the_whosfree_team' }).ok).toBe(false);
   });
 
   it('needs a known timezone', () => {
-    expect(parseProfileInput({ ...base, timeZone: 'Mars/Olympus' }).ok).toBe(false);
+    expect(parseProfileInput({ ...base, timeZone: 'Mars/Olympus' })).toMatchObject({
+      ok: false,
+      field: 'timeZone',
+    });
     expect(parseProfileInput({ ...base, timeZone: 'Europe/London' }).ok).toBe(true);
   });
 });
@@ -72,5 +84,25 @@ describe('database error messages', () => {
 
   it('explains the status rate limit (WF-063, NFR-SEC-9)', () => {
     expect(statusErrorMessage(DB_ERROR.rateLimited)).toMatch(/a lot this hour/);
+  });
+});
+
+describe('profileErrorField (WF-136: the field the server refused is marked invalid)', () => {
+  it('points handle errors at the handle', () => {
+    for (const code of [
+      DB_ERROR.handleInvalid,
+      DB_ERROR.handleReserved,
+      DB_ERROR.handleTaken,
+      DB_ERROR.rateLimited,
+    ]) {
+      expect(profileErrorField(code)).toBe('handle');
+    }
+  });
+
+  it('points name and timezone errors at those fields, and nothing else at a field', () => {
+    expect(profileErrorField('23514')).toBe('name');
+    expect(profileErrorField('22023')).toBe('timeZone');
+    expect(profileErrorField('XX000')).toBeNull();
+    expect(profileErrorField(undefined)).toBeNull();
   });
 });

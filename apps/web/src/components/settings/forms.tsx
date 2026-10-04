@@ -10,6 +10,7 @@ import { cn } from '@whosfree/ui/lib/utils';
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH } from '@whosfree/shared';
 import { PushPermission } from '@/components/push/push-permission';
 import { saveNotificationSettings, saveProfile, setSharingPaused } from '@/lib/actions/settings';
+import type { ProfileField } from '@/lib/profile-form';
 
 const TIMEZONES = [
   'America/Jamaica',
@@ -19,9 +20,10 @@ const TIMEZONES = [
   'Europe/London',
 ];
 
-function Status({ text }: { text?: string }) {
+function Status({ text, id }: { text?: string; id?: string }) {
   return (
     <span
+      id={id}
       role="status"
       className={cn('text-sm', text === 'Saved' ? 'text-status-free-ink' : 'text-destructive')}
     >
@@ -50,7 +52,14 @@ export function ProfileForm({
   // Keep the saved zone selectable even when it isn't one of the common ones.
   const zones = TIMEZONES.includes(initial.timeZone) ? TIMEZONES : [initial.timeZone, ...TIMEZONES];
   const [status, setStatus] = useState<string>();
+  // The field the last error was about, marked invalid until the next save (WF-136).
+  const [invalid, setInvalid] = useState<ProfileField | null>(null);
   const [pending, start] = useTransition();
+  const fieldProps = (field: ProfileField, hint?: string) => ({
+    'aria-invalid': invalid === field || undefined,
+    'aria-describedby':
+      [hint, invalid === field ? 'profile-status' : null].filter(Boolean).join(' ') || undefined,
+  });
   return (
     <form
       className="flex flex-col gap-4"
@@ -59,6 +68,7 @@ export function ProfileForm({
         start(async () => {
           const res = await saveProfile({ name, handle, timeZone });
           setStatus(res.ok ? 'Saved' : res.error);
+          setInvalid(res.ok ? null : (res.field ?? null));
         });
       }}
     >
@@ -69,6 +79,7 @@ export function ProfileForm({
           value={name}
           autoComplete="name"
           onChange={(e) => setName(e.target.value)}
+          {...fieldProps('name')}
         />
       </div>
       <div className="flex flex-col gap-2">
@@ -90,7 +101,7 @@ export function ProfileForm({
             maxLength={HANDLE_MAX_LENGTH}
             onChange={(e) => setHandle(e.target.value.replace(/^@/, ''))}
             className="pl-7"
-            aria-describedby="handle-hint"
+            {...fieldProps('handle', 'handle-hint')}
           />
         </div>
         <p id="handle-hint" className="text-xs text-muted-foreground">
@@ -104,6 +115,7 @@ export function ProfileForm({
           id="profile-tz"
           value={timeZone}
           onChange={(e) => setTimeZone(e.target.value)}
+          {...fieldProps('timeZone')}
           className="h-11 rounded-[10px] border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:h-10"
         >
           {zones.map((tz) => (
@@ -121,7 +133,7 @@ export function ProfileForm({
         <Button type="submit" size="sm" disabled={pending}>
           Save profile
         </Button>
-        <Status text={status} />
+        <Status id="profile-status" text={status} />
       </div>
     </form>
   );

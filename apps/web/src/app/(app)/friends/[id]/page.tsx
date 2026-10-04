@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Ban, CalendarSearch, ChevronLeft, UserMinus } from 'lucide-react';
@@ -9,17 +9,20 @@ import { StaleWarning } from '@whosfree/ui/components/misc';
 import { StatusBadge } from '@whosfree/ui/components/status-badge';
 import { TierBadge } from '@whosfree/ui/components/tier-picker';
 import {
+  addDays,
   formatClockRange,
   formatDayLabel,
   formatDuration,
   formatMonthDay,
-  minutesIntoDay,
+  startOfWeek,
 } from '@whosfree/ui/lib/time';
 import { Panel } from '@/components/app/page-header';
 import { PingButton } from '@/components/app/ping-dialog';
+import { ConnectionScheduleSection } from '@/components/calendar/connection-schedule';
+import { readCalendarParams } from '@/components/calendar/toolbar';
 import { FriendDangerZone } from '@/components/friends/friend-danger-zone';
-import { DayBar } from '@/components/friends/day-bar';
 import { FriendTierForm } from '@/components/friends/friend-tier-form';
+import { getConnectionSchedule } from '@/lib/data/connection-schedule';
 import { getFriend, getNow } from '@/lib/data/people';
 import { describeStatus } from '@/lib/status';
 
@@ -28,15 +31,18 @@ export async function generateMetadata({ params }: PageProps<'/friends/[id]'>): 
   return { title: f?.person.name ?? 'Friend' };
 }
 
-// Friend detail (FR-VIEW-4, WF-065): today and tomorrow at the viewer's tier.
-export default async function FriendPage({ params }: PageProps<'/friends/[id]'>) {
+// Friend detail (FR-VIEW-4, WF-065): their day or week at the viewer's tier, today by default.
+export default async function FriendPage({ params, searchParams }: PageProps<'/friends/[id]'>) {
   const { id } = await params;
-  const [friend, { now, today, timeZone }] = await Promise.all([getFriend(id), getNow()]);
+  const { now, today, timeZone } = await getNow();
+  const { view, date } = readCalendarParams(await searchParams, today);
+  const dates =
+    view === 'day' ? [date] : Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(date), i));
+  const [friend, schedule] = await Promise.all([getFriend(id), getConnectionSchedule(id, dates)]);
   if (!friend) notFound();
   const p = friend.person;
   const first = p.name.split(' ')[0] ?? p.name;
   const s = describeStatus(p, now, timeZone);
-  const nowMinute = minutesIntoDay(now, timeZone);
 
   return (
     <>
@@ -48,7 +54,7 @@ export default async function FriendPage({ params }: PageProps<'/friends/[id]'>)
         Friends
       </Link>
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-        <div className="flex flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-4">
           <section className="flex flex-col items-center gap-3 rounded-2xl border bg-card p-5 text-center md:p-6">
             <PersonAvatar name={p.name} hue={p.hue} size="xl" status={s.tone} />
             <div className="flex flex-col items-center gap-1">
@@ -88,23 +94,33 @@ export default async function FriendPage({ params }: PageProps<'/friends/[id]'>)
             </div>
           </section>
 
-          <Panel id="timeline" title={`${first}’s day`}>
-            <div className="flex flex-col gap-6">
-              {friend.timeline.map((d, i) => (
-                <DayBar
-                  key={d.date}
-                  day={d}
-                  label={formatDayLabel(d.date, today)}
-                  nowMinute={i === 0 ? nowMinute : null}
-                />
-              ))}
-            </div>
-          </Panel>
+          <section aria-labelledby="schedule-title" className="flex min-w-0 flex-col">
+            <h2 id="schedule-title" className="sr-only">
+              {first}’s schedule
+            </h2>
+            {schedule ? (
+              <ConnectionScheduleSection
+                schedule={schedule}
+                firstName={first}
+                path={`/friends/${p.id}` as Route}
+                view={view}
+                date={date}
+                dates={dates}
+                today={today}
+                now={now}
+                timeZone={timeZone}
+              />
+            ) : null}
+          </section>
         </div>
 
         <aside className="flex flex-col gap-4">
           <Panel id="both-free" title="You’re both free">
-            {friend.freeTogether.length ? (
+            {friend.freeTogether === null ? (
+              <p className="text-sm text-muted-foreground">
+                Times you’re both free are coming soon.
+              </p>
+            ) : friend.freeTogether.length ? (
               <ul className="flex flex-col gap-2">
                 {friend.freeTogether.map((w) => (
                   <li

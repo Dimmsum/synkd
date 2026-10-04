@@ -32,6 +32,13 @@ describe('clock formatting', () => {
   it('drops the repeated AM/PM in a range', () => {
     expect(formatClockRange(9 * 60, 10 * 60 + 30)).toBe('9:00 – 10:30 AM');
     expect(formatClockRange(11 * 60, 13 * 60)).toBe('11:00 AM – 1:00 PM');
+    expect(formatClockRange(22 * 60, 1440)).toBe('10:00 PM – 12:00 AM');
+  });
+
+  it('marks a range that runs overnight (WF-136)', () => {
+    expect(formatClockRange(10 * 60, 9 * 60)).toBe('10:00 AM – 9:00 AM (next day)');
+    expect(formatClockRange(22 * 60, 2 * 60)).toBe('10:00 PM – 2:00 AM (next day)');
+    expect(formatClockRange(22 * 60, 26 * 60)).toBe('10:00 PM – 2:00 AM (next day)');
   });
 
   it('uses compact hour labels for grids', () => {

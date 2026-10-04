@@ -31,7 +31,7 @@ The single tracker for **everything that needs doing** on whosfree: features, se
 ### IDs
 - Every issue has a permanent ID: `WF-###`. **IDs are never reused or renumbered.**
 - Numbers are grouped by phase (Phase 0 = 001–019, Phase 1 = 020–039, and so on). That makes an ID easy to place, but the gaps aren't meaningful.
-- **New issues (including bugs) take the next free number after the highest existing ID.** The next free number is **WF-132**.
+- **New issues (including bugs) take the next free number after the highest existing ID.** The next free number is **WF-137**.
 - Use the ID in branch names and commit messages, e.g. `feat(parser): recurring extraction (WF-028)`.
 
 ### Category (the kind of work)
@@ -107,7 +107,7 @@ These have no unfinished dependencies:
 | [WF-070](#wf-070--short-gap-rule) | Short-gap rule (stretch) | `feature` |
 | [WF-050](#wf-050--pause-sharing) | Pause sharing (stretch; the column and redaction already exist) | `feature` |
 
-**Milestone A code is merged** (2026-09-30). What's `in-review` is waiting for the owner's migrations, environment variables and a real run on a deploy and on phones: WF-004, 005, 006, 015, 026–032, 035, 040, 042–045, 047, 062, 063, 064, 068, 090–093, 111, 127, 130, 131. Still `in-progress`: WF-010 (legal values), WF-013 (OpenRouter settings), WF-037 (event and ping purges), WF-128 (slot-finder part, waits for WF-098). **Waiting on the owner:** WF-002 (hosting: Railway for now, Vercel is the PRD target), WF-003 (apply migrations), WF-006 (branch protection).
+**Milestone A code is merged** (2026-09-30). What's `in-review` is waiting for the owner's migrations, environment variables and a real run on a deploy and on phones: WF-004, 005, 006, 015, 026–032, 035, 040, 042–045, 047, 062, 063, 064, 065, 068, 090–093, 111, 127, 130–136. Still `in-progress`: WF-010 (legal values), WF-013 (OpenRouter settings), WF-037 (event and ping purges), WF-128 (slot-finder part, waits for WF-098). **Waiting on the owner:** WF-002 (hosting: Railway for now, Vercel is the PRD target), WF-003 (apply migrations), WF-006 (branch protection).
 
 > WF-020 (collecting samples) still gates WF-023's model choice and WF-028's accuracy target. The parser runs on provisional models until then.
 
@@ -238,7 +238,7 @@ Everything else at P0, which adds:
 | WF-062 | Available hours (onboarding slider and settings) | feature | web, backend | P0 | 3 | A | in-review | 014, 060 |
 | WF-063 | Manual status override | feature | web, backend | P0 | 3 | A | in-review | 060 |
 | WF-064 | Now screen (real-time, redacted) | feature | web, backend | P0 | 3 | A | in-review | 041, 042, 043, 061 |
-| WF-065 | Friend detail and My schedule views | feature | web | P0 | 3 | B | todo | 064 |
+| WF-065 | Friend detail and My schedule views | feature | web | P0 | 3 | B | in-review | 064 |
 | WF-066 | Group timeline view | feature | web | P1 | 3 | stretch | todo | 064 |
 | WF-067 | Stale-data warning | feature | web, backend | P1 | 3 | stretch | todo | 064 |
 | WF-068 | End-to-end onboarding flow | feature | web | P0 | 3 | A | in-review | 005, 030, 045, 062 |
@@ -284,6 +284,11 @@ Everything else at P0, which adds:
 | WF-129 | Creating a group fails with "You don't have permission" (42501) | bug | backend | P0 | 2 | A | done | — |
 | WF-130 | Generated handle for every new user | feature | backend, web | P0 | 2 | A | in-review | 040 |
 | WF-131 | Offline friend's upload stays on "Waiting in line" (parse job never dispatched) | bug | web | P0 | 2 | A | in-review | — |
+| WF-132 | Status chip shows the previous status "until now" right after a status change | bug | web | P1 | 3 | A | in-review | — |
+| WF-133 | Realtime join is sent without the token, so changes in the first ~7 s after a page load are lost | bug | web | P0 | 3 | A | in-review | — |
+| WF-134 | Unbuilt screens show mock people and placeholder results to real users | bug | web | P0 | 3 | A | in-review | — |
+| WF-135 | Remove friend, block, leave, make admin and delete group happen on one tap with no confirmation | bug | web | P1 | 2 | A | in-review | — |
+| WF-136 | Polish from the 2026-10-03 E2E run (plurals, copy, tap targets, a11y) | bug | web | P2 | 6 | A | in-review | — |
 
 ---
 
@@ -1053,13 +1058,16 @@ Every account gets a unique handle made from its name when it's created, so frie
 - [x] Status is never shown by colour alone (NFR-UX-1)
 
 #### WF-065 · Friend detail and My schedule views
-- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
+- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** B · **Status:** `in-review`
 - **Depends on:** WF-064
 - **PRD:** FR-VIEW-4, FR-VIEW-5
 
 **Acceptance criteria**
-- [ ] A friend's detail page shows their timeline for today and tomorrow at the viewer's tier
-- [ ] My schedule has day and week views, with a badge showing where each event came from (upload, manual or Google)
+- [x] A friend's detail page shows their schedule as a day or week view (today by default) at the viewer's tier
+- [x] My schedule has day and week views, with a badge showing where each event came from (upload, manual or Google)
+- [x] My schedule has a person switcher (you, friends, offline friends) that keeps the day/week view and date
+
+> Scope widened (2026-10-04, owner request): from "today and tomorrow" to day and week views, plus the switcher on My schedule (PRD FR-VIEW-4 updated). The calendar reads `now_for_viewer` for the dates shown (≤ 8 days, so a week fits), so redaction stays in Postgres and no migration is needed; `lib/presence/schedule.ts` runs the engine's `timeline` over the row and splits it at the viewer's local midnight. Blank = free, hatched = outside their hours, T1 blocks say only "Busy". "You're both free" on the friend page still waits for the slot finder (WF-098). **Left:** check it on a deploy with real friends at T1/T2/T3.
 
 #### WF-066 · Group timeline view
 - **Category:** `feature` · **Area:** `web` · **Priority:** P1 · **Milestone:** stretch · **Status:** `todo`
@@ -1570,6 +1578,119 @@ Log bugs here using the [bug template](#bug-template). Each bug takes the next f
 **Fix criteria**
 - [x] Root cause identified
 - [x] Fix merged with a test that fails without it (`lib/parse/dispatch.test.ts`: falls back to running the job here; stalled jobs are nudged)
+
+#### WF-132 · Status chip shows the previous status "until now" right after a status change
+- **Category:** `bug` · **Area:** `web` · **Severity:** S3 · **Status:** `in-review`
+- **Found in:** dev (localhost) + hosted Supabase · headless Chromium 1440×900 · 2026-10-03 (E2E run, `docs/e2e-test-report-2026-10-03.md`, E2E-23/24)
+- **Related to:** WF-063, WF-064, PRD FR-AVL-3
+- **Depends on:** —
+
+**Steps to reproduce**
+1. On Now, the chip says "Free until 2:00 PM". Open it, pick Busy, "1 hour", Set status.
+2. Watch the chip without reloading.
+3. Open it again and press "Back to automatic".
+
+**Expected:** "Busy until 1:44 PM" after step 1, and "Free until 2:00 PM" after step 3.
+**Actual:** after step 1 the chip shows "Busy" for a moment, then **"Free until 12:44 PM"** (the old status, ending at the current minute). After step 3 it shows **"Busy until 12:44 PM · <note>"**. Both stay until a reload, which then shows the right status.
+
+**Notes:** The server re-renders the shell (`revalidatePath('/', 'layout')`), and `app/(app)/layout.tsx` works the status out at `requestNow()`, which is the app server's `Date.now()`. `set_status`/`clear_status` stamp `starts_at`/`ends_at` with Postgres `now()`. The wrong label is exactly what the engine gives when it evaluates a few milliseconds *before* the database stamp: the closed override still counts, or the new one hasn't started yet. So the likely cause is the app server's clock being slightly behind the database's. Not confirmed, because the run had no database access. `useOptimistic` only covers the transition, and it doesn't apply to "Back to automatic" (status `null`). Possible fixes: have the RPCs return their timestamp and evaluate at `max(requestNow, stamp)`, or set the timestamps from the app.
+
+**Fix (2026-10-03):** the viewer's own status is worked out at `settleOwnNow(now, overrides)` (`lib/presence/compute.ts`, used by `getOwnPresence`): if a status boundary lies within `DB_CLOCK_TOLERANCE_MS` (5 s) after the app's `now`, it's evaluated at that boundary instead. Statuses always start at the database's `now()` and a closed one ends there, while an end the user picks is at least a minute away, so a boundary that close is a change that already happened by the database's clock. No migration needed. Clock skew is still the likely cause rather than a confirmed one (no database access during the run); check on a deploy that the chip is right straight after Set status and "Back to automatic".
+
+**Fix criteria**
+- [x] Root cause identified (app server clock behind Postgres `now()`; consistent with every symptom, not measured)
+- [x] Fix merged with a test that fails without it (`lib/presence/compute.test.ts`: "settleOwnNow")
+
+#### WF-133 · Realtime join is sent without the token, so changes in the first ~7 s after a page load are lost
+- **Category:** `bug` · **Area:** `web` · **Severity:** S2 · **Status:** `in-review`
+- **Found in:** dev (localhost) + hosted Supabase · headless Chromium · 2026-10-03 (E2E-12/13/19/30)
+- **Related to:** WF-064 (status changes reach viewers in ≤ 5 s), WF-092, WF-027 (upload card), PRD FR-VIEW-3, D41
+- **Depends on:** —
+
+**Steps to reproduce**
+1. Two friends, A and B. A opens Now.
+2. Within about 5 s, B sets a manual status.
+3. Watch A's Now without reloading.
+
+**Expected:** A sees B's new status within 5 s.
+**Actual:** A never sees it (waited 15 s). Every page that uses `useUserSignals` logs `"<label>: live updates unavailable CHANNEL_ERROR"`. When B changes status after A has been on the page for ~7 s, it works (the update lands ~2.5 s later).
+
+**Notes:** WebSocket frames on A's page: the first `phx_join` for `realtime:user:<id>` carries **no `access_token`**, and about 4 s later Realtime replies `"Unauthorized: You do not have permissions to read from this Channel topic"`. realtime-js then rejoins with the token and gets `ok` at ~7 s. Signals sent before then are lost, and `use-user-signals.ts` only catches up on a *re*-join: `joined` is still `false` after the failed first attempt, so the successful retry doesn't call `onChange`. Fix: give Realtime the Clerk token before subscribing (for example `await supabase.realtime.setAuth(await getToken())`), and refetch on the first `SUBSCRIBED` that follows an error.
+
+**Fix (2026-10-03):** `lib/realtime/subscribe.ts` (used by `useUserSignals`) awaits `supabase.realtime.setAuth()` (the client's `accessToken` callback, so the Clerk token) before `channel().subscribe()`. realtime-js 2.117 copies `accessTokenValue` into the join payload at subscribe time, and supabase-js only starts fetching the token asynchronously in its constructor. It also calls `onChange` once on the first `SUBSCRIBED` after a `CHANNEL_ERROR`/`TIMED_OUT`. Check on a deploy that the first `phx_join` carries `access_token` and no `CHANNEL_ERROR` is logged.
+
+**Fix criteria**
+- [x] Root cause identified
+- [x] Fix merged with a test that fails without it (`lib/realtime/subscribe.test.ts`)
+
+#### WF-134 · Unbuilt screens show mock people and placeholder results to real users
+- **Category:** `bug` · **Area:** `web` · **Severity:** S2 · **Status:** `in-review`
+- **Found in:** dev (localhost) + hosted Supabase · 2026-10-03 (E2E run)
+- **Related to:** WF-048, WF-065, WF-066, WF-069, WF-098, PRD FR-VIEW-4, FR-VIEW-7
+- **Depends on:** —
+
+**Steps to reproduce** (as a new user with one friend and no groups)
+1. Open **Find a time** from the nav.
+2. Open **Settings → Who can see me**.
+3. Open a friend who is sharing a schedule.
+4. On a friend with no schedule, press **Nudge**.
+5. Create a group on your own and open it.
+
+**Expected:** each screen shows the user's real data, or says the feature is coming. Fake people, fake results and fake success are never shown.
+**Actual:**
+1. Find a time lists slots with "Everyone free · Kemar", the mock person "Kemar Brown" (`lib/data/slots.ts` reads `lib/mock/data`).
+2. Who can see me lists groups the user isn't in ("Flat 4", "COMP2140 Study", "Netball Crew", "Sunday Football") and a friend they don't have ("Shanice Walker") (`getVisibilityOverview` reads `PEOPLE`/`viewerGroups()`). On a privacy page this is misleading.
+3. The friend's header says "Free until 2:00 PM", but "Alice's day" says "Not sharing yet." for today and tomorrow, and "You're both free" says "No shared free time this week." (`getFriend` returns `hours: null` and `freeTogether: []`).
+4. The button says "Nudged", but `nudgeToAddSchedule` is a stub (TODO WF-069) and nothing reaches the friend.
+5. "No time this week works for everyone" for a one-person group whose only member is free now.
+
+**Notes:** The features themselves are `todo`. The bug is that their screens are live and show wrong information. Until each lands, hide the entry point or show a "coming soon" state.
+
+**Fix (2026-10-03):** `lib/mock` and `lib/data/slots.ts` are deleted.
+1. Find a time shows "coming soon" (`components/app/coming-soon.tsx`); its links stay. TODO(WF-098) in the page.
+2. Who can see me is built from the viewer's real friends, groups and group members (`lib/social/visibility.ts`, the same rules as `resolve_tier`), with empty states. WF-048 still owns moving it into the database.
+3. Friend page: the day timeline and "You're both free" say they're coming (`FriendDetail.timeline`/`freeTogether` are `null` until WF-065).
+4. The Nudge button isn't shown (WF-069). Hidden for the same reason: "Report ping" in the inbox (WF-095), Pause sharing in Profile (WF-050) and the notification type/quiet-hours form (WF-094; push on this device stays). Their stub actions now return "isn't available yet" instead of `ok`, and `mockDelay` is gone.
+5. Group page: the calendar says it's coming (WF-066); "Next time everyone's free" and "Best times this week" are removed until WF-098. The live "Right now" panel stays.
+
+**Fix criteria**
+- [x] Root cause identified
+- [x] No route or action reachable from the app reads `lib/mock` or reports a success it didn't do (`src/no-placeholders.test.ts`: no mock imports, no `mockDelay`, no TODO-marked action returning `ok`; fails on the old code)
+
+#### WF-135 · Remove friend, block, leave, make admin and delete group happen on one tap with no confirmation
+- **Category:** `bug` · **Area:** `web` · **Severity:** S3 · **Status:** `in-review`
+- **Found in:** dev (localhost) · 2026-10-03 (E2E-33, 34, 44, 45)
+- **Related to:** WF-043, WF-047, PRD FR-SOC-6
+- **Depends on:** —
+
+**Steps to reproduce**
+1. On a friend's page, press **Remove friend** (or **Block**).
+2. In group settings as admin, press **Make <member> the admin**, then **Leave group**. As the new admin, press **Delete group**.
+
+**Expected:** a confirmation like the one for deleting an offline friend ("Delete Kemar? Their schedule is deleted straight away… This can't be undone. Keep / Delete").
+**Actual:** each one happens straight away. A stray tap on "Delete group" deletes the group for every member. "Make admin" can't be undone by the old admin.
+
+**Fix (2026-10-03):** `ConfirmActionButton` (`components/app/confirm-action-button.tsx`, the same Dialog as the offline-friend delete) with the wording in `lib/confirmations.ts`, used for Remove friend, Block, Make admin, Leave group and Delete group. An admin's "Remove" (a member) still runs on one tap; it wasn't in this report.
+
+**Fix criteria**
+- [x] Root cause identified (plain `ActionButton`s)
+- [x] Each of the five actions asks first, with a test that fails without it (`lib/confirmations.test.ts`)
+
+#### WF-136 · Polish from the 2026-10-03 E2E run (plurals, copy, tap targets, a11y)
+- **Category:** `bug` · **Area:** `web` · **Severity:** S4 · **Status:** `in-review`
+- **Found in:** dev (localhost) · 2026-10-03 (E2E run)
+- **Related to:** WF-014, WF-029, WF-040, WF-042, WF-043, WF-127
+- **Depends on:** —
+
+**Actual → expected**
+- [x] "1 friends", "1 members" (Friends, Groups, sidebar) → "1 friend", "1 member". (`lib/plural.ts` `countOf`, also on the group page and Now's group panel.)
+- [x] The tier picker says "What **New** will see" for a user named "New member": the first word of the default name. Use the handle while the name is still the default (email sign-up asks for no name; see WF-130's open item). (`lib/names.ts` `shortName`; `DEFAULT_DISPLAY_NAME` in `@whosfree/shared`.)
+- [x] The review screen for an offline friend's file still says "Your file" and "Your week". (Now "<nickname>'s file/week".)
+- [x] An event that ends before it starts (overnight, by design) is listed as "10:00 – 9:00 AM" with no "overnight" or "next day" marker. (`formatClockRange` adds "(next day)".)
+- [x] On desktop, the review week grid in the 640 px onboarding column scrolls sideways, and Fri–Sun start off-screen. (The review editor goes side by side on a container query, `@4xl`, not the `xl` viewport breakpoint.)
+- [x] Tap targets under 44×44 px on phones: friend-name links on Now and Friends (91×22), Inbox Received/Sent tabs (40 px tall). (Tabs are `min-h-11` on phones. The friend-name link is a stretched link, `after:absolute after:inset-0` in the `relative` row, so its tap area is the whole row; 91×22 is the text box. Check on a phone.)
+- [x] The handle field never gets `aria-invalid` when the server rejects a handle. (`saveProfile` returns the field; the form sets `aria-invalid` and points `aria-describedby` at the error.)
+- [x] A file rejected at upload ("isn't a PDF, photo or screenshot") is still stored and listed in Pending uploads for 7 days. Delete it straight away. (The parse run removes the bytes on a final unusable-file failure, `isRejectedFile`; the upload card then deletes the pending upload. If the card is closed first, the row stays until it expires, with no file behind it.)
 
 ---
 

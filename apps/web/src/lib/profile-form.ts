@@ -10,6 +10,9 @@ export interface ProfileInput {
   timeZone: string;
 }
 
+/** The form field an error is about, so the form can mark it invalid (WF-136). */
+export type ProfileField = 'name' | 'handle' | 'timeZone';
+
 export type ParsedProfile =
   | {
       ok: true;
@@ -18,7 +21,7 @@ export type ParsedProfile =
       handle: string;
       timezone: string;
     }
-  | { ok: false; error: string };
+  | { ok: false; error: string; field: ProfileField };
 
 /**
  * Name: 1–100 characters, no control characters. Handle: required (D47), with the shared `Handle`
@@ -31,18 +34,23 @@ export function parseProfileInput(input: ProfileInput): ParsedProfile {
     return {
       ok: false,
       error: input.name.trim() ? 'Names are 1–100 characters, on one line.' : 'Add your name.',
+      field: 'name',
     };
   }
 
   const typed = normalizeHandleInput(input.handle);
-  if (!typed) return { ok: false, error: 'Choose a handle.' };
+  if (!typed) return { ok: false, error: 'Choose a handle.', field: 'handle' };
   const handle = Handle.safeParse(typed);
   if (!handle.success) {
-    return { ok: false, error: `${handle.error.issues[0]?.message ?? 'Check your handle'}.` };
+    return {
+      ok: false,
+      error: `${handle.error.issues[0]?.message ?? 'Check your handle'}.`,
+      field: 'handle',
+    };
   }
 
   if (!isKnownTimezone(input.timeZone)) {
-    return { ok: false, error: 'Pick a timezone from the list.' };
+    return { ok: false, error: 'Pick a timezone from the list.', field: 'timeZone' };
   }
 
   return { ok: true, name: name.data, handle: handle.data, timezone: input.timeZone };

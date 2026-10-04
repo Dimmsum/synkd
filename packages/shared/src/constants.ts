@@ -183,6 +183,12 @@ export type AvatarUploadType = (typeof AVATAR_UPLOAD_TYPES)[number];
 /** Display name length, in characters (PRD §9 `users.name`, FR-AUTH-2). The database checks 1–100. */
 export const DISPLAY_NAME_MAX_LENGTH = 100;
 
+/**
+ * The name a new user gets when sign-up gives none (email sign-up asks for no name, WF-004).
+ * Screens use their handle instead while the name is still this (WF-136).
+ */
+export const DEFAULT_DISPLAY_NAME = 'New member';
+
 export const SOURCE_TYPES = ['upload', 'manual', 'gcal'] as const;
 export type SourceType = (typeof SOURCE_TYPES)[number];
 

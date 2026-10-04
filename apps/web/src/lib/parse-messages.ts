@@ -28,6 +28,20 @@ export function parseFailureMessage(code: ParseErrorCode | null): string {
   }
 }
 
+/**
+ * Whether the file itself can't be used (wrong type, too big, damaged), so nothing can ever be
+ * done with it: it's deleted straight away instead of waiting out its 7 days (D38, WF-136).
+ */
+export function isRejectedFile(code: ParseErrorCode | null): boolean {
+  return (
+    code === 'unsupported_file' ||
+    code === 'file_too_large' ||
+    code === 'too_many_pages' ||
+    code === 'image_too_large' ||
+    code === 'unreadable_file'
+  );
+}
+
 /** Whether "Try again" with the same file could help (FR-IMP-14). */
 export function canRetry(code: ParseErrorCode | null): boolean {
   return (

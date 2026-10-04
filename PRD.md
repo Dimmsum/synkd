@@ -336,7 +336,7 @@ Location or room is **never stored or shared**, at any tier (NG1, D35).
 | FR-VIEW-1 | **Now screen** (home), with sections for *Free now*, *Free soon (within 60 minutes)*, *Busy/Away*, and *Not sharing yet* (`no_schedule` or `paused`). Every status shows "until X" (D18). | M |
 | FR-VIEW-2 | The Now screen can be **filtered by group**. | M |
 | FR-VIEW-3 | **Real-time updates**: a friend's status change appears without refreshing. | M |
-| FR-VIEW-4 | **Friend detail**: that friend's timeline for today and tomorrow, at your tier. | M |
+| FR-VIEW-4 | **Friend detail**: that friend's schedule as a day or week view (today by default), at your tier. My schedule also has a person switcher, so you can flip between your own schedule and any friend's (or offline friend's) day or week. | M |
 | FR-VIEW-5 | **My schedule**: day and week views of my combined schedule, with a badge showing where each event came from. | M |
 | FR-VIEW-6 | **Group view**: today's timeline for every member, with free overlaps highlighted. | S |
 | FR-VIEW-7 | Empty states that lead to invites ("None of your friends are here yet. Share your invite link"). People with `no_schedule` get a "Nudge them to add a schedule" action. | M |

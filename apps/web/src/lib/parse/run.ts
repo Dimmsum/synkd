@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 import type { ParseRun } from '@whosfree/backend';
 import type { ParseOutcome } from '@whosfree/parser/node';
 import { SCHEDULE_FILE_MAX_BYTES, type ParseErrorCode } from '@whosfree/shared';
+import { isRejectedFile } from '@/lib/parse-messages';
 import type { ParseAdmin } from './admin';
 
 export type ConvertOutcome =
@@ -18,7 +19,7 @@ export type ConvertOutcome =
   | { ok: false; code: ParseErrorCode };
 
 export interface RunDeps {
-  admin: Pick<ParseAdmin, 'download' | 'complete' | 'fail'>;
+  admin: Pick<ParseAdmin, 'download' | 'complete' | 'fail' | 'remove'>;
   /** Converts the file (ConvertError → `{ ok: false }`); anything thrown is internal. */
   convert(bytes: Uint8Array): Promise<ConvertOutcome>;
   parse(input: {
@@ -54,6 +55,13 @@ export async function processRun(run: ParseRun, deps: RunDeps): Promise<RunResul
         retryable,
         ...extra,
       });
+      if (status === 'failed' && isRejectedFile(error)) {
+        // Nothing can be done with this file, so its bytes go now, not in 7 days (D38, WF-136).
+        // The job stays, so the upload card can still say why; the card then deletes the upload.
+        await deps.admin.remove([run.storage_path]).catch((err: unknown) => {
+          console.warn('Removing a rejected file failed; it expires as usual', (err as Error).name);
+        });
+      }
       return status === null ? 'stale' : status === 'queued' ? 'retry' : 'failed';
     } catch (err) {
       // The lease runs out and the sweep tries again.

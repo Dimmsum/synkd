@@ -2,7 +2,7 @@
 
 import { useId, useState, useTransition } from 'react';
 import { PING_REPLIES, PING_TEXT_MAX_LENGTH, type PingReply } from '@whosfree/shared';
-import { Check, Ellipsis, Flag, Ban } from 'lucide-react';
+import { Check, Ellipsis, Ban } from 'lucide-react';
 import { Button } from '@whosfree/ui/components/button';
 import {
   DropdownMenu,
@@ -12,7 +12,7 @@ import {
 } from '@whosfree/ui/components/dropdown-menu';
 import { Textarea } from '@whosfree/ui/components/textarea';
 import { cn } from '@whosfree/ui/lib/utils';
-import { blockPerson, replyToPing, reportPing } from '@/lib/actions/pings';
+import { blockPerson, replyToPing } from '@/lib/actions/pings';
 import { pingCharsLeft } from '@/lib/ping-rules';
 
 /** One-tap replies (FR-PING-4) or a short text reply, ≤ 140 characters. */
@@ -109,9 +109,10 @@ export function PingReplyBox({ pingId, disabled }: { pingId: string; disabled?: 
   );
 }
 
-/** Report or block from a ping (FR-PING-8). */
+/** Block from a ping (FR-PING-8). Reporting comes with WF-095. */
 export function PingMenu({
-  pingId,
+  // Kept for "Report ping" (WF-095).
+  pingId: _pingId,
   personId,
   name,
 }: {
@@ -129,15 +130,8 @@ export function PingMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            className="min-h-11"
-            onSelect={async () => {
-              const res = await reportPing(pingId);
-              if (res.ok) setDone('Reported. Thanks for letting us know.');
-            }}
-          >
-            <Flag aria-hidden="true" /> Report ping
-          </DropdownMenuItem>
+          {/* TODO(FR-PING-8, WF-095): "Report ping" (reportPing) once reports reach a moderation
+              queue. Until then it isn't offered (WF-134). */}
           <DropdownMenuItem
             className="min-h-11 text-destructive"
             onSelect={async () => {

@@ -17,6 +17,7 @@ import { filterByGroup, freeNowByGroup, groupIntoNowSections } from '@/lib/now-s
 import { sortOfflineFriends } from '@/lib/offline-friends';
 import { presenceAt } from '@/lib/presence/clock';
 import type { Connection, GroupSummary, OfflineFriendView } from '@/lib/types';
+import { countOf } from '@/lib/plural';
 import { useNowSignals, usePresenceClock, useRefetch } from './use-now-updates';
 
 /** Opens "Add someone not on whosfree" on the Friends page (WF-127, J8 step 1). */
@@ -291,7 +292,7 @@ function GroupsRail({
               <span className="flex min-w-0 flex-col">
                 <span className="truncate text-sm font-semibold">{g.name}</span>
                 <span className="text-xs text-muted-foreground">
-                  {g.memberCount} members ·{' '}
+                  {countOf(g.memberCount, 'member')} ·{' '}
                   <span className="font-semibold text-status-free-ink">
                     {freeByGroup.get(g.id) ?? 0} free
                   </span>

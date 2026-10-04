@@ -258,6 +258,32 @@ export function ownPresenceInput(rows: OwnRows): PresenceInput {
   );
 }
 
+/**
+ * How far ahead of the app server's clock a status change stamped by the database may land
+ * (WF-132). `set_status` and `clear_status` stamp `starts_at`/`ends_at` with Postgres `now()`;
+ * when the app server's clock runs behind the database's, the re-render right after the change
+ * would otherwise see the old status still running and the new one not started yet.
+ */
+export const DB_CLOCK_TOLERANCE_MS = 5_000;
+
+/**
+ * The instant to work out the viewer's own status at: `now`, or the latest status boundary in
+ * `(now, now + DB_CLOCK_TOLERANCE_MS]` if there is one. Statuses always start at the database's
+ * `now()` and a closed one ends there, while an end the user picks is at least a minute away,
+ * so a boundary that close is a change that has already happened by the database's clock.
+ */
+export function settleOwnNow(now: number, overrides: OwnRows['overrides']): number {
+  let settled = now;
+  for (const o of overrides) {
+    for (const stamp of [o.starts_at, o.ends_at]) {
+      if (stamp === null) continue;
+      const t = Date.parse(stamp);
+      if (t > settled && t <= now + DB_CLOCK_TOLERANCE_MS) settled = t;
+    }
+  }
+  return settled;
+}
+
 /** Every day 08:00–22:00 (D24): an offline friend has no hours of their own (WF-128). */
 export const OFFLINE_FRIEND_HOURS: AvailableHours[] = DAYS_OF_WEEK.map((day) => ({
   day,
@@ -285,7 +311,7 @@ export function offlineFriendPresenceInput(
 }
 
 /** Why someone has a status, in what the viewer's tier allows (the rows are already redacted). */
-function activityFor(cause: StatusCause, input: PresenceInput): Activity | undefined {
+export function activityFor(cause: StatusCause, input: PresenceInput): Activity | undefined {
   if (cause.type === 'events') {
     const details = cause.eventIds.map((id) => input.events.get(id)).filter((d) => d !== undefined);
     const title = details.find((d) => d.title)?.title ?? undefined;

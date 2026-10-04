@@ -1,14 +1,15 @@
 // Data access for the viewer, the Now screen, friends and groups.
 //
-// Screens call these async functions and never touch lib/mock directly. The viewer, friends,
-// requests, groups and everyone's status are real (WF-004, WF-042, WF-043, WF-064): database
-// functions called as the signed-in user (Clerk token → Supabase RLS), with statuses worked out
-// on the server by the availability engine (lib/data/now.ts). Group week/day timelines and the
-// slot finder still come from the mock until WF-065/066/098 wire them. Everything about other
-// people must come back already redacted to the viewer's tier (FR-VIS-5, D41).
+// Screens call these async functions. The viewer, friends, requests, groups and everyone's
+// status are real (WF-004, WF-042, WF-043, WF-064): database functions called as the signed-in
+// user (Clerk token → Supabase RLS), with statuses worked out on the server by the availability
+// engine (lib/data/now.ts). Nothing here reads mock data (WF-134): what isn't built yet (group
+// calendars WF-066, the slot finder WF-098) is left out, and its screens say it's coming.
+// Everything about other people must come back already redacted to the viewer's tier
+// (FR-VIS-5, D41).
 
 import { cache } from 'react';
-import { minutesIntoDay, startOfWeek, dateKey } from '@whosfree/ui/lib/time';
+import { dateKey } from '@whosfree/ui/lib/time';
 import type {
   Connection,
   FriendDetail,
@@ -16,13 +17,11 @@ import type {
   GroupDetail,
   GroupSummary,
   Iso,
-  OverlapWeek,
   Viewer,
 } from '@/lib/types';
 import { appUrl } from '@/lib/config';
 import { hueFor } from '@/lib/hue';
 import { freeNowByGroup } from '@/lib/now-sections';
-import { rankSlots } from '@/lib/overlap';
 import {
   getNowConnections,
   getOwnPresence,
@@ -51,16 +50,6 @@ import {
   toPermissions,
   withPresence,
 } from '@/lib/social/mappers';
-import { GROUPS, VIEWER } from '@/lib/mock/data';
-import {
-  busyDays,
-  ctx,
-  excludedPeople,
-  findPerson,
-  nextDates,
-  toPerson,
-  visibleBlocks,
-} from '@/lib/mock/selectors';
 
 /**
  * The signed-in user with their own status (FR-AVL-4), worked out by the availability engine
@@ -137,19 +126,17 @@ export async function getFriendRequests(): Promise<FriendRequest[]> {
 /**
  * A friend's detail: who they are and their status now (WF-064), the groups you share and the
  * tier you show them (WF-042/043). Null if they aren't a friend (or either of you blocked the
- * other).
- * TODO(WF-065): the timeline and "You're both free" come from `events_for_viewer` for today +
- * tomorrow, redacted on the server (FR-VIEW-4). Until then they're empty, as for someone
- * without a schedule.
+ * other). Their day/week calendar is lib/data/connection-schedule.ts (WF-065).
+ * TODO(WF-098): "You're both free" comes from the slot finder. Until then it's null, which the
+ * page shows as coming soon: empty would read as "never free together" (WF-134).
  */
 export async function getFriend(id: string): Promise<FriendDetail | null> {
   if (!isUuid(id)) return null;
-  const [friends, groups, index, presence, { today }] = await Promise.all([
+  const [friends, groups, index, presence] = await Promise.all([
     listFriends(),
     listMyGroups(),
     groupMembershipIndex(),
     getPresenceIndex(),
-    getNow(),
   ]);
   const row = friends.find((f) => f.user_id === id);
   if (!row) return null;
@@ -160,11 +147,10 @@ export async function getFriend(id: string): Promise<FriendDetail | null> {
       socialConnection(friendToPerson(row), { isFriend: true, groupIds }),
       presence.get(id),
     ),
-    timeline: nextDates(today, 2).map((date) => ({ date, blocks: [], hours: null })),
     sharedGroups: shared.map(toGroupSummary),
     viewerTierForThem: row.tier,
     groupTier: mostRestrictiveGroup(shared),
-    freeTogether: [],
+    freeTogether: null,
   };
 }
 
@@ -227,62 +213,5 @@ export async function getGroup(id: string): Promise<GroupDetail | null> {
     viewerPermissions: permissions,
     viewerTier: row.my_tier,
     invite: invite ? toGroupInvite(invite, appUrl()) : null,
-  };
-}
-
-/**
- * Free/busy intervals for every member over a week, for the overlap week view.
- * Only times, never reasons (FR-SLOT-3). TODO(WF-066/WF-061): server-side intervals.
- */
-export async function getGroupWeek(id: string, anyDateInWeek: string): Promise<OverlapWeek | null> {
-  const g = GROUPS.find((x) => x.id === id && x.memberIds.includes(VIEWER.id));
-  if (!g) return null;
-  const weekStart = startOfWeek(anyDateInWeek);
-  const members = g.memberIds.map(findPerson).filter((p) => p !== undefined);
-  return {
-    weekStart,
-    days: busyDays(members, nextDates(weekStart, 7)),
-    people: members.filter((p) => !p.paused && !p.noSchedule).map(toPerson),
-    excluded: excludedPeople(members),
-  };
-}
-
-/**
- * Ranked free slots for a group over the next `days` days, from now (powers "Next time
- * everyone's free" and "Best times this week"). TODO(WF-098): server-side slot finder.
- */
-export async function getGroupUpcomingSlots(id: string, days = 7) {
-  const g = GROUPS.find((x) => x.id === id && x.memberIds.includes(VIEWER.id));
-  if (!g) return [];
-  const { now, today, tz } = ctx();
-  const members = g.memberIds.map(findPerson).filter((p) => p !== undefined);
-  const byId = new Map(members.map((p) => [p.id, toPerson(p)]));
-  return rankSlots(busyDays(members, nextDates(today, days)), {
-    minDuration: 60,
-    window: [8 * 60, 22 * 60],
-    maxMissing: 1,
-    notBefore: { date: today, minute: minutesIntoDay(now, tz) },
-  }).map((s) => ({
-    date: s.date,
-    start: s.start,
-    end: s.end,
-    free: s.free.map((pid) => byId.get(pid)).filter((p) => p !== undefined),
-    missing: s.missing.map((pid) => byId.get(pid)).filter((p) => p !== undefined),
-  }));
-}
-
-/** Today's timeline for every member of a group (FR-VIEW-6), at each member's tier. */
-export async function getGroupDay(id: string, date: string) {
-  const g = GROUPS.find((x) => x.id === id && x.memberIds.includes(VIEWER.id));
-  if (!g) return null;
-  const members = g.memberIds.map(findPerson).filter((p) => p !== undefined);
-  return {
-    date,
-    members: members.map((p) => ({
-      person: toPerson(p),
-      blocks: visibleBlocks(p, date),
-      excluded: Boolean(p.paused || p.noSchedule),
-    })),
-    busy: busyDays(members, [date])[0]?.members ?? [],
   };
 }

@@ -66,7 +66,7 @@ export function ScheduleGrid({
   );
 }
 
-function DayHeader({ date, today }: { date: string; today: string }) {
+export function DayHeader({ date, today }: { date: string; today: string }) {
   const isToday = date === today;
   return (
     <div className="flex items-center justify-center gap-2 px-1.5 py-2.5">

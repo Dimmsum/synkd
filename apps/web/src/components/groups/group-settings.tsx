@@ -24,6 +24,7 @@ import { TierPicker } from '@whosfree/ui/components/tier-picker';
 import { dateKey, formatMonthDay } from '@whosfree/ui/lib/time';
 import { cn } from '@whosfree/ui/lib/utils';
 import { ActionButton } from '@/components/app/action-buttons';
+import { ConfirmActionButton } from '@/components/app/confirm-action-button';
 import { GROUP_EMOJIS } from '@/components/groups/new-group-dialog';
 import {
   createInvite,
@@ -37,6 +38,7 @@ import {
   transferAdmin,
   updateGroup,
 } from '@/lib/actions/social';
+import { CONFIRM } from '@/lib/confirmations';
 import type { GroupInvite } from '@/lib/types';
 
 export const PERMISSION_LABELS: Record<GroupPermission, { label: string; hint: string }> = {
@@ -443,14 +445,16 @@ export function MembersManager({
               {!m.isViewer && m.role !== 'admin' && (viewerIsAdmin || viewerCanRemove) ? (
                 <div className="flex flex-wrap gap-2 pl-12">
                   {viewerIsAdmin ? (
-                    <ActionButton
+                    <ConfirmActionButton
                       action={() => transferAdmin(groupId, m.id)}
+                      confirmation={CONFIRM.makeAdmin(m.name)}
+                      destructive={false}
                       doneLabel="Admin transferred"
                       icon={<Crown aria-hidden="true" />}
                       ariaLabel={`Make ${m.name} the admin`}
                     >
                       Make admin
-                    </ActionButton>
+                    </ConfirmActionButton>
                   ) : null}
                   <ActionButton
                     action={() => removeMember(groupId, m.id)}
@@ -470,11 +474,14 @@ export function MembersManager({
   );
 }
 
+/** Leave, or delete as the admin. Both ask first (WF-135). */
 export function LeaveOrDelete({
   groupId,
+  groupName,
   viewerIsAdmin,
 }: {
   groupId: string;
+  groupName: string;
   viewerIsAdmin: boolean;
 }) {
   return (
@@ -486,22 +493,24 @@ export function LeaveOrDelete({
       ) : null}
       <div className="flex flex-wrap gap-2">
         {viewerIsAdmin ? (
-          <ActionButton
+          <ConfirmActionButton
             action={() => deleteGroup(groupId)}
+            confirmation={CONFIRM.deleteGroup(groupName)}
             doneLabel="Group deleted"
             variant="destructive"
           >
             Delete group
-          </ActionButton>
+          </ConfirmActionButton>
         ) : (
-          <ActionButton
+          <ConfirmActionButton
             action={() => leaveGroup(groupId)}
+            confirmation={CONFIRM.leaveGroup(groupName)}
             doneLabel="You left"
             variant="outline"
             className="text-destructive"
           >
             Leave group
-          </ActionButton>
+          </ConfirmActionButton>
         )}
       </div>
     </div>

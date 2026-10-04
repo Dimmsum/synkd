@@ -9,6 +9,7 @@ import { getOfflineFriendsNow } from '@/lib/data/offline-friends';
 import { getMyFriendInvite } from '@/lib/data/invites';
 import { getFriendRequests, getFriends, getGroups, getNow, getViewer } from '@/lib/data/people';
 import { friendLinkUrl } from '@/lib/social/mappers';
+import { countOf } from '@/lib/plural';
 
 export const metadata: Metadata = { title: 'Friends' };
 
@@ -39,7 +40,7 @@ export default async function FriendsPage({ searchParams }: PageProps<'/friends'
         title="Friends"
         subtitle={
           <>
-            {friends.length} friends ·{' '}
+            {countOf(friends.length, 'friend')} ·{' '}
             <span className="font-semibold text-status-free-ink">{free} free right now</span>
           </>
         }
