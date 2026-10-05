@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DB_ERROR } from '@whosfree/backend';
-import type { EventDraft } from '@whosfree/shared';
+import { DB_ERROR } from '@synkd/backend';
+import type { EventDraft } from '@synkd/shared';
 import { scheduleErrorMessage, TRY_AGAIN } from './db-errors';
 import {
   checkSchedule,

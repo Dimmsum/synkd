@@ -14,7 +14,7 @@ import {
   PING_TEMPLATES,
   SOURCE_TYPES,
   TIERS,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import {
   GROUP_ERRORS,
   OFFLINE_FRIEND_ERRORS,
@@ -561,7 +561,7 @@ describe('no location data anywhere (D35)', () => {
   });
 });
 
-describe('database constraints match @whosfree/shared', () => {
+describe('database constraints match @synkd/shared', () => {
   it('events.category accepts exactly EVENT_CATEGORIES', async () => {
     const u = await addUser(db, `user_cat_${Date.now()}`);
     const s = await addSource(db, u);

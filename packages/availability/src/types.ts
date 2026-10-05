@@ -1,4 +1,4 @@
-import type { AvailableHours, ManualStatus, SchedulePeriod, Status } from '@whosfree/shared';
+import type { AvailableHours, ManualStatus, SchedulePeriod, Status } from '@synkd/shared';
 
 /**
  * A calendar event as the engine sees it (PRD §9 `events`): an id, when it happens and whether

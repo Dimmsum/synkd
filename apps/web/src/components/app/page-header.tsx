@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import { ChevronLeft } from 'lucide-react';
-import { cn } from '@whosfree/ui/lib/utils';
+import { cn } from '@synkd/ui/lib/utils';
 
 /** Title row used by every app screen: title + subtitle on the left, actions on the right. */
 export function PageHeader({

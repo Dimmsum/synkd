@@ -2,7 +2,7 @@
 // availabilityPrefs, FR-AVL-2, D24).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { AvailableHours, DAYS_OF_WEEK, DEFAULT_AVAILABLE_HOURS } from '@whosfree/shared';
+import { AvailableHours, DAYS_OF_WEEK, DEFAULT_AVAILABLE_HOURS } from '@synkd/shared';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
 import { addUser } from './harness/seed';
@@ -62,7 +62,7 @@ describe('default row', () => {
     ]);
   });
 
-  it('is 08:00-22:00 every day (D24), matching @whosfree/shared', async () => {
+  it('is 08:00-22:00 every day (D24), matching @synkd/shared', async () => {
     const weekly = await weeklyOf(alice);
     expect(weekly).toEqual(DEFAULT_WEEK);
     expect(Week.parse(weekly)).toEqual(DEFAULT_WEEK);
@@ -214,7 +214,7 @@ describe('editing the week', () => {
     expect(await weeklyOf(alice)).toEqual(DEFAULT_WEEK);
   });
 
-  it('whatever it accepts parses as AvailableHours[] from @whosfree/shared', async () => {
+  it('whatever it accepts parses as AvailableHours[] from @synkd/shared', async () => {
     await setWeekly('user_alice', [
       { day: 'sun', start: '00:00', end: '23:59' },
       { day: 'thu', start: '12:00', end: '12:01' },

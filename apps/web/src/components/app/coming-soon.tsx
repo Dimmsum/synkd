@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import { Hourglass } from 'lucide-react';
-import { EmptyState } from '@whosfree/ui/components/misc';
+import { EmptyState } from '@synkd/ui/components/misc';
 
 /**
  * Stands in for a feature that isn't built yet (WF-134). Says so plainly instead of showing

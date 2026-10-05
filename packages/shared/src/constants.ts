@@ -101,7 +101,7 @@ export const DEFAULT_GROUP_MAX_MEMBERS = 20;
 export const INVITE_CODE_PATTERN = /^[A-Za-z0-9_-]{22}$/;
 
 /**
- * Offline friends (D44): people who aren't on whosfree, added by a user with a nickname and a
+ * Offline friends (D44): people who aren't on synkd, added by a user with a nickname and a
  * schedule. At most this many per user (FR-SOC-18). The database enforces the same cap in
  * `create_offline_friend` (backend migration 20261002300000_offline_friends.sql).
  */

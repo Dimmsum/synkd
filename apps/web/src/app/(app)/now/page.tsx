@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { cn } from '@whosfree/ui/lib/utils';
+import { cn } from '@synkd/ui/lib/utils';
 import { NowBoard } from '@/components/now/now-board';
 import { getViewerRow } from '@/lib/data/now';
 import { getOfflineFriendsNow } from '@/lib/data/offline-friends';
@@ -19,7 +19,7 @@ export default async function NowPage({ searchParams }: PageProps<'/now'>) {
     getNowForViewer(),
     getNow(),
     getViewerRow(),
-    // People the viewer added who aren't on whosfree (WF-128): their own section, never part of
+    // People the viewer added who aren't on synkd (WF-128): their own section, never part of
     // the viewer's own status.
     getOfflineFriendsNow(),
   ]);

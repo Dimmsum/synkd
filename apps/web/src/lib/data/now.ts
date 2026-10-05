@@ -12,8 +12,8 @@ import 'server-only';
 import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
-import { DEFAULT_UNTIL_HORIZON_MS } from '@whosfree/availability';
-import type { NowConnection } from '@whosfree/backend';
+import { DEFAULT_UNTIL_HORIZON_MS } from '@synkd/availability';
+import type { NowConnection } from '@synkd/backend';
 import {
   computePresence,
   errorCode,

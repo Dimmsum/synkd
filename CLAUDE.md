@@ -2,7 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-whosfree ("Who's Free") is a PWA that shows which friends are free right now, built from their uploaded class schedules and Google Calendar. `PRD.md` holds the requirements and `ISSUES.md` is the work tracker. Both are large, so grep them by ID rather than reading them whole.
+synkd is a PWA that shows which friends are free right now, built from their uploaded class schedules and Google Calendar. `PRD.md` holds the requirements and `ISSUES.md` is the work tracker. Both are large, so grep them by ID rather than reading them whole.
+
+The name is always lowercase "synkd" (D48); the domain will be `getsynked.com` or similar. It used to be called "whosfree"/"Who's Free", and a few things keep that name on purpose: the `WF-###` issue IDs, the design export folders, applied migrations, and the database identifiers `whosfree.friend_pair`, `whosfree.now_signalled` and `whosfree_user_channel_receive_own`. Don't use the old name anywhere else.
 
 ## Commands
 
@@ -14,12 +16,12 @@ pnpm build | dev | lint | typecheck | test      # turbo run <task> across all wo
 pnpm format / pnpm format:check                  # prettier (root)
 
 # One package
-pnpm --filter @whosfree/shared test
-pnpm --filter @whosfree/shared typecheck
+pnpm --filter @synkd/shared test
+pnpm --filter @synkd/shared typecheck
 
 # One test file / one test (Vitest)
-pnpm --filter @whosfree/shared test src/schemas.test.ts
-pnpm --filter @whosfree/shared test -t "rejects a zero-length event"
+pnpm --filter @synkd/shared test src/schemas.test.ts
+pnpm --filter @synkd/shared test -t "rejects a zero-length event"
 ```
 
 Before changing `turbo.json` or turbo commands, read `AGENTS.md`. The installed Turborepo version may behave differently from what you expect, and its bundled docs are the reference.
@@ -33,7 +35,7 @@ Only Phase 0 exists so far. `apps/` is empty, and `packages/` contains:
 PRD §8.2 plans more workspaces: `apps/web` (Next.js App Router PWA on Vercel), `apps/worker` (Hono on Railway, for PDF/HEIC processing and LLM parse jobs through OpenRouter), `packages/backend` (Supabase migrations, RLS, SQL functions, generated types), `packages/availability` (pure TS engine with no I/O), `packages/parser` and `packages/ui` (shared React components, Tailwind + shadcn/ui). Follow that layout when you scaffold them.
 
 Rules that span multiple files:
-- **Internal packages ship TypeScript source, not build output.** For example, `@whosfree/shared` exports `./src/index.ts`. That's why `lint`, `typecheck` and `test` depend on the no-op `transit` task (`dependsOn: ["^transit"]`) and not on `^build`: a change in a dependency still invalidates its dependants' caches.
+- **Internal packages ship TypeScript source, not build output.** For example, `@synkd/shared` exports `./src/index.ts`. That's why `lint`, `typecheck` and `test` depend on the no-op `transit` task (`dependsOn: ["^transit"]`) and not on `^build`: a change in a dependency still invalidates its dependants' caches.
 - **Postgres is the single place where authorization happens** (PRD §8.1, D40/D41). Clerk JWTs are trusted by Supabase through third-party auth, and RLS keys on `auth.jwt()->>'sub'`. Other users' data is only reachable through `security definer` functions that apply tier redaction (`resolve_tier`/`redact`). Multi-step writes are single SQL functions. Realtime Broadcast only carries "changed" signals, and clients re-fetch through the redacting functions.
 - **No location data anywhere** (D35). Event schemas have no location field, and zod strips unknown keys like `location`/`room`. Tests enforce this.
 - `no-console` allows only `warn`/`error` (NFR-SEC-11): logs must never contain event titles, ping text or tokens.

@@ -6,8 +6,7 @@ import { missingLegalValues } from '@/lib/legal';
 
 export const metadata: Metadata = {
   title: 'Contact',
-  description:
-    "How to reach Who's Free: data and privacy requests, account help and security reports.",
+  description: 'How to reach synkd: data and privacy requests, account help and security reports.',
 };
 
 // FR-WEB-4, NFR-COMP-2, WF-010. Public: readable without signing in. Email only, no form.
@@ -37,8 +36,8 @@ export default function ContactPage() {
           until then, email is how we handle these requests.
         </p>
         <p className="mt-2">
-          Not on Who&apos;s Free, but think someone added your schedule without your permission?
-          Email the same address and we&apos;ll help. The{' '}
+          Not on synkd, but think someone added your schedule without your permission? Email the
+          same address and we&apos;ll help. The{' '}
           <Link href="/privacy" className={textLinkClass}>
             privacy policy
           </Link>{' '}

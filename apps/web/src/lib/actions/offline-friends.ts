@@ -7,7 +7,7 @@
 // SQLSTATEs (NFR-SEC-11).
 
 import { revalidatePath } from 'next/cache';
-import { OfflineFriendNickname } from '@whosfree/shared';
+import { OfflineFriendNickname } from '@synkd/shared';
 import { offlineFriendErrorMessage } from '@/lib/offline-friends';
 import { isUuid } from '@/lib/social/mappers';
 import { createServerSupabase } from '@/lib/supabase/server';
@@ -41,7 +41,7 @@ function refresh() {
 }
 
 /**
- * Adds someone who isn't on whosfree (FR-SOC-14), known only by a nickname and an optional
+ * Adds someone who isn't on synkd (FR-SOC-14), known only by a nickname and an optional
  * emoji. Refused unless the viewer confirms they have that person's permission to add their
  * schedule (FR-SOC-16); the database records when. At most 20 per user (FR-SOC-18).
  */

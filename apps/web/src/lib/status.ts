@@ -1,6 +1,6 @@
-import { MANUAL_STATUS_LABELS, type EventCategory } from '@whosfree/shared';
-import type { StatusTone } from '@whosfree/ui/components/status-badge';
-import { formatUntil, type Instant } from '@whosfree/ui/lib/time';
+import { MANUAL_STATUS_LABELS, type EventCategory } from '@synkd/shared';
+import type { StatusTone } from '@synkd/ui/components/status-badge';
+import { formatUntil, type Instant } from '@synkd/ui/lib/time';
 import type { Activity, Connection, PresenceStatus } from '@/lib/types';
 
 /** How a T2 viewer sees each category (PRD §6.7: "In class", "At work", "In a meeting"). */

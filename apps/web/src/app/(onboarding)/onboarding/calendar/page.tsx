@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { CalendarDays, Check } from 'lucide-react';
-import { buttonVariants } from '@whosfree/ui/components/button';
+import { buttonVariants } from '@synkd/ui/components/button';
 import { OnboardingShell } from '@/components/onboarding/shell';
 import { advanceOnboarding } from '@/lib/actions/onboarding';
 

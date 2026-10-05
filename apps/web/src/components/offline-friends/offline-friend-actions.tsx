@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Send, Trash2 } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
+import { Button } from '@synkd/ui/components/button';
 import {
   Dialog,
   DialogClose,
@@ -13,8 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@whosfree/ui/components/dialog';
-import { Input } from '@whosfree/ui/components/input';
+} from '@synkd/ui/components/dialog';
+import { Input } from '@synkd/ui/components/input';
 import { deleteOfflineFriend } from '@/lib/actions/offline-friends';
 
 /**
@@ -71,16 +71,16 @@ export function DeleteOfflineFriendButton({ id, nickname }: { id: string; nickna
 }
 
 /**
- * Invite to whosfree (FR-SOC-17, J8 step 4): shares the viewer's own friend link (/add/<id>),
+ * Invite to synkd (FR-SOC-17, J8 step 4): shares the viewer's own friend link (/add/<id>),
  * through the system share sheet where there is one, else copied. They can't be pinged, so this
  * is the action instead. Nothing about the offline friend goes in the message.
  */
-export function InviteToWhosfreeButton({ link, nickname }: { link: string; nickname: string }) {
+export function InviteToSynkdButton({ link, nickname }: { link: string; nickname: string }) {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
   async function share() {
     const data = {
-      title: 'Join me on whosfree',
-      text: 'Join me on whosfree so we can see when we’re both free.',
+      title: 'Join me on synkd',
+      text: 'Join me on synkd so we can see when we’re both free.',
       url: link,
     };
     if (typeof navigator.share === 'function' && navigator.canShare?.(data) !== false) {
@@ -103,7 +103,7 @@ export function InviteToWhosfreeButton({ link, nickname }: { link: string; nickn
     <span className="inline-flex w-full flex-col gap-1 sm:w-auto">
       <Button onClick={share} className="w-full sm:w-auto">
         {state === 'copied' ? <Check aria-hidden="true" /> : <Send aria-hidden="true" />}
-        {state === 'copied' ? 'Link copied' : `Invite ${nickname} to whosfree`}
+        {state === 'copied' ? 'Link copied' : `Invite ${nickname} to synkd`}
       </Button>
       <span role="status" className="text-xs text-muted-foreground">
         {state === 'copied' ? (

@@ -1,5 +1,5 @@
 // Test helpers: a fake OpenRouter. Never makes a network call. Not exported from the package.
-import type { ParseDraft } from '@whosfree/shared';
+import type { ParseDraft } from '@synkd/shared';
 import { makePrompt } from './prompt';
 
 export const TEST_PROMPT = makePrompt('v0-test', 'Extract the schedule.');

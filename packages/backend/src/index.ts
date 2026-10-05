@@ -1,4 +1,4 @@
-// @whosfree/backend: the Supabase project (supabase/: config and migrations)
+// @synkd/backend: the Supabase project (supabase/: config and migrations)
 // and the TypeScript types generated from its schema.
 //
 // Use `Database` to type a Supabase client, e.g.
@@ -252,7 +252,7 @@ export const GROUP_ERRORS = {
 /**
  * One event in a `now_for_viewer` source (WF-064), already redacted to the viewer's tier:
  * `category` from T2, `title` from T3, neither for private events. Instants are UTC epoch
- * ms, so this is an `@whosfree/availability` `ScheduleEvent` as is.
+ * ms, so this is an `@synkd/availability` `ScheduleEvent` as is.
  */
 export interface NowEvent {
   id: string;
@@ -287,7 +287,7 @@ export interface NowOverride {
  * co-member, never blocked) with the tier-redacted input for `statusAt`:
  * `{ timeZone: timezone, sharingPaused: paused, availableHours: available_hours, overrides,
  * sources }`. When `paused`, every schedule field is empty. The jsonb columns arrive untyped,
- * so validate them (e.g. `AvailableHours` from @whosfree/shared) before relying on this shape.
+ * so validate them (e.g. `AvailableHours` from @synkd/shared) before relying on this shape.
  */
 export type NowConnection = Omit<
   Fn['now_for_viewer']['Returns'][number],
@@ -313,7 +313,7 @@ export type NowConnection = Omit<
 type OfflineFriendRow = Fn['list_offline_friends']['Returns'][number];
 
 /**
- * One row of `list_offline_friends` (WF-127): someone not on whosfree whom the caller added
+ * One row of `list_offline_friends` (WF-127): someone not on synkd whom the caller added
  * (D44). Only ever the caller's own. `has_schedule` is false until a schedule is confirmed for
  * them. Their events are read directly under RLS: `events` where `offline_friend_id` is the id.
  */

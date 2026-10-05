@@ -10,7 +10,7 @@
 // words that merely look like a keyword ("Theatre Studies", "Office hours"). A bare name or a
 // room without a keyword ("SLT 2") can't be told apart from a course name, so the review screen
 // remains the last check (FR-IMP-9).
-import type { EventCategory, ParseDraft } from '@whosfree/shared';
+import type { EventCategory, ParseDraft } from '@synkd/shared';
 
 /** What an event is called when nothing is left of its title. */
 export const CATEGORY_TITLES: Record<EventCategory, string> = {

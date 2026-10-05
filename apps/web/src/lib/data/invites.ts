@@ -7,7 +7,7 @@ import type {
   FriendInvitePreview as DbFriendInvitePreview,
   FriendInviteSummary as DbFriendInviteSummary,
   InviteSummary as DbInviteSummary,
-} from '@whosfree/backend';
+} from '@synkd/backend';
 import { appUrl } from '@/lib/config';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { INVITE_COOKIE, isInviteCode } from '@/lib/social/invite-cookie';

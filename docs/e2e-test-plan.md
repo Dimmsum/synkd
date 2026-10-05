@@ -4,7 +4,7 @@ Manual/scripted end-to-end checks for the features that are built (`done` or `in
 
 ## Setup
 
-- `apps/web` on `http://localhost:3000` (`pnpm --filter @whosfree/web dev`), against the Supabase dev project and the Clerk development instance.
+- `apps/web` on `http://localhost:3000` (`pnpm --filter @synkd/web dev`), against the Supabase dev project and the Clerk development instance.
 - Two users, each in its own browser context (separate cookies and storage):
   - **A**: `e2e-alice+clerk_test@example.com`
   - **B**: `e2e-bob+clerk_test@example.com`

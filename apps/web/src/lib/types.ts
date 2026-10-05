@@ -17,7 +17,7 @@ import type {
   SourceType,
   Status,
   Tier,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 
 export type PersonId = string;
 export type GroupId = string;
@@ -87,7 +87,7 @@ export interface Connection extends Person, Presence {
 }
 
 /**
- * Someone not on whosfree whom the viewer added (D44, FR-SOC-14), with their status now. Only
+ * Someone not on synkd whom the viewer added (D44, FR-SOC-14), with their status now. Only
  * ever the viewer's own: nobody else can see them (FR-SOC-15). They can't be pinged (FR-SOC-17).
  */
 export interface OfflineFriendView extends Presence {

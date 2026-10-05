@@ -2,7 +2,7 @@
 // once (FR-AUTH-6, NFR-COMP-7, D13, D29).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { checkAge, localDateIn } from '@whosfree/shared';
+import { checkAge, localDateIn } from '@synkd/shared';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
 import { addUser } from './harness/seed';

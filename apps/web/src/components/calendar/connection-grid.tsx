@@ -1,7 +1,7 @@
-import { MANUAL_STATUS_LABELS } from '@whosfree/shared';
-import { TimeRange } from '@whosfree/ui/components/misc';
-import { formatClockRange, minutesIntoDay } from '@whosfree/ui/lib/time';
-import { cn } from '@whosfree/ui/lib/utils';
+import { MANUAL_STATUS_LABELS } from '@synkd/shared';
+import { TimeRange } from '@synkd/ui/components/misc';
+import { formatClockRange, minutesIntoDay } from '@synkd/ui/lib/time';
+import { cn } from '@synkd/ui/lib/utils';
 import { DayHeader } from '@/components/calendar/schedule-grid';
 import { blockPosition, TimeGrid, type GridColumn } from '@/components/calendar/time-grid';
 import type { CalendarView } from '@/components/calendar/toolbar';

@@ -3,7 +3,7 @@
 // Layout: every schedule file `<name>.<pdf|png|jpg|jpeg|webp|heic|heif>` sits next to a
 // hand-written `<name>.expected.json`. Samples can be grouped in sub-folders (e.g. `uni/`,
 // `roster/`); the first folder becomes the sample's group in the results.
-import { ParseDraft } from '@whosfree/shared';
+import { ParseDraft } from '@synkd/shared';
 import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import { z } from 'zod';

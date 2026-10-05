@@ -11,7 +11,7 @@ export default function InstallSettingsPage() {
   return (
     <SettingsPage
       title="Install app"
-      subtitle="Open Who's Free from your home screen and get pings as notifications."
+      subtitle="Open synkd from your home screen and get pings as notifications."
     >
       <InstallPrompt surface="requested" />
       <p className="text-sm text-body-foreground">

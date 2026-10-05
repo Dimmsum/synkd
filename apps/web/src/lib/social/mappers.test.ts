@@ -6,7 +6,7 @@ import type {
   GroupMember,
   MyGroup,
   PublicProfile,
-} from '@whosfree/backend';
+} from '@synkd/backend';
 import { hueFor } from '@/lib/hue';
 import {
   DEFAULT_GROUP_EMOJI,
@@ -35,7 +35,7 @@ import {
 const ID_A = '11111111-1111-4111-8111-111111111111';
 const ID_B = '22222222-2222-4222-8222-222222222222';
 const GROUP = '33333333-3333-4333-8333-333333333333';
-const APP = 'https://whosfree.app';
+const APP = 'https://getsynked.com';
 const CODE = 'AbCdEfGhIjKlMnOpQr_-12';
 
 const group = (over: Partial<MyGroup> = {}): MyGroup => ({

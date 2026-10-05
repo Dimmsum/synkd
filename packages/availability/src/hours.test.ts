@@ -1,4 +1,4 @@
-import { DAYS_OF_WEEK } from '@whosfree/shared';
+import { DAYS_OF_WEEK } from '@synkd/shared';
 import { describe, expect, it } from 'vitest';
 import { availableHoursIntervals, defaultAvailableHours } from './hours';
 import { HOUR_MS } from './time';

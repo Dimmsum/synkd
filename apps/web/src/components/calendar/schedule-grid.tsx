@@ -1,7 +1,7 @@
-import type { SourceType } from '@whosfree/shared';
-import { SourceBadge, TimeRange } from '@whosfree/ui/components/misc';
-import { minutesIntoDay, weekdayShort } from '@whosfree/ui/lib/time';
-import { cn } from '@whosfree/ui/lib/utils';
+import type { SourceType } from '@synkd/shared';
+import { SourceBadge, TimeRange } from '@synkd/ui/components/misc';
+import { minutesIntoDay, weekdayShort } from '@synkd/ui/lib/time';
+import { cn } from '@synkd/ui/lib/utils';
 import { blockPosition, TimeGrid, type GridColumn } from '@/components/calendar/time-grid';
 import type { CalendarView } from '@/components/calendar/toolbar';
 import { CATEGORY_LABELS } from '@/lib/status';

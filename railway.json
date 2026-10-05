@@ -2,11 +2,11 @@
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
     "builder": "RAILPACK",
-    "buildCommand": "pnpm --filter @whosfree/web build",
+    "buildCommand": "pnpm --filter @synkd/web build",
     "watchPatterns": ["apps/web/**", "packages/**", "docs/legal/**", "pnpm-lock.yaml"]
   },
   "deploy": {
-    "startCommand": "pnpm --filter @whosfree/web start",
+    "startCommand": "pnpm --filter @synkd/web start",
     "healthcheckPath": "/offline",
     "healthcheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE"

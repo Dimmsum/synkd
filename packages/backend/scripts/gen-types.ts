@@ -1,6 +1,6 @@
-// pnpm --filter @whosfree/backend db:types                 regenerate src/database.types.ts
-// pnpm --filter @whosfree/backend db:types --check         exit 1 if it is out of date
-// pnpm --filter @whosfree/backend db:types --db-url <url>  generate from a running database instead
+// pnpm --filter @synkd/backend db:types                 regenerate src/database.types.ts
+// pnpm --filter @synkd/backend db:types --check         exit 1 if it is out of date
+// pnpm --filter @synkd/backend db:types --db-url <url>  generate from a running database instead
 //   (e.g. postgresql://postgres:postgres@127.0.0.1:54322/postgres after `supabase start`)
 
 import { readFile, writeFile } from 'node:fs/promises';
@@ -14,7 +14,7 @@ if (args.includes('--check')) {
   const current = await readFile(TYPES_PATH, 'utf8').catch(() => '');
   if (current !== generated) {
     console.error(
-      'src/database.types.ts is out of date. Run: pnpm --filter @whosfree/backend db:types',
+      'src/database.types.ts is out of date. Run: pnpm --filter @synkd/backend db:types',
     );
     process.exitCode = 1;
   }

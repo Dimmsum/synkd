@@ -2,10 +2,10 @@ import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { after } from 'next/server';
 import { ExternalLink, FileText, LoaderCircle, TriangleAlert } from 'lucide-react';
-import { buttonVariants } from '@whosfree/ui/components/button';
-import { EmptyState } from '@whosfree/ui/components/misc';
-import { formatAgo, formatMonthDay, dateKey } from '@whosfree/ui/lib/time';
-import { cn } from '@whosfree/ui/lib/utils';
+import { buttonVariants } from '@synkd/ui/components/button';
+import { EmptyState } from '@synkd/ui/components/misc';
+import { formatAgo, formatMonthDay, dateKey } from '@synkd/ui/lib/time';
+import { cn } from '@synkd/ui/lib/utils';
 import { PageHeader } from '@/components/app/page-header';
 import {
   DeleteUploadButton,

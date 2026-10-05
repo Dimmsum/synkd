@@ -10,7 +10,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { TEMPLATE_ENV } from './db';
 
 export default async function setup(): Promise<() => Promise<void>> {
-  const dir = await mkdtemp(join(tmpdir(), 'whosfree-pglite-'));
+  const dir = await mkdtemp(join(tmpdir(), 'synkd-pglite-'));
   const file = join(dir, 'empty-datadir.tar');
   const pg = await PGlite.create();
   const dump = await pg.dumpDataDir('none');

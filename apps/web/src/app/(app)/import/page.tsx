@@ -2,7 +2,7 @@ import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ShieldCheck } from 'lucide-react';
-import { PARSE_ATTEMPTS_PER_DAY } from '@whosfree/shared';
+import { PARSE_ATTEMPTS_PER_DAY } from '@synkd/shared';
 import { PageHeader } from '@/components/app/page-header';
 import { UploadCard } from '@/components/import/upload-card';
 import { getOfflineFriendRef } from '@/lib/data/imports';

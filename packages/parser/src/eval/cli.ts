@@ -1,7 +1,7 @@
 // Eval CLI (WF-022). Run from the repo root:
 //
-//   pnpm --filter @whosfree/parser eval --model google/gemini-2.5-flash --prompt v1
-//   pnpm --filter @whosfree/parser eval:compare [a.json b.json]
+//   pnpm --filter @synkd/parser eval --model google/gemini-2.5-flash --prompt v1
+//   pnpm --filter @synkd/parser eval:compare [a.json b.json]
 //
 // See packages/parser/eval/README.md. Prints aggregate numbers only; per-sample detail goes to
 // the result file (NFR-SEC-11). The API key comes from OPENROUTER_API_KEY in the environment or

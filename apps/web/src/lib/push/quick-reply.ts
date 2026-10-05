@@ -15,12 +15,12 @@
 //   does nothing unless this browser's own worker stored it moments before. The entry holds no
 //   ping text and no names, only the ping id and which reply was tapped.
 
-/** The one-tap replies, in button order. Same as PING_REPLIES in @whosfree/shared (tested). */
+/** The one-tap replies, in button order. Same as PING_REPLIES in @synkd/shared (tested). */
 export const PING_QUICK_REPLIES = ["I'm down", 'In 10', "Can't right now"] as const;
 export type PingQuickReply = (typeof PING_QUICK_REPLIES)[number];
 
 /** Cache API cache that holds pending quick replies for a moment. */
-export const QUICK_REPLY_CACHE = 'whosfree-quick-replies';
+export const QUICK_REPLY_CACHE = 'synkd-quick-replies';
 /** The inbox URL parameter that names a pending quick reply. */
 export const QUICK_REPLY_PARAM = 'quick';
 /** A pending quick reply older than this is ignored (the tap was too long ago). */

@@ -1,5 +1,5 @@
 {
-  "extends": "@whosfree/config/tsconfig/base.json",
+  "extends": "@synkd/config/tsconfig/base.json",
   "compilerOptions": {
     "types": ["node"]
   },

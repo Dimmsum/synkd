@@ -6,7 +6,7 @@
 // explicitly (see `localToUtc`). Calendar dates are handled as "day numbers": whole days since
 // 1970-01-01, which makes date arithmetic plain integer maths with no timezone involved.
 
-import { DAYS_OF_WEEK, type DayOfWeek } from '@whosfree/shared';
+import { DAYS_OF_WEEK, type DayOfWeek } from '@synkd/shared';
 
 export const MINUTE_MS = 60_000;
 export const HOUR_MS = 60 * MINUTE_MS;

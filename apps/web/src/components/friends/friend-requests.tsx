@@ -5,9 +5,9 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
-import { DEFAULT_TIER, type Tier } from '@whosfree/shared';
+import { DEFAULT_TIER, type Tier } from '@synkd/shared';
 import { Check, Copy, Link2, Link2Off, RefreshCw, Search, UserPlus } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
+import { Button } from '@synkd/ui/components/button';
 import {
   Dialog,
   DialogContent,
@@ -16,13 +16,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@whosfree/ui/components/dialog';
-import { Input } from '@whosfree/ui/components/input';
-import { Label } from '@whosfree/ui/components/label';
-import { PersonAvatar } from '@whosfree/ui/components/person-avatar';
-import { Separator } from '@whosfree/ui/components/separator';
-import { TierPicker } from '@whosfree/ui/components/tier-picker';
-import { formatAgo } from '@whosfree/ui/lib/time';
+} from '@synkd/ui/components/dialog';
+import { Input } from '@synkd/ui/components/input';
+import { Label } from '@synkd/ui/components/label';
+import { PersonAvatar } from '@synkd/ui/components/person-avatar';
+import { Separator } from '@synkd/ui/components/separator';
+import { TierPicker } from '@synkd/ui/components/tier-picker';
+import { formatAgo } from '@synkd/ui/lib/time';
 import {
   cancelFriendRequest,
   createFriendInvite,
@@ -325,7 +325,7 @@ function FoundPerson({
 
 /**
  * The link the viewer shares, and its QR code (FR-SOC-1). Their friend invite link (WF-042) when
- * they have one: it works for people who aren't on Who's Free yet (it's remembered through
+ * they have one: it works for people who aren't on synkd yet (it's remembered through
  * sign-up) and can be replaced or turned off. Otherwise their friend link, /add/<id>, which
  * always works for people already signed in. Whoever opens either sees the viewer's name and
  * sends a request, choosing their own tier.
@@ -373,7 +373,7 @@ function FriendLink({
         <div className="flex w-full min-w-0 flex-col gap-2">
           <p className="text-[13px] text-muted-foreground">
             {invite
-              ? 'Anyone can scan this or open the link to send you a request, even if they’re new to Who’s Free.'
+              ? 'Anyone can scan this or open the link to send you a request, even if they’re new to synkd.'
               : 'Friends can scan this or open the link to send you a request.'}
           </p>
           <div className="flex gap-2">
@@ -449,7 +449,7 @@ function FriendLink({
           <p className="text-xs text-muted-foreground">
             {invite
               ? 'Making a new link, or turning it off, stops this one working.'
-              : 'An invite link also works for people who aren’t on Who’s Free yet, and you can turn it off any time.'}
+              : 'An invite link also works for people who aren’t on synkd yet, and you can turn it off any time.'}
           </p>
           {error ? (
             <p role="alert" className="text-sm text-destructive">

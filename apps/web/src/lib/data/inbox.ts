@@ -7,7 +7,7 @@
 
 import 'server-only';
 import { cache } from 'react';
-import type { InboxPing } from '@whosfree/backend';
+import type { InboxPing } from '@synkd/backend';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { splitInbox } from '@/lib/pings/mappers';
 import type { Ping } from '@/lib/types';

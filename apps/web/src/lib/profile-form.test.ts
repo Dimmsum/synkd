@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DB_ERROR } from '@whosfree/backend';
+import { DB_ERROR } from '@synkd/backend';
 import {
   hoursErrorMessage,
   profileErrorField,
@@ -49,7 +49,7 @@ describe('parseProfileInput (FR-AUTH-2)', () => {
       error: 'That handle is reserved.',
       field: 'handle',
     });
-    expect(parseProfileInput({ ...base, handle: 'the_whosfree_team' }).ok).toBe(false);
+    expect(parseProfileInput({ ...base, handle: 'the_synkd_team' }).ok).toBe(false);
   });
 
   it('needs a known timezone', () => {

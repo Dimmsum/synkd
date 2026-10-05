@@ -1,17 +1,17 @@
 'use client';
 
 import { useId, useState, useTransition } from 'react';
-import { PING_REPLIES, PING_TEXT_MAX_LENGTH, type PingReply } from '@whosfree/shared';
+import { PING_REPLIES, PING_TEXT_MAX_LENGTH, type PingReply } from '@synkd/shared';
 import { Check, Ellipsis, Ban } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
+import { Button } from '@synkd/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@whosfree/ui/components/dropdown-menu';
-import { Textarea } from '@whosfree/ui/components/textarea';
-import { cn } from '@whosfree/ui/lib/utils';
+} from '@synkd/ui/components/dropdown-menu';
+import { Textarea } from '@synkd/ui/components/textarea';
+import { cn } from '@synkd/ui/lib/utils';
 import { blockPerson, replyToPing } from '@/lib/actions/pings';
 import { pingCharsLeft } from '@/lib/ping-rules';
 

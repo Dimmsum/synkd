@@ -1,11 +1,11 @@
 'use client';
 
 import { useId, useState, useTransition } from 'react';
-import { TIER_LABELS, TIERS, type Tier } from '@whosfree/shared';
+import { TIER_LABELS, TIERS, type Tier } from '@synkd/shared';
 import { Info } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
-import { GroupEmoji, PersonAvatar } from '@whosfree/ui/components/person-avatar';
-import { tierFromString } from '@whosfree/ui/lib/tiers';
+import { Button } from '@synkd/ui/components/button';
+import { GroupEmoji, PersonAvatar } from '@synkd/ui/components/person-avatar';
+import { tierFromString } from '@synkd/ui/lib/tiers';
 import { setFriendTier, setGroupTier } from '@/lib/actions/social';
 import type { VisibilityRow } from '@/lib/types';
 

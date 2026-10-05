@@ -6,7 +6,7 @@
 // the environment here, so importing this module can't leak it. Only the Next.js server and the
 // eval CLI hold the key (NFR-SEC-8). Nothing from the file or the model output is logged
 // (NFR-SEC-11).
-import { ParseDraft } from '@whosfree/shared';
+import { ParseDraft } from '@synkd/shared';
 import { z } from 'zod';
 import type { ModelMediaType } from './media';
 import type { Prompt } from './prompt-core';
@@ -259,7 +259,7 @@ export async function parseSchedule(
       headers: {
         Authorization: `Bearer ${opts.apiKey}`,
         'Content-Type': 'application/json',
-        'X-Title': 'whosfree parser',
+        'X-Title': 'synkd parser',
       },
       body: JSON.stringify(buildRequestBody(req, opts)),
       signal: controller.signal,

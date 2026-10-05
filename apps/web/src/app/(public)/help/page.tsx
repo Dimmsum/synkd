@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { TIER_DETAILS } from '@whosfree/ui/lib/tiers';
-import { TIERS } from '@whosfree/shared';
+import { TIER_DETAILS } from '@synkd/ui/lib/tiers';
+import { TIERS } from '@synkd/shared';
 import { InfoPage, textLinkClass } from '@/components/public/info-page';
 import { InstallPrompt, IosInstallSteps } from '@/components/pwa/install-prompt';
 
@@ -28,8 +28,8 @@ export default function HelpPage() {
       <section id="install" className="scroll-mt-20">
         <h2>How do I install it?</h2>
         <p>
-          Who&apos;s Free is a web app you add to your home screen. Installed, it opens like any
-          other app and can notify you when a friend pings you.
+          synkd is a web app you add to your home screen. Installed, it opens like any other app and
+          can notify you when a friend pings you.
         </p>
         <InstallPrompt surface="requested" className="mt-4" />
         <h3 className="mt-6 font-semibold text-foreground">iPhone and iPad</h3>
@@ -40,10 +40,9 @@ export default function HelpPage() {
         <IosInstallSteps />
         <h3 className="mt-6 font-semibold text-foreground">Android</h3>
         <p>
-          In Chrome, tap <strong className="text-foreground">Install</strong> when Who&apos;s Free
-          offers it, or open the menu ⋮ and tap{' '}
-          <strong className="text-foreground">Install app</strong>. Then turn on notifications in
-          Settings.
+          In Chrome, tap <strong className="text-foreground">Install</strong> when synkd offers it,
+          or open the menu ⋮ and tap <strong className="text-foreground">Install app</strong>. Then
+          turn on notifications in Settings.
         </p>
       </section>
       <section>

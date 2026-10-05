@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Inbox as InboxIcon, Send } from 'lucide-react';
-import { EmptyState } from '@whosfree/ui/components/misc';
-import { PersonAvatar } from '@whosfree/ui/components/person-avatar';
-import { formatAgo, formatDuration } from '@whosfree/ui/lib/time';
-import { cn } from '@whosfree/ui/lib/utils';
+import { EmptyState } from '@synkd/ui/components/misc';
+import { PersonAvatar } from '@synkd/ui/components/person-avatar';
+import { formatAgo, formatDuration } from '@synkd/ui/lib/time';
+import { cn } from '@synkd/ui/lib/utils';
 import { PageHeader } from '@/components/app/page-header';
 import {
   InboxLive,

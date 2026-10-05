@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@whosfree/ui/lib/utils';
+import { cn } from '@synkd/ui/lib/utils';
 import { Slot } from 'radix-ui';
 
 // Sizes keep a 44px minimum tap target on phones (NFR-UX-2) and tighten to the

@@ -17,8 +17,8 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
-import { GroupEmoji } from '@whosfree/ui/components/person-avatar';
-import { Eyebrow, Logo } from '@whosfree/ui/components/misc';
+import { GroupEmoji } from '@synkd/ui/components/person-avatar';
+import { Eyebrow, Logo } from '@synkd/ui/components/misc';
 import {
   Sheet,
   SheetClose,
@@ -26,8 +26,8 @@ import {
   SheetDescription,
   SheetTitle,
   SheetTrigger,
-} from '@whosfree/ui/components/sheet';
-import { cn } from '@whosfree/ui/lib/utils';
+} from '@synkd/ui/components/sheet';
+import { cn } from '@synkd/ui/lib/utils';
 import type { GroupSummary } from '@/lib/types';
 
 interface NavItem {

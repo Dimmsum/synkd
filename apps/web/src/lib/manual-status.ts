@@ -9,14 +9,14 @@ import {
   STATUS_OVERRIDE_MAX_DAYS,
   StatusLabel,
   LocalTime,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import {
   addDays,
   dateKey,
   formatUntil,
   zonedTimeToInstant,
   type Instant,
-} from '@whosfree/ui/lib/time';
+} from '@synkd/ui/lib/time';
 import type { StatusText } from '@/lib/status';
 import type { ActiveOverride } from '@/lib/types';
 

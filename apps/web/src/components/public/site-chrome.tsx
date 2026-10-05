@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import { buttonVariants } from '@whosfree/ui/components/button';
-import { Logo } from '@whosfree/ui/components/misc';
-import { cn } from '@whosfree/ui/lib/utils';
+import { buttonVariants } from '@synkd/ui/components/button';
+import { Logo } from '@synkd/ui/components/misc';
+import { cn } from '@synkd/ui/lib/utils';
 
 export function SiteHeader() {
   return (
     <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-      <Link href="/" className="rounded-lg" aria-label="Who's Free home">
+      <Link href="/" className="rounded-lg" aria-label="synkd home">
         <Logo />
       </Link>
       <nav aria-label="Account" className="flex items-center gap-1 sm:gap-2">
@@ -25,7 +25,7 @@ export function SiteFooter({ className }: { className?: string }) {
   return (
     <footer className={cn('border-t bg-card', className)}>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <p>Who&apos;s Free · for adults 18+ · Made in Jamaica</p>
+        <p>synkd · for adults 18+ · Made in Jamaica</p>
         <nav aria-label="Legal and help" className="flex flex-wrap gap-x-1">
           {(
             [

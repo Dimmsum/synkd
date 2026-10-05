@@ -6,23 +6,23 @@ import {
   type GroupPermission,
   type GroupPermissions,
   type Tier,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import { Copy, Crown, Link2, Link2Off, RefreshCw, Share2, UserMinus } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
-import { Input } from '@whosfree/ui/components/input';
-import { Label } from '@whosfree/ui/components/label';
+import { Button } from '@synkd/ui/components/button';
+import { Input } from '@synkd/ui/components/input';
+import { Label } from '@synkd/ui/components/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@whosfree/ui/components/select';
-import { PersonAvatar } from '@whosfree/ui/components/person-avatar';
-import { Switch } from '@whosfree/ui/components/switch';
-import { TierPicker } from '@whosfree/ui/components/tier-picker';
-import { dateKey, formatMonthDay } from '@whosfree/ui/lib/time';
-import { cn } from '@whosfree/ui/lib/utils';
+} from '@synkd/ui/components/select';
+import { PersonAvatar } from '@synkd/ui/components/person-avatar';
+import { Switch } from '@synkd/ui/components/switch';
+import { TierPicker } from '@synkd/ui/components/tier-picker';
+import { dateKey, formatMonthDay } from '@synkd/ui/lib/time';
+import { cn } from '@synkd/ui/lib/utils';
 import { ActionButton } from '@/components/app/action-buttons';
 import { ConfirmActionButton } from '@/components/app/confirm-action-button';
 import { GROUP_EMOJIS } from '@/components/groups/new-group-dialog';
@@ -201,7 +201,7 @@ export function InviteLink({
   timeZone: string;
 }) {
   const [copied, setCopied] = useState(false);
-  const text = `Join ${groupName} on Who's Free: ${invite.url}`;
+  const text = `Join ${groupName} on synkd: ${invite.url}`;
 
   async function share() {
     // Web Share API first, then a wa.me link (FR-SOC-4).

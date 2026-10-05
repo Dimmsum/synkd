@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { WifiOff } from 'lucide-react';
-import { buttonVariants } from '@whosfree/ui/components/button';
-import { Logo } from '@whosfree/ui/components/misc';
+import { buttonVariants } from '@synkd/ui/components/button';
+import { Logo } from '@synkd/ui/components/misc';
 
 export const metadata: Metadata = {
   title: "You're offline",
@@ -21,8 +21,8 @@ export default function OfflinePage() {
         <WifiOff aria-hidden="true" className="size-6 text-muted-foreground" />
         <h1 className="text-2xl font-bold">You&apos;re offline</h1>
         <p className="max-w-sm text-body-foreground">
-          Who&apos;s Free needs a connection to show who&apos;s free right now. Check your Wi-Fi or
-          mobile data, then try again.
+          synkd needs a connection to show who&apos;s free right now. Check your Wi-Fi or mobile
+          data, then try again.
         </p>
       </div>
       {/* A plain link, so it works without JavaScript and reloads through the network. */}

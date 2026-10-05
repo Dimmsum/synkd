@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { PersonAvatar } from '@whosfree/ui/components/person-avatar';
-import { StaleWarning } from '@whosfree/ui/components/misc';
-import { StatusBadge } from '@whosfree/ui/components/status-badge';
-import { cn } from '@whosfree/ui/lib/utils';
+import { PersonAvatar } from '@synkd/ui/components/person-avatar';
+import { StaleWarning } from '@synkd/ui/components/misc';
+import { StatusBadge } from '@synkd/ui/components/status-badge';
+import { cn } from '@synkd/ui/lib/utils';
 import type { Connection } from '@/lib/types';
 import { describeStatus } from '@/lib/status';
 import { PingButton } from './ping-dialog';

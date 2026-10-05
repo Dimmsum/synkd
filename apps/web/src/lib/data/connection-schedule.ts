@@ -7,8 +7,8 @@
 // Only error codes go into thrown errors and logs, never names or titles (NFR-SEC-11).
 
 import 'server-only';
-import type { NowConnection } from '@whosfree/backend';
-import { addDays, zonedTimeToInstant } from '@whosfree/ui/lib/time';
+import type { NowConnection } from '@synkd/backend';
+import { addDays, zonedTimeToInstant } from '@synkd/ui/lib/time';
 import { getViewerRow } from '@/lib/data/now';
 import { errorCode, nowRowInput } from '@/lib/presence/compute';
 import { blocksOnDates } from '@/lib/presence/schedule';

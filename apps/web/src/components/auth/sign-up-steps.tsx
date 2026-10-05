@@ -1,4 +1,4 @@
-import { cn } from '@whosfree/ui/lib/utils';
+import { cn } from '@synkd/ui/lib/utils';
 
 const STEPS = ['Account', 'Age', 'Terms'] as const;
 

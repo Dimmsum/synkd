@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { cn } from '@whosfree/ui/lib/utils';
-import { StatusMarker, type StatusTone } from '@whosfree/ui/components/status-badge';
+import { cn } from '@synkd/ui/lib/utils';
+import { StatusMarker, type StatusTone } from '@synkd/ui/components/status-badge';
 
 const SIZES = {
   xs: 'size-5 text-[8px]',

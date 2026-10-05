@@ -3,7 +3,7 @@
 // NFR-SCALE-4, PRD §8.5).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { DEFAULT_MEMBER_PERMISSIONS } from '@whosfree/shared';
+import { DEFAULT_MEMBER_PERMISSIONS } from '@synkd/shared';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
 import {

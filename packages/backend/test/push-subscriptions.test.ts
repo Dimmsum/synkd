@@ -4,7 +4,7 @@
 // (FR-PWA-4, FR-PING-3, NFR-SEC-2, NFR-SEC-9, D41).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { MAX_PUSH_SUBSCRIPTIONS, PUSH_DEVICE_LABEL_MAX_LENGTH } from '@whosfree/shared';
+import { MAX_PUSH_SUBSCRIPTIONS, PUSH_DEVICE_LABEL_MAX_LENGTH } from '@synkd/shared';
 import { PUSH_SUBSCRIPTION_ERRORS } from '../src/index';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';

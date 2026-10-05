@@ -14,7 +14,7 @@
 //     else. It fetches nothing, caches nothing and logs nothing; the payload format and its
 //     limits are in lib/push/payload.ts. Tapping a notification opens a path on this site only.
 //   - One-tap ping replies (WF-093): tapping a reply button on a ping notification stores only
-//     `{ pingId, reply, at }` under a random one-time key in the `whosfree-quick-replies` cache
+//     `{ pingId, reply, at }` under a random one-time key in the `synkd-quick-replies` cache
 //     and opens the inbox, which takes it and sends the reply as the signed-in user. Nothing
 //     else is stored, and the worker still never calls the API (lib/push/quick-reply.ts).
 //   - WF-110 adds the offline cache of the last-known Now data, holding only what the

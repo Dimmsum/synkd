@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DB_ERROR, GROUP_ERRORS } from '@whosfree/backend';
+import { DB_ERROR, GROUP_ERRORS } from '@synkd/backend';
 import { dbErrorMessage, isAlreadyMember, knownDbErrorMessage, TRY_AGAIN } from './errors';
 
 describe('knownDbErrorMessage', () => {

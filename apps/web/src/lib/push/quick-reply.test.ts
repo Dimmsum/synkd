@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PING_REPLIES } from '@whosfree/shared';
+import { PING_REPLIES } from '@synkd/shared';
 import {
   PING_QUICK_REPLIES,
   QUICK_REPLY_MAX_AGE_MS,

@@ -5,7 +5,7 @@
 // limits as parseStatusInput (label at most 40 characters, end at most 7 days away).
 
 import { revalidatePath } from 'next/cache';
-import type { ManualStatus } from '@whosfree/shared';
+import type { ManualStatus } from '@synkd/shared';
 import { statusErrorMessage } from '@/lib/db-errors';
 import { parseStatusInput } from '@/lib/manual-status';
 import { createServerSupabase } from '@/lib/supabase/server';

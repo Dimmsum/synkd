@@ -1,4 +1,4 @@
-// @whosfree/availability: the pure availability engine (PRD §6.6). No I/O, no clock reads.
+// @synkd/availability: the pure availability engine (PRD §6.6). No I/O, no clock reads.
 // Every instant is UTC epoch milliseconds and every interval is half-open, `[start, end)`.
 
 export {

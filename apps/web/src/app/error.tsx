@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Button, buttonVariants } from '@whosfree/ui/components/button';
-import { Logo } from '@whosfree/ui/components/misc';
+import { Button, buttonVariants } from '@synkd/ui/components/button';
+import { Logo } from '@synkd/ui/components/misc';
 
 // FR-WEB-8. `retry` re-fetches the segment, so a passing server error can recover.
 // TODO(WF-008): report `error` to Sentry (without PII, NFR-SEC-12).

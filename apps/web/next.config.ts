@@ -12,14 +12,14 @@ if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 const nextConfig: NextConfig = {
   // Internal packages ship TypeScript source (no build step), so Next compiles them.
   transpilePackages: [
-    '@whosfree/ui',
-    '@whosfree/shared',
-    '@whosfree/backend',
-    '@whosfree/availability',
-    // Server only (`@whosfree/parser/node`, the parse route, D46). Bundled like the WF-024 spike:
+    '@synkd/ui',
+    '@synkd/shared',
+    '@synkd/backend',
+    '@synkd/availability',
+    // Server only (`@synkd/parser/node`, the parse route, D46). Bundled like the WF-024 spike:
     // Turbopack emits PDFium's .wasm as a traced asset and inlines libheif's; sharp stays
     // external (a Next.js default server-external package).
-    '@whosfree/parser',
+    '@synkd/parser',
   ],
   typedRoutes: true,
   poweredByHeader: false,

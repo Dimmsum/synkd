@@ -48,7 +48,7 @@ describe('supabase/init.sql', () => {
     await fromInit.close();
   });
 
-  it('is up to date (run `pnpm --filter @whosfree/backend db:init`)', async () => {
+  it('is up to date (run `pnpm --filter @synkd/backend db:init`)', async () => {
     expect(await readFile(INIT_SQL_PATH, 'utf8')).toBe(await buildInitSql());
   });
 

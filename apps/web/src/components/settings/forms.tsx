@@ -2,12 +2,12 @@
 
 import { useState, useTransition } from 'react';
 import { CirclePause } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
-import { Input } from '@whosfree/ui/components/input';
-import { Label } from '@whosfree/ui/components/label';
-import { Switch } from '@whosfree/ui/components/switch';
-import { cn } from '@whosfree/ui/lib/utils';
-import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH } from '@whosfree/shared';
+import { Button } from '@synkd/ui/components/button';
+import { Input } from '@synkd/ui/components/input';
+import { Label } from '@synkd/ui/components/label';
+import { Switch } from '@synkd/ui/components/switch';
+import { cn } from '@synkd/ui/lib/utils';
+import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH } from '@synkd/shared';
 import { PushPermission } from '@/components/push/push-permission';
 import { saveNotificationSettings, saveProfile, setSharingPaused } from '@/lib/actions/settings';
 import type { ProfileField } from '@/lib/profile-form';

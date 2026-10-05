@@ -7,7 +7,7 @@
 // to /onboarding) but isn't gated: every step can be skipped, and /onboarding itself resumes an
 // unfinished setup or sends finished users to Now (users.onboarded_at, WF-068).
 
-import type { AccountStatus } from '@whosfree/backend';
+import type { AccountStatus } from '@synkd/backend';
 
 /** What a signed-in user still has to do before they may use the app. */
 export type AccountStep = 'profile' | 'age' | 'consent' | 'ready';

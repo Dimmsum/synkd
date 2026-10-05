@@ -6,8 +6,8 @@
 // the screens expand (WF-030, WF-031, WF-064).
 
 import { describe, expect, it } from 'vitest';
-import { eventTimesFromDraft } from '@whosfree/availability';
-import type { EventDraft } from '@whosfree/shared';
+import { eventTimesFromDraft } from '@synkd/availability';
+import type { EventDraft } from '@synkd/shared';
 import { scheduleOnDates } from './my-schedule';
 import { computePresence, ownPresenceInput, type OwnRows } from './presence/compute';
 import { checkSchedule } from './schedule-draft';

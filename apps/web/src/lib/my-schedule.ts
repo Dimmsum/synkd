@@ -2,9 +2,9 @@
 // My schedule and Settings show (FR-VIEW-5, FR-GCAL-10, WF-030). Pure: lib/data/schedule.ts
 // reads the rows, these functions expand and describe them.
 
-import { expandEvent } from '@whosfree/availability';
-import { EventCategory, SchedulePeriod, SOURCE_TYPES, type SourceType } from '@whosfree/shared';
-import { addDays, minutesIntoDay, zonedTimeToInstant } from '@whosfree/ui/lib/time';
+import { expandEvent } from '@synkd/availability';
+import { EventCategory, SchedulePeriod, SOURCE_TYPES, type SourceType } from '@synkd/shared';
+import { addDays, minutesIntoDay, zonedTimeToInstant } from '@synkd/ui/lib/time';
 import { CATEGORY_LABELS } from '@/lib/status';
 import type { MyEvent, ScheduleSource } from '@/lib/types';
 import { formatDateRange } from './schedule-draft';

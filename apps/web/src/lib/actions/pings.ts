@@ -16,7 +16,7 @@ import {
   PingText,
   type PingReply,
   type PingTemplate,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { sendPushToUser } from '@/lib/push/send';
 import { pingError } from '@/lib/pings/errors';

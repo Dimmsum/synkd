@@ -9,7 +9,7 @@
 //   moves them between sections on the client.
 
 import { useEffect, useEffectEvent, useState } from 'react';
-import { NOW_CHANGED_EVENT } from '@whosfree/shared';
+import { NOW_CHANGED_EVENT } from '@synkd/shared';
 import { nextChangeAt, needsRefetch, type Timed } from '@/lib/presence/clock';
 import { useUserSignals } from '@/components/realtime/use-user-signals';
 

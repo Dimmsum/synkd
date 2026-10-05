@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Copy, Send } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
+import { Button } from '@synkd/ui/components/button';
 import { ActionButton } from '@/components/app/action-buttons';
 import { sendPing } from '@/lib/actions/pings';
 

@@ -1,11 +1,11 @@
 // The stored shapes of available hours (WF-062) and manual overrides (WF-063)
-// are exactly what @whosfree/availability's engine takes: rows read back
+// are exactly what @synkd/availability's engine takes: rows read back
 // under RLS feed statusAt() directly (FR-AVL-2, FR-AVL-3, D5).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { statusAt } from '@whosfree/availability';
-import type { AvailabilityInput, StatusOverride } from '@whosfree/availability';
-import { AvailableHours, DAYS_OF_WEEK, localDateIn, ManualStatus } from '@whosfree/shared';
+import { statusAt } from '@synkd/availability';
+import type { AvailabilityInput, StatusOverride } from '@synkd/availability';
+import { AvailableHours, DAYS_OF_WEEK, localDateIn, ManualStatus } from '@synkd/shared';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
 import { addSource } from './harness/seed';

@@ -2,7 +2,7 @@ import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { LoaderCircle, TriangleAlert } from 'lucide-react';
-import { buttonVariants } from '@whosfree/ui/components/button';
+import { buttonVariants } from '@synkd/ui/components/button';
 import { PageHeader } from '@/components/app/page-header';
 import { ReviewEditor } from '@/components/import/review-editor';
 import { getOfflineFriendRef, getParseJob } from '@/lib/data/imports';

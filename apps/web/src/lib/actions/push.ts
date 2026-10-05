@@ -7,8 +7,8 @@
 
 import { after } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { DB_ERROR } from '@whosfree/backend';
-import { PUSH_DEVICE_LABEL_MAX_LENGTH } from '@whosfree/shared';
+import { DB_ERROR } from '@synkd/backend';
+import { PUSH_DEVICE_LABEL_MAX_LENGTH } from '@synkd/shared';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { sendPushToUser } from '@/lib/push/send';
 import { fail, ok, type ActionResult } from './result';

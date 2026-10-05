@@ -23,7 +23,7 @@ describe('Supabase CLI', () => {
     }
   }, 120_000);
 
-  it('src/database.types.ts is up to date (run `pnpm --filter @whosfree/backend db:types`)', async () => {
+  it('src/database.types.ts is up to date (run `pnpm --filter @synkd/backend db:types`)', async () => {
     const committed = await readFile(TYPES_PATH, 'utf8');
     expect(await generateTypes()).toBe(committed);
   }, 120_000);

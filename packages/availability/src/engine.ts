@@ -1,7 +1,7 @@
 // The status engine (PRD §6.6): works out a user's status over time from their events,
 // available hours and manual overrides.
 
-import { DEFAULT_TIMEZONE, MANUAL_STATUS_TO_STATUS, type Status } from '@whosfree/shared';
+import { DEFAULT_TIMEZONE, MANUAL_STATUS_TO_STATUS, type Status } from '@synkd/shared';
 import { availableHoursIntervals, defaultAvailableHours } from './hours';
 import { intersectIntervals, mergeIntervals, type Interval } from './interval';
 import { expandEvent, type Occurrence } from './recurrence';

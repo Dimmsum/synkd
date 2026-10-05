@@ -1,5 +1,5 @@
-import { Logo } from '@whosfree/ui/components/misc';
-import { cn } from '@whosfree/ui/lib/utils';
+import { Logo } from '@synkd/ui/components/misc';
+import { cn } from '@synkd/ui/lib/utils';
 import { advanceOnboarding } from '@/lib/actions/onboarding';
 import { getOnboardingState } from '@/lib/data/onboarding';
 import { onboardingSteps, type OnboardingStep } from '@/lib/onboarding';

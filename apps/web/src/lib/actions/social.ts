@@ -9,13 +9,13 @@ import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { after } from 'next/server';
-import { DEFAULT_TIER, normalizeHandleInput, Tier, type GroupPermission } from '@whosfree/shared';
+import { DEFAULT_TIER, normalizeHandleInput, Tier, type GroupPermission } from '@synkd/shared';
 import type {
   FriendInvite,
   PublicProfile,
   RequestFriendByInviteResult,
   SendFriendRequestResult,
-} from '@whosfree/backend';
+} from '@synkd/backend';
 import { appUrl } from '@/lib/config';
 import { sendPushToUser } from '@/lib/push/send';
 import { createServerSupabase, type ServerSupabase } from '@/lib/supabase/server';

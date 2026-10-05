@@ -8,7 +8,7 @@
 
 import { readFile } from 'node:fs/promises';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { NOW_CHANGED_EVENT, REALTIME_USER_CHANNEL_PREFIX, userChannel } from '@whosfree/shared';
+import { NOW_CHANGED_EVENT, REALTIME_USER_CHANNEL_PREFIX, userChannel } from '@synkd/shared';
 import { createTestDb, migrationFiles } from './harness/db';
 import type { TestDb } from './harness/db';
 import { codeOf } from './harness/errors';
@@ -119,7 +119,7 @@ describe('what a signal looks like', () => {
       expect(text).not.toContain(leak);
   });
 
-  it('the channel naming in SQL matches @whosfree/shared', async () => {
+  it('the channel naming in SQL matches @synkd/shared', async () => {
     const sql = (await Promise.all((await migrationFiles()).map((f) => readFile(f, 'utf8')))).join(
       '\n',
     );

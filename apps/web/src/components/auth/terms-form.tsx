@@ -2,8 +2,8 @@
 
 import { useActionState, useState } from 'react';
 import Link from 'next/link';
-import { Button } from '@whosfree/ui/components/button';
-import { Checkbox } from '@whosfree/ui/components/checkbox';
+import { Button } from '@synkd/ui/components/button';
+import { Checkbox } from '@synkd/ui/components/checkbox';
 import { acceptTerms } from '@/lib/actions/auth';
 
 /**

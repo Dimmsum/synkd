@@ -1,4 +1,4 @@
 {
-  "extends": "@whosfree/config/tsconfig/base.json",
+  "extends": "@synkd/config/tsconfig/base.json",
   "include": ["src", "vitest.config.ts"]
 }

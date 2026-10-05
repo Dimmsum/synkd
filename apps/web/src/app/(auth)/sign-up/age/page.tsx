@@ -12,7 +12,7 @@ export default function AgePage() {
       <SignUpSteps current={1} />
       <div className="mb-6 flex flex-col gap-1.5">
         <h1 className="text-2xl font-bold tracking-[-0.02em]">When&apos;s your birthday?</h1>
-        <p className="text-body-foreground">You must be 18 or older to use Who&apos;s Free.</p>
+        <p className="text-body-foreground">You must be 18 or older to use synkd.</p>
       </div>
       <AgeForm />
     </div>

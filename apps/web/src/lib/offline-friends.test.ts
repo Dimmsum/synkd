@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { OFFLINE_FRIEND_ERRORS } from '@whosfree/backend';
-import { MAX_OFFLINE_FRIENDS } from '@whosfree/shared';
+import { OFFLINE_FRIEND_ERRORS } from '@synkd/backend';
+import { MAX_OFFLINE_FRIENDS } from '@synkd/shared';
 import type { OfflineFriendView } from '@/lib/types';
 import {
   canAddOfflineFriend,

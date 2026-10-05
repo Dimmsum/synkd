@@ -2,7 +2,7 @@
 // photos (WF-040). Pure, with no dependencies, so the browser can check a file before sending it
 // and the server can check it again (the server's check is the one that counts).
 
-import type { AvatarUploadType } from '@whosfree/shared';
+import type { AvatarUploadType } from '@synkd/shared';
 
 const startsWith = (bytes: Uint8Array, sig: readonly number[], at = 0) =>
   bytes.length >= at + sig.length && sig.every((b, i) => bytes[at + i] === b);

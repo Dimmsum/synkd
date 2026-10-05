@@ -19,9 +19,9 @@ export async function buildInitSql(): Promise<string> {
     }),
   );
   const header = [
-    '-- whosfree: the full database schema, for a NEW, EMPTY Supabase project.',
+    '-- synkd: the full database schema, for a NEW, EMPTY Supabase project.',
     '--',
-    '-- GENERATED from supabase/migrations by `pnpm --filter @whosfree/backend db:init`.',
+    '-- GENERATED from supabase/migrations by `pnpm --filter @synkd/backend db:init`.',
     '-- Do not edit by hand: change or add a migration, then regenerate. A test fails if this',
     '-- file is out of date.',
     '--',

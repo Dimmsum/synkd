@@ -1,4 +1,4 @@
-import { DEFAULT_GROUP_MAX_MEMBERS } from '@whosfree/shared';
+import { DEFAULT_GROUP_MAX_MEMBERS } from '@synkd/shared';
 
 /**
  * Legal pages: the one place to fill in the values the privacy policy and terms leave open
@@ -134,7 +134,7 @@ export type LegalValueKey = keyof typeof LEGAL_VALUES;
 
 /**
  * Tokens filled from code rather than by the owner, so the documents can't disagree with the
- * product: the version above and shared limits from `@whosfree/shared`.
+ * product: the version above and shared limits from `@synkd/shared`.
  */
 const DERIVED_TOKENS: Readonly<Record<string, string>> = {
   VERSION: LEGAL_VERSION,

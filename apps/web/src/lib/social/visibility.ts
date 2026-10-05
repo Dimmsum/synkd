@@ -6,8 +6,8 @@
 // leave them out.
 // TODO(WF-048): have the database resolve this with resolve_tier so it can't drift.
 
-import type { Friend, GroupMember, MyGroup } from '@whosfree/backend';
-import { DEFAULT_TIER, type Tier } from '@whosfree/shared';
+import type { Friend, GroupMember, MyGroup } from '@synkd/backend';
+import { DEFAULT_TIER, type Tier } from '@synkd/shared';
 import type { VisibilityRow } from '@/lib/types';
 import { friendToPerson, toGroupSummary, toPerson } from './mappers';
 

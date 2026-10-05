@@ -3,7 +3,7 @@
 // We use `@next/eslint-plugin-next` and `eslint-plugin-react-hooks` directly instead of
 // `eslint-config-next`: the latter bundles eslint-plugin-react, -jsx-a11y and -import,
 // whose peer ranges stop at ESLint 9, and this repo is on ESLint 10.
-import base from '@whosfree/config/eslint';
+import base from '@synkd/config/eslint';
 import nextPlugin from '@next/eslint-plugin-next';
 import reactHooks from 'eslint-plugin-react-hooks';
 

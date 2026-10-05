@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { EyeOff } from 'lucide-react';
-import { TIERS } from '@whosfree/shared';
-import { TIER_DETAILS } from '@whosfree/ui/lib/tiers';
+import { TIERS } from '@synkd/shared';
+import { TIER_DETAILS } from '@synkd/ui/lib/tiers';
 import { Panel } from '@/components/app/page-header';
 import { SettingsPage } from '@/components/settings/settings-page';
 import { VisibilityItem } from '@/components/settings/visibility-list';

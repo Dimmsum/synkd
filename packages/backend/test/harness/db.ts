@@ -78,7 +78,7 @@ function session(pg: PGlite, role: ApiRole, claims: Record<string, unknown>): Se
  * Path to an empty PGlite data directory saved by the Vitest global setup.
  * Starting from it skips initdb; when unset, a new database is initialised.
  */
-export const TEMPLATE_ENV = 'WHOSFREE_PGLITE_EMPTY_DATADIR';
+export const TEMPLATE_ENV = 'SYNKD_PGLITE_EMPTY_DATADIR';
 
 async function emptyDatabase(): Promise<PGlite> {
   const template = process.env[TEMPLATE_ENV];

@@ -1,7 +1,7 @@
 // WF-063: manual status override (PRD §9 statusOverrides, FR-AVL-3, J5).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { MANUAL_STATUSES, STATUS_CHANGES_PER_HOUR } from '@whosfree/shared';
+import { MANUAL_STATUSES, STATUS_CHANGES_PER_HOUR } from '@synkd/shared';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
 import { addUser } from './harness/seed';

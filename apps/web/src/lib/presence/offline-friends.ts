@@ -4,7 +4,7 @@
 // the viewer's own status (lib/data/now.ts filters `offline_friend_id is null`), and nothing here
 // is ever sent to anyone else (FR-SOC-15).
 
-import type { OfflineFriend } from '@whosfree/backend';
+import type { OfflineFriend } from '@synkd/backend';
 import {
   computePresence,
   errorCode,

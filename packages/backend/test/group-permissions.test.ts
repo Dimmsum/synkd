@@ -2,8 +2,8 @@
 // FR-SOC-9, J7, D26).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { DEFAULT_MEMBER_PERMISSIONS, GROUP_PERMISSIONS } from '@whosfree/shared';
-import type { GroupPermission } from '@whosfree/shared';
+import { DEFAULT_MEMBER_PERMISSIONS, GROUP_PERMISSIONS } from '@synkd/shared';
+import type { GroupPermission } from '@synkd/shared';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
 import {

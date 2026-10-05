@@ -1,4 +1,4 @@
-import type { DayOfWeek, EventDraft, ParseDraft, WeekPattern } from '@whosfree/shared';
+import type { DayOfWeek, EventDraft, ParseDraft, WeekPattern } from '@synkd/shared';
 import { describe, expect, it } from 'vitest';
 import {
   expandUnits,

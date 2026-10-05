@@ -1,6 +1,6 @@
 // Runs one model and one prompt over every eval sample and scores the results (WF-022).
 // Nothing here prints; the CLI decides what to show, and only aggregate numbers (NFR-SEC-11).
-import type { ParseDraft } from '@whosfree/shared';
+import type { ParseDraft } from '@synkd/shared';
 import { readFile } from 'node:fs/promises';
 import { matchesMagicBytes, modelMediaType } from '../media';
 import {

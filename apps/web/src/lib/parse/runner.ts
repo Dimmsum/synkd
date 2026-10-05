@@ -1,5 +1,5 @@
 // The real wiring of a parse run and of dispatch (WF-027, D46). Server only: it imports the
-// converter (sharp, PDFium and libheif WASM) through `@whosfree/parser/node`.
+// converter (sharp, PDFium and libheif WASM) through `@synkd/parser/node`.
 //
 // dispatchParseJob is the single seam between "a job is queued" and "a run happens" (spike §7):
 // it POSTs to the internal run route, which claims the job and works in `after()` within its
@@ -8,9 +8,9 @@
 // (WF-131).
 
 import 'server-only';
-import { ConvertError, convertUpload, parseScheduleImages } from '@whosfree/parser/node';
-import { DEFAULT_TIMEZONE } from '@whosfree/shared';
-import { dateKey } from '@whosfree/ui/lib/time';
+import { ConvertError, convertUpload, parseScheduleImages } from '@synkd/parser/node';
+import { DEFAULT_TIMEZONE } from '@synkd/shared';
+import { dateKey } from '@synkd/ui/lib/time';
 import { requireParseAdmin, type ParseAdmin } from './admin';
 import { dispatch, isStalled } from './dispatch';
 import { internalBaseUrl, internalSecret, PARSE_RUN_PATH } from './internal';

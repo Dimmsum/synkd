@@ -1,1 +1,1 @@
-export { default } from '@whosfree/config/eslint';
+export { default } from '@synkd/config/eslint';

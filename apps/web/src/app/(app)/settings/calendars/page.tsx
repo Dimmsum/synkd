@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CalendarDays, FileText, PenLine, TriangleAlert, Upload } from 'lucide-react';
-import { formatMonthDay } from '@whosfree/ui/lib/time';
-import type { SourceType } from '@whosfree/shared';
-import { buttonVariants } from '@whosfree/ui/components/button';
+import { formatMonthDay } from '@synkd/ui/lib/time';
+import type { SourceType } from '@synkd/shared';
+import { buttonVariants } from '@synkd/ui/components/button';
 import { Panel } from '@/components/app/page-header';
 import { SettingsPage } from '@/components/settings/settings-page';
 import { getSources } from '@/lib/data/schedule';

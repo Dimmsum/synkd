@@ -1,4 +1,4 @@
-import { PARSE_PROMPT_VERSION } from '@whosfree/shared';
+import { PARSE_PROMPT_VERSION } from '@synkd/shared';
 import { describe, expect, it } from 'vitest';
 import { matchesMagicBytes, modelMediaType } from './media';
 import { loadPrompt, makePrompt, PRODUCTION_PROMPT } from './prompt';

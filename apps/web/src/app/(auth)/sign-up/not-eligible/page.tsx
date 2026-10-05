@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CircleX } from 'lucide-react';
-import { buttonVariants } from '@whosfree/ui/components/button';
+import { buttonVariants } from '@synkd/ui/components/button';
 import { SignOutOnMount } from '@/components/auth/sign-out-on-mount';
 
 export const metadata: Metadata = { title: 'You must be 18 or older' };
@@ -17,7 +17,7 @@ export default function NotEligiblePage() {
       </span>
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-[-0.02em]">
-          You must be 18 or older to use Who&apos;s Free
+          You must be 18 or older to use synkd
         </h1>
         <p className="text-body-foreground">
           Thanks for being honest. We didn&apos;t keep your date of birth, and we&apos;ve signed you

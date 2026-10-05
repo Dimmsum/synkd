@@ -25,8 +25,8 @@ import {
   X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
-import { cn } from '@whosfree/ui/lib/utils';
+import { Button } from '@synkd/ui/components/button';
+import { cn } from '@synkd/ui/lib/utils';
 import { installView, type InstallSurface, type InstallView } from '@/lib/install';
 import {
   dismissInstall,
@@ -40,7 +40,7 @@ import {
 export const INSTALL_PAGE_HREF = '/settings/install' as Route;
 
 const PUSH_NEEDS_INSTALL =
-  'On iPhone and iPad, notifications only work once Who’s Free is on your Home Screen (iOS 16.4 or later).';
+  'On iPhone and iPad, notifications only work once synkd is on your Home Screen (iOS 16.4 or later).';
 
 interface Step {
   icon: LucideIcon;
@@ -109,7 +109,7 @@ export function IosInstallSteps({ browser = 'safari' }: { browser?: 'safari' | '
         },
         {
           icon: Bell,
-          text: 'Open Who’s Free from your Home Screen and turn on notifications.',
+          text: 'Open synkd from your Home Screen and turn on notifications.',
         },
       ]}
     />
@@ -139,7 +139,7 @@ function InAppSteps() {
             </>
           ),
         },
-        { icon: SquarePlus, text: 'Then add Who’s Free to your Home Screen from Safari.' },
+        { icon: SquarePlus, text: 'Then add synkd to your Home Screen from Safari.' },
       ]}
     />
   );
@@ -157,13 +157,13 @@ function content(view: InstallView, state: InstallState): Content | null {
     case 'prompt':
       return {
         icon: Download,
-        title: 'Install Who’s Free',
+        title: 'Install synkd',
         body: 'Open it from your home screen like any other app, and get pings as notifications. It takes a second and uses almost no space.',
       };
     case 'ios-safari':
       return {
         icon: Smartphone,
-        title: 'Add Who’s Free to your Home Screen',
+        title: 'Add synkd to your Home Screen',
         body: state.iosPush
           ? PUSH_NEEDS_INSTALL
           : 'You can open it from your Home Screen like an app. Notifications need iOS 16.4 or later, so update your iPhone to get them.',
@@ -173,7 +173,7 @@ function content(view: InstallView, state: InstallState): Content | null {
       return state.iosPush
         ? {
             icon: Smartphone,
-            title: 'Add Who’s Free to your Home Screen',
+            title: 'Add synkd to your Home Screen',
             body: (
               <>
                 {PUSH_NEEDS_INSTALL} If you don’t see Add to Home Screen, open this page in Safari.
@@ -183,21 +183,21 @@ function content(view: InstallView, state: InstallState): Content | null {
           }
         : {
             icon: Compass,
-            title: 'Open Who’s Free in Safari to install it',
+            title: 'Open synkd in Safari to install it',
             body: 'On this version of iOS, only Safari can add apps to your Home Screen.',
             steps: <IosInstallSteps browser="safari" />,
           };
     case 'ios-in-app':
       return {
         icon: ExternalLink,
-        title: 'Open Who’s Free in Safari to install it',
-        body: `This app’s built-in browser can’t add Who’s Free to your Home Screen. ${PUSH_NEEDS_INSTALL}`,
+        title: 'Open synkd in Safari to install it',
+        body: `This app’s built-in browser can’t add synkd to your Home Screen. ${PUSH_NEEDS_INSTALL}`,
         steps: <InAppSteps />,
       };
     case 'android-menu':
       return {
         icon: Download,
-        title: 'Install Who’s Free',
+        title: 'Install synkd',
         body: 'Open it from your home screen like any other app, and get pings as notifications.',
         steps: (
           <Steps
@@ -227,13 +227,13 @@ function content(view: InstallView, state: InstallState): Content | null {
     case 'desktop':
       return {
         icon: MonitorDown,
-        title: 'Install Who’s Free on your phone',
+        title: 'Install synkd on your phone',
         body: 'It works best on your phone, where pings arrive as notifications. Open this site on your phone and follow the steps there. In Chrome or Edge on a computer, you can also install it from the install button in the address bar.',
       };
     case 'installed':
       return {
         icon: CircleCheck,
-        title: 'Who’s Free is installed',
+        title: 'synkd is installed',
         body: 'You’re using the installed app on this device.',
       };
     case 'hidden':
@@ -343,14 +343,14 @@ export function InstallBanner() {
 
   return (
     <aside
-      aria-label="Install Who’s Free"
+      aria-label="Install synkd"
       className="mb-4 flex items-center gap-3 rounded-xl border bg-card py-2 pr-1.5 pl-3"
     >
       <Smartphone aria-hidden="true" className="size-5 shrink-0 text-primary-ink" />
       <p className="flex-1 text-sm text-body-foreground">
         {view === 'prompt'
-          ? 'Install Who’s Free to get pings as notifications.'
-          : 'Add Who’s Free to your Home Screen to get pings as notifications.'}
+          ? 'Install synkd to get pings as notifications.'
+          : 'Add synkd to your Home Screen to get pings as notifications.'}
       </p>
       {view === 'prompt' ? (
         <Button size="sm" onClick={() => void promptInstall()}>

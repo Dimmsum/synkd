@@ -11,11 +11,11 @@ import {
   Trash,
   UsersRound,
 } from 'lucide-react';
-import { buttonVariants } from '@whosfree/ui/components/button';
-import { StatusBadge } from '@whosfree/ui/components/status-badge';
-import { PersonAvatar } from '@whosfree/ui/components/person-avatar';
-import { Eyebrow } from '@whosfree/ui/components/misc';
-import { cn } from '@whosfree/ui/lib/utils';
+import { buttonVariants } from '@synkd/ui/components/button';
+import { StatusBadge } from '@synkd/ui/components/status-badge';
+import { PersonAvatar } from '@synkd/ui/components/person-avatar';
+import { Eyebrow } from '@synkd/ui/components/misc';
+import { cn } from '@synkd/ui/lib/utils';
 import { SiteFooter, SiteHeader } from '@/components/public/site-chrome';
 
 // Landing page (FR-WEB-1, WF-009). Fully static with no client JavaScript, so it stays well
@@ -116,9 +116,9 @@ export default function LandingPage() {
               See who&apos;s free <span className="text-primary-ink">right now.</span>
             </h1>
             <p className="max-w-xl text-lg text-body-foreground">
-              Who&apos;s Free turns your class timetable, work roster or Google Calendar into a live
-              free/busy status. Share it with the friends and groups you pick, ping someone
-              who&apos;s free, and find a time that works for everybody.
+              synkd turns your class timetable, work roster or Google Calendar into a live free/busy
+              status. Share it with the friends and groups you pick, ping someone who&apos;s free,
+              and find a time that works for everybody.
             </p>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               <Link
@@ -203,8 +203,8 @@ export default function LandingPage() {
                 Put it on your home screen
               </h2>
               <p className="mt-3 text-body-foreground">
-                Who&apos;s Free is a web app, so there&apos;s nothing to download from a store.
-                Installing it gives you a home-screen icon and ping notifications.
+                synkd is a web app, so there&apos;s nothing to download from a store. Installing it
+                gives you a home-screen icon and ping notifications.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -212,7 +212,7 @@ export default function LandingPage() {
                 icon={Smartphone}
                 title="Android (Chrome)"
                 steps={[
-                  'Open Who’s Free in Chrome.',
+                  'Open synkd in Chrome.',
                   'Tap Install when it pops up, or open the ⋮ menu.',
                   'Choose “Install app” or “Add to Home screen”.',
                 ]}
@@ -221,7 +221,7 @@ export default function LandingPage() {
                 icon={CalendarDays}
                 title="iPhone (Safari)"
                 steps={[
-                  'Open Who’s Free in Safari.',
+                  'Open synkd in Safari.',
                   'Tap the Share button.',
                   'Choose “Add to Home Screen”, then open it from there to get notifications (iOS 16.4+).',
                 ]}

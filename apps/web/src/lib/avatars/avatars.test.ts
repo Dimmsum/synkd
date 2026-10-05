@@ -5,7 +5,7 @@ import {
   AVATAR_SIZE_PX,
   AVATAR_STORED_MAX_BYTES,
   AVATAR_UPLOAD_TYPES,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import { avatarObjectPath, isAvatarObjectName, isStoredAvatarUrl } from './paths';
 import { centreSquare } from './shrink';
 import { sniffImageType } from './sniff';

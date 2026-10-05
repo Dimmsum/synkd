@@ -2,7 +2,7 @@
 
 import fc from 'fast-check';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { Handle, RESERVED_HANDLES } from '@whosfree/shared';
+import { Handle, RESERVED_HANDLES, RESERVED_HANDLE_SUBSTRINGS } from '@synkd/shared';
 import { DB_ERROR } from '../src/errors';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
@@ -49,17 +49,18 @@ const BOB_PROFILE = {
   avatar_url: 'https://img.example/bob.png',
 };
 
-describe('handle rules: the database matches @whosfree/shared', () => {
+describe('handle rules: the database matches @synkd/shared', () => {
   it('the reserved list in the CHECK constraint is exactly RESERVED_HANDLES', async () => {
     const { rows } = await db.admin.query<{ def: string }>(
       `select pg_get_constraintdef(oid) as def from pg_constraint
        where conname = 'users_handle_not_reserved'`,
     );
-    const words = [...(rows[0]?.def ?? '').matchAll(/'([^']*)'::text/g)].map((m) => m[1]);
-    expect(words.filter((w) => w !== 'whosfree').sort()).toEqual(
-      RESERVED_HANDLES.filter((w) => w !== 'whosfree'),
-    );
-    expect(rows[0]?.def).toContain(`strpos(lower(handle), 'whosfree'::text) = 0`);
+    const words = [...(rows[0]?.def ?? '').matchAll(/'([^']*)'::text/g)].map((m) => m[1] ?? '');
+    const substrings: readonly string[] = RESERVED_HANDLE_SUBSTRINGS;
+    expect(words.filter((w) => !substrings.includes(w)).sort()).toEqual(RESERVED_HANDLES);
+    for (const s of substrings) {
+      expect(rows[0]?.def).toContain(`strpos(lower(handle), '${s}'::text) = 0`);
+    }
   });
 
   async function dbAccepts(handle: string): Promise<boolean> {
@@ -90,15 +91,16 @@ describe('handle rules: the database matches @whosfree/shared', () => {
     'ＫＥＭＡＲ', // full-width
     'Admin',
     'SUPPORT',
-    'whosfree_team',
-    'TheWhosFreeApp',
+    'synkd_team',
+    'TheSynkdApp',
+    'GetSynked',
     '',
   ])('%j: accepted by the database exactly when Handle accepts it', async (h) => {
     expect(await dbAccepts(h)).toBe(Handle.safeParse(h).success);
   });
 
   it('agrees with Handle on generated strings', async () => {
-    const chars = fc.constantFrom(...'aZk9_-.@ éеWHOSFREEwhosfree'.split(''));
+    const chars = fc.constantFrom(...'aZk9_-.@ éеSYNKEDsynked'.split(''));
     await fc.assert(
       fc.asyncProperty(fc.string({ unit: chars, maxLength: 34 }), async (h) => {
         expect(await dbAccepts(h)).toBe(Handle.safeParse(h).success);
@@ -142,7 +144,7 @@ describe('public.set_handle', () => {
     },
   );
 
-  it.each(['admin', 'Support', '@settings', 'whosfree_help'])(
+  it.each(['admin', 'Support', '@settings', 'synkd_help', 'getsynked'])(
     'refuses a reserved handle %j (WF102)',
     async (h) => {
       expect(await codeOf(setHandle('user_alice', h))).toBe(DB_ERROR.handleReserved);

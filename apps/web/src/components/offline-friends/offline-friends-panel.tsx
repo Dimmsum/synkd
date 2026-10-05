@@ -1,4 +1,4 @@
-import { MAX_OFFLINE_FRIENDS } from '@whosfree/shared';
+import { MAX_OFFLINE_FRIENDS } from '@synkd/shared';
 import { Panel } from '@/components/app/page-header';
 import { AddOfflineFriendButton } from '@/components/offline-friends/offline-friend-form';
 import { OfflineFriendRow } from '@/components/offline-friends/offline-friend-row';
@@ -6,8 +6,8 @@ import { sortOfflineFriends } from '@/lib/offline-friends';
 import type { OfflineFriendView } from '@/lib/types';
 
 /**
- * The Friends page's "Not on whosfree" panel (FR-SOC-14, FR-SOC-18, J8): the people the viewer
- * added who aren't on whosfree, with their status, and the button to add another. Only the
+ * The Friends page's "Not on synkd" panel (FR-SOC-14, FR-SOC-18, J8): the people the viewer
+ * added who aren't on synkd, with their status, and the button to add another. Only the
  * viewer ever sees this list (FR-SOC-15).
  */
 export function OfflineFriendsPanel({
@@ -26,10 +26,10 @@ export function OfflineFriendsPanel({
   const count = friends?.length ?? 0;
   return (
     <Panel
-      id="not-on-whosfree"
+      id="not-on-synkd"
       title={
         <span className="flex items-center gap-2">
-          Not on whosfree
+          Not on synkd
           <span className="rounded-full bg-muted px-2 text-xs font-semibold text-muted-foreground">
             {count}/{MAX_OFFLINE_FRIENDS}
           </span>

@@ -1,4 +1,4 @@
-import { DEFAULT_TIMEZONE } from '@whosfree/shared';
+import { DEFAULT_TIMEZONE } from '@synkd/shared';
 import { LEGAL_VERSION } from '@/lib/legal';
 
 /**

@@ -1,4 +1,4 @@
-@import '@whosfree/ui/globals.css';
+@import '@synkd/ui/globals.css';
 
 /* Scan this app's sources and the shared UI package for class names. */
 @source '../';

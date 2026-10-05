@@ -1,6 +1,6 @@
 import type { Metadata, Route } from 'next';
 import { UserRoundX } from 'lucide-react';
-import { EmptyState } from '@whosfree/ui/components/misc';
+import { EmptyState } from '@synkd/ui/components/misc';
 import { PageHeader } from '@/components/app/page-header';
 import { AddPersonView } from '@/components/friends/add-person';
 import { getProfile } from '@/lib/data/social';

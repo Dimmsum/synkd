@@ -13,10 +13,10 @@ import { countOf } from '@/lib/plural';
 
 export const metadata: Metadata = { title: 'Friends' };
 
-// Friends (WF-042), and the people the viewer added who aren't on whosfree (WF-127). Group
+// Friends (WF-042), and the people the viewer added who aren't on synkd (WF-127). Group
 // members who aren't friends appear on Now and in their groups.
 //
-// `?add=offline` opens "Add someone not on whosfree" (linked from Now). `?friended=<id>` follows
+// `?add=offline` opens "Add someone not on synkd" (linked from Now). `?friended=<id>` follows
 // becoming friends with someone: if the viewer has offline friends, it offers to delete the copy
 // they added of that person (FR-SOC-19).
 export default async function FriendsPage({ searchParams }: PageProps<'/friends'>) {

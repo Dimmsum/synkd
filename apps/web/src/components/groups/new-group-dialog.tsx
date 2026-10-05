@@ -3,9 +3,9 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { DEFAULT_GROUP_MAX_MEMBERS } from '@whosfree/shared';
+import { DEFAULT_GROUP_MAX_MEMBERS } from '@synkd/shared';
 import { Check, Plus } from 'lucide-react';
-import { Button, buttonVariants } from '@whosfree/ui/components/button';
+import { Button, buttonVariants } from '@synkd/ui/components/button';
 import {
   Dialog,
   DialogContent,
@@ -14,10 +14,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@whosfree/ui/components/dialog';
-import { Input } from '@whosfree/ui/components/input';
-import { Label } from '@whosfree/ui/components/label';
-import { cn } from '@whosfree/ui/lib/utils';
+} from '@synkd/ui/components/dialog';
+import { Input } from '@synkd/ui/components/input';
+import { Label } from '@synkd/ui/components/label';
+import { cn } from '@synkd/ui/lib/utils';
 import { createGroup } from '@/lib/actions/social';
 
 export const GROUP_EMOJIS = [

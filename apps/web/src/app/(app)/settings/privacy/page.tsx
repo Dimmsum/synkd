@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Download, Trash } from 'lucide-react';
-import { buttonVariants } from '@whosfree/ui/components/button';
+import { buttonVariants } from '@synkd/ui/components/button';
 import { Panel } from '@/components/app/page-header';
 import { SignOutButton } from '@/components/app/sign-out-button';
 import { SettingsPage } from '@/components/settings/settings-page';
@@ -10,7 +10,7 @@ import { getConsentRecord } from '@/lib/data/settings';
 export const metadata: Metadata = { title: 'Privacy and data' };
 
 // TODO(WF-011): final domain and contact address.
-const CONTACT = 'privacy@whosfree.app';
+const CONTACT = 'privacy@getsynked.com';
 
 const formatAccepted = (at: string) =>
   new Date(at).toLocaleDateString('en-JM', { dateStyle: 'medium', timeZone: 'America/Jamaica' });

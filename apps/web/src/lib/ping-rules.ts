@@ -1,4 +1,4 @@
-import { PING_TEXT_MAX_LENGTH } from '@whosfree/shared';
+import { PING_TEXT_MAX_LENGTH } from '@synkd/shared';
 import type { PresenceStatus } from '@/lib/types';
 
 export type PingPolicy = 'allowed' | 'confirm' | 'blocked';

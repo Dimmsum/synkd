@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Status } from '@whosfree/shared';
+import type { Status } from '@synkd/shared';
 import {
   BellOff,
   CalendarClock,
@@ -11,7 +11,7 @@ import {
   Moon,
   type LucideIcon,
 } from 'lucide-react';
-import { cn } from '@whosfree/ui/lib/utils';
+import { cn } from '@synkd/ui/lib/utils';
 
 /**
  * A status as the UI shows it. `soon` is not a stored status: it's a `busy`/`away`/`dnd`

@@ -4,7 +4,7 @@
 // they're joining, onboarding's sharing step offers the tier picker and joins, and joining
 // clears it. Strictly functional: it holds only the code, which the visitor already has.
 
-import { INVITE_CODE_PATTERN } from '@whosfree/shared';
+import { INVITE_CODE_PATTERN } from '@synkd/shared';
 
 export const INVITE_COOKIE = 'wf_invite';
 

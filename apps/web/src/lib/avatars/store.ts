@@ -13,7 +13,7 @@ import 'server-only';
 import { randomBytes } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { AVATAR_BUCKET } from '@whosfree/shared';
+import { AVATAR_BUCKET } from '@synkd/shared';
 import { avatarObjectPath } from './paths';
 
 /** A year: every upload has a new name, so a stored photo never changes. */

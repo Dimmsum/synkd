@@ -12,7 +12,7 @@
 import 'server-only';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@whosfree/backend';
+import type { Database } from '@synkd/backend';
 
 /** A device to deliver to: only what `web-push` needs, plus the row id for bookkeeping. */
 export interface StoredPushSubscription {

@@ -1,6 +1,6 @@
 // Available hours (FR-AVL-2, D24): the part of each local day a user is willing to show as free.
 
-import { DAYS_OF_WEEK, DEFAULT_AVAILABLE_HOURS, type AvailableHours } from '@whosfree/shared';
+import { DAYS_OF_WEEK, DEFAULT_AVAILABLE_HOURS, type AvailableHours } from '@synkd/shared';
 import { mergeIntervals, type Interval } from './interval';
 import { localDayOf, localToUtc, msFromLocalTime, weekdayOf } from './time';
 

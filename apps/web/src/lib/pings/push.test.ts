@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PING_TEXT_MAX_LENGTH, PING_TEMPLATES } from '@whosfree/shared';
+import { PING_TEXT_MAX_LENGTH, PING_TEMPLATES } from '@synkd/shared';
 import { PUSH_LIMITS, parsePushPayload, serializePushPayload } from '@/lib/push/payload';
 import { pingIdFromTag } from '@/lib/push/quick-reply';
 import { pingPushPayload, replyPushPayload } from './push';

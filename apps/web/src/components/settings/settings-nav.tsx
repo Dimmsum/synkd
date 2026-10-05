@@ -14,7 +14,7 @@ import {
   UserRound,
   type LucideIcon,
 } from 'lucide-react';
-import { cn } from '@whosfree/ui/lib/utils';
+import { cn } from '@synkd/ui/lib/utils';
 
 export const SETTINGS_SECTIONS: {
   href: Route;
