@@ -9,6 +9,7 @@ import {
   CalendarSearch,
   Inbox,
   Menu,
+  MessageSquare,
   Plus,
   Settings,
   UserRound,
@@ -29,6 +30,7 @@ import {
 } from '@synkd/ui/components/sheet';
 import { cn } from '@synkd/ui/lib/utils';
 import type { GroupSummary } from '@/lib/types';
+import { FeedbackDialog } from './feedback-dialog';
 
 interface NavItem {
   href: Route;
@@ -100,96 +102,116 @@ type GroupLink = Pick<GroupSummary, 'id' | 'name' | 'emoji' | 'memberCount'>;
  * Phone navigation: a hamburger button in the header that opens a drawer with the same links and
  * groups as the desktop sidebar (owner decision, PRD FR-WEB-9; the design's bottom bar is not
  * used). Links and the close button are at least 44px tall (NFR-UX-2). Unread pings show as a
- * dot on the button, so they aren't hidden while the menu is closed.
+ * dot on the button, so they aren't hidden while the menu is closed. "Send feedback" closes the
+ * drawer and opens the feedback form (FR-WEB-10).
  */
 export function MobileNav({ unread, groups }: { unread: number; groups: GroupLink[] }) {
   const [open, setOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const isActive = useIsActive();
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger
-        aria-label={unread ? `Open menu, ${unread} unread` : 'Open menu'}
-        className="relative -ml-1.5 flex size-11 items-center justify-center rounded-lg text-foreground hover:bg-background"
-      >
-        <Menu aria-hidden="true" className="size-6" />
-        {unread ? (
-          <span
-            aria-hidden="true"
-            className="absolute top-2 right-2 size-2.5 rounded-full bg-primary ring-2 ring-card"
-          />
-        ) : null}
-      </SheetTrigger>
-      <SheetContent
-        side="left"
-        showCloseButton={false}
-        className="w-[min(85vw,300px)] gap-6 overflow-y-auto bg-card px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]"
-      >
-        <div className="flex items-center justify-between">
-          <SheetTitle asChild>
-            <div>
-              <Logo />
-            </div>
-          </SheetTitle>
-          <SheetClose
-            aria-label="Close menu"
-            className="-mr-1.5 flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-background hover:text-foreground"
-          >
-            <X aria-hidden="true" className="size-5" />
-          </SheetClose>
-        </div>
-        <SheetDescription className="sr-only">Go to a page or one of your groups.</SheetDescription>
-
-        <nav aria-label="Main" className="flex flex-col gap-0.5">
-          {NAV.map((item) => {
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                aria-current={active ? 'page' : undefined}
-                className={cn(
-                  'flex min-h-11 items-center gap-3 rounded-[9px] px-2.5 text-[15px] font-medium text-body-foreground transition-colors hover:bg-background',
-                  active && 'bg-primary-soft font-semibold text-primary-ink hover:bg-primary-soft',
-                )}
-              >
-                <item.icon aria-hidden="true" className="size-5" />
-                {item.label}
-                {item.href === '/inbox' ? <Badge count={unread} className="ml-auto" /> : null}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between px-2.5 pb-1">
-            <Eyebrow>Groups</Eyebrow>
-            <Link
-              href="/groups?new=1"
-              onClick={() => setOpen(false)}
-              aria-label="New group"
-              className="flex size-11 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
+    <>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger
+          aria-label={unread ? `Open menu, ${unread} unread` : 'Open menu'}
+          className="relative -ml-1.5 flex size-11 items-center justify-center rounded-lg text-foreground hover:bg-background"
+        >
+          <Menu aria-hidden="true" className="size-6" />
+          {unread ? (
+            <span
+              aria-hidden="true"
+              className="absolute top-2 right-2 size-2.5 rounded-full bg-primary ring-2 ring-card"
+            />
+          ) : null}
+        </SheetTrigger>
+        <SheetContent
+          side="left"
+          showCloseButton={false}
+          className="w-[min(85vw,300px)] gap-6 overflow-y-auto bg-card px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]"
+        >
+          <div className="flex items-center justify-between">
+            <SheetTitle asChild>
+              <div>
+                <Logo />
+              </div>
+            </SheetTitle>
+            <SheetClose
+              aria-label="Close menu"
+              className="-mr-1.5 flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-background hover:text-foreground"
             >
-              <Plus aria-hidden="true" className="size-4" />
-            </Link>
+              <X aria-hidden="true" className="size-5" />
+            </SheetClose>
           </div>
-          {groups.map((g) => (
-            <Link
-              key={g.id}
-              href={`/groups/${g.id}`}
-              onClick={() => setOpen(false)}
-              className="flex min-h-11 items-center gap-2.5 rounded-[9px] px-2.5 text-sm hover:bg-background"
-            >
-              <GroupEmoji emoji={g.emoji} size="sm" />
-              <span className="truncate">{g.name}</span>
-              <span className="ml-auto text-xs text-muted-foreground">
-                {g.memberCount}
-                <span className="sr-only"> {g.memberCount === 1 ? 'member' : 'members'}</span>
-              </span>
-            </Link>
-          ))}
-        </div>
-      </SheetContent>
-    </Sheet>
+          <SheetDescription className="sr-only">
+            Go to a page or one of your groups.
+          </SheetDescription>
+
+          <nav aria-label="Main" className="flex flex-col gap-0.5">
+            {NAV.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  aria-current={active ? 'page' : undefined}
+                  className={cn(
+                    'flex min-h-11 items-center gap-3 rounded-[9px] px-2.5 text-[15px] font-medium text-body-foreground transition-colors hover:bg-background',
+                    active &&
+                      'bg-primary-soft font-semibold text-primary-ink hover:bg-primary-soft',
+                  )}
+                >
+                  <item.icon aria-hidden="true" className="size-5" />
+                  {item.label}
+                  {item.href === '/inbox' ? <Badge count={unread} className="ml-auto" /> : null}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between px-2.5 pb-1">
+              <Eyebrow>Groups</Eyebrow>
+              <Link
+                href="/groups?new=1"
+                onClick={() => setOpen(false)}
+                aria-label="New group"
+                className="flex size-11 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
+              >
+                <Plus aria-hidden="true" className="size-4" />
+              </Link>
+            </div>
+            {groups.map((g) => (
+              <Link
+                key={g.id}
+                href={`/groups/${g.id}`}
+                onClick={() => setOpen(false)}
+                className="flex min-h-11 items-center gap-2.5 rounded-[9px] px-2.5 text-sm hover:bg-background"
+              >
+                <GroupEmoji emoji={g.emoji} size="sm" />
+                <span className="truncate">{g.name}</span>
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {g.memberCount}
+                  <span className="sr-only"> {g.memberCount === 1 ? 'member' : 'members'}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              setFeedbackOpen(true);
+            }}
+            className="mt-auto flex min-h-11 items-center gap-3 rounded-[9px] px-2.5 text-[15px] font-medium text-body-foreground transition-colors hover:bg-background"
+          >
+            <MessageSquare aria-hidden="true" className="size-5" />
+            Send feedback
+          </button>
+        </SheetContent>
+      </Sheet>
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+    </>
   );
 }

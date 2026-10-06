@@ -42,6 +42,7 @@ synkd ([DOMAIN]) is operated by **[LEGAL ENTITY NAME]**, [REGISTERED ADDRESS], J
 | **Connections** | Your friends, the groups you're in, your role and permissions in each group, and the visibility level you picked for each | To decide who can see your availability, and how much of it |
 | **Pings and replies** | Templates like "Free for food?", short messages you write (up to 140 characters), and replies | To deliver them to the person you're pinging |
 | **Reports** | A report you make about another user, group or ping | To keep synkd safe |
+| **Feedback** | A message you send us with "Send feedback" or "Report this problem", the page you sent it from, your browser type (e.g. "Safari on iPhone"), whether you use the installed app, and whether we may email you about it | To fix bugs and decide what to improve. Only our team can read it. We email you about it only if you said we could. |
 
 ### 2.2 Information from Google Calendar (only if you connect it)
 If you choose to connect Google Calendar, we read events from the calendars you select. From each event we store **only**:
@@ -171,6 +172,7 @@ When you upload a timetable or roster (yours, or an offline friend's), we send t
 | **Birth year and age confirmation** | Until you delete your account |
 | **Consent records** | [CONSENT RECORD RETENTION] |
 | **Reports** | [REPORT RETENTION] |
+| **Feedback** | Until you delete your account |
 | **Analytics and error reports** | [ANALYTICS RETENTION] |
 | **Backups** | [BACKUP RETENTION] |
 

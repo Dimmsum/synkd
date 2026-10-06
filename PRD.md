@@ -20,6 +20,7 @@
 | 0.6 | 2026-09-30 | **Backend moves from Convex to Supabase** (D40): Postgres with row-level security, Supabase Storage, Realtime and Cron. Clerk stays for sign-in, connected through Supabase's third-party auth. **Authorisation and tier redaction are enforced in Postgres**, and TypeScript server logic runs on the Next.js server (D41). Updated the architecture (§8), data model (§9), NFRs and risks to match. |
 | 0.7 | 2026-09-30 | Recorded decisions from building the availability engine (D42): recurrence and timezones are handled in-house instead of with `rrule` and `date-fns-tz`, `exdates` are occurrence start instants, and week numbers count from the Monday week containing the schedule's start date (FR-IMP-5). |
 | 0.8 | 2026-09-30 | Data model matches the first migrations (D43): blocks get their own directed `blocks` table instead of a `blocked` friendship status; `events` use `startsAt`/`endsAt`; group permissions are four boolean columns; a source's period is three columns. |
+| 0.15 | 2026-10-05 | Added **in-app feedback** (FR-WEB-10): a "Send feedback" form in the sidebar, the phone menu and the error page, stored in a new `feedback` table that only the team can read. |
 | 0.14 | 2026-10-05 | The product is named **synkd** (D48), replacing the working name "whosfree". The domain will be along the lines of `getsynked.com` (not yet registered). Handles containing "synkd" or "synked" are reserved (FR-AUTH-2). |
 | 0.13 | 2026-10-01 | Every account gets a **handle generated from its name** at sign-up, which can be changed but not removed (D47, FR-AUTH-2). |
 | 0.12 | 2026-09-30 | **No Railway worker** (D46, after the WF-024 spike): PDF and HEIC conversion and the OpenRouter call run on the Next.js server, with uploads going straight to Supabase Storage and parse jobs queued in Postgres with a cron sweep. Updated §8, the parse flow and the NFRs that mentioned the worker. |
@@ -206,6 +207,7 @@ Shanice is why every group gets its own visibility tier, chosen when you join it
 | FR-WEB-7 | **Link previews** (Open Graph) for invite links, so WhatsApp shows "Join *Flat 4* on synkd". The group name becomes visible to anyone who has the link. | S |
 | FR-WEB-8 | A **404 page and error pages** that point people somewhere useful. | M |
 | FR-WEB-9 | **Navigation:** desktop uses the left sidebar from the design. On phones the app follows the design (`Who's Free scheduling UI/`) **except** for its bottom navigation bar: there is no bottom bar, and the same destinations and groups open from a **hamburger menu** in the top header, as a drawer. | M |
+| FR-WEB-10 | **In-app feedback.** A **Send feedback** item at the bottom of the desktop sidebar and the phone menu, and a **Report this problem** button on the error page, open a short form: the kind ("Something's broken", "Idea or request", "Something else"), a plain-text message of up to 2,000 characters, and an opt-in "You can email me about this". The page path (without query string or hash), a coarse device label (e.g. "Safari on iPhone") and whether the app is installed are attached. Signed-in users only, 10 a day (NFR-SEC-9). Only the team can read feedback, in the Supabase dashboard, where it's triaged. The message is never logged (NFR-SEC-11). | M |
 
 ### 6.2 Authentication & profile (AUTH) (D19)
 | ID | Requirement | Priority |
@@ -636,6 +638,7 @@ These are Postgres tables in Supabase. Every table has an `id` (uuid) primary ke
 | `mutes` | `userId`, `targetType`, `targetId`, `until?` | |
 | `pushSubscriptions` | `userId`, `endpoint` (unique), `p256dh`, `auth`, `deviceLabel?` (coarse, e.g. "Chrome on Android", not the user agent), `updatedAt`, `lastUsedAt` | Index: `userId`. At most 10 per user (least recently used dropped) |
 | `reports` | `reporterId`, `targetType` (`user`/`group`/`ping`), `targetId`, `reason`, `status` | |
+| `feedback` | `userId`, `kind` (`bug`/`idea`/`other`), `message` (≤ 2,000 chars, plain text), `page?` (path only), `deviceLabel?` (coarse), `installed`, `canContact`, `status` (`new`/`seen`/`planned`/`done`/`wont_fix`, team triage) | Indexes: `status, createdAt` and `userId`. Written only by `submit_feedback`; no client can read it (FR-WEB-10). Deleted with the account. |
 | `rateLimits` | `userId`, `action`, `windowStart`, `count` | Primary key: `userId, action, windowStart`. Used by the write functions (NFR-SEC-9). |
 
 **Access rules (D41):** users read and write their own rows directly, under RLS. Other users' rows (events, overrides, available hours) are never selectable directly. They're returned only by `security definer` functions that check the connection, call `resolve_tier`, and `redact`. `users.clerkId` holds the Clerk user ID from the token; the `current_user_id()` SQL helper maps it to `users.id`.

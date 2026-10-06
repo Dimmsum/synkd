@@ -357,6 +357,19 @@ export const PUSH_SUBSCRIPTION_ERRORS = {
 } as const;
 
 /**
+ * Error messages `submit_feedback` raises (WF-137, FR-WEB-10). WF001 for no account, 22023 for
+ * the argument errors, PT429 when rate limited (FEEDBACK_PER_DAY).
+ */
+export const FEEDBACK_ERRORS = {
+  noAccount: 'No account for this sign-in',
+  invalidMessage: 'Feedback must be 1 to 2000 characters of plain text',
+  invalidKind: 'Unknown feedback kind',
+  invalidPage: 'Invalid page',
+  invalidDeviceLabel: 'Invalid device label',
+  rateLimited: 'Too many attempts',
+} as const;
+
+/**
  * One row of `list_inbox` (WF-092): a ping the caller received or sent, newest first, with the
  * other person's public profile (nobody blocked either way appears). `template`/`text` and the
  * reply fields are optional; `unread` is the caller's own flag (an unread received ping, or an

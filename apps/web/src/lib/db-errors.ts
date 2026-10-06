@@ -160,3 +160,18 @@ export function uploadErrorMessage(code: string | undefined, details: string | u
       return TRY_AGAIN;
   }
 }
+
+/** `submit_feedback` (FR-WEB-10, WF-137). */
+export function feedbackErrorMessage(code: string | undefined): string {
+  switch (code) {
+    case PG.invalidParameter:
+      return 'Check your message and try again.';
+    case DB_ERROR.rateLimited:
+      // FEEDBACK_PER_DAY (NFR-SEC-9).
+      return 'You’ve sent a lot of feedback today. Thank you! Try again tomorrow.';
+    case DB_ERROR.noAccount:
+      return NO_ACCOUNT;
+    default:
+      return TRY_AGAIN;
+  }
+}

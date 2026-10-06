@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Button, buttonVariants } from '@synkd/ui/components/button';
 import { Logo } from '@synkd/ui/components/misc';
+import { FeedbackButton } from '@/components/app/feedback-dialog';
 
 // FR-WEB-8. `retry` re-fetches the segment, so a passing server error can recover.
 // TODO(WF-008): report `error` to Sentry (without PII, NFR-SEC-12).
@@ -28,6 +29,10 @@ export default function ErrorPage({
           Back to Now
         </Link>
       </div>
+      {/* FR-WEB-10: report it, with the page it happened on. */}
+      <FeedbackButton defaultKind="bug" className="text-muted-foreground">
+        Report this problem
+      </FeedbackButton>
     </main>
   );
 }
