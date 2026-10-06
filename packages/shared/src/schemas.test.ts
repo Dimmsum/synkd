@@ -3,6 +3,7 @@ import {
   AvailableHours,
   DisplayName,
   EventDraft,
+  FeedbackInput,
   LocalTime,
   OfflineFriendNickname,
   ParseDraft,
@@ -261,5 +262,40 @@ describe('DisplayName', () => {
     expect(DisplayName.safeParse('   ').success).toBe(false);
     expect(DisplayName.safeParse('a'.repeat(101)).success).toBe(false);
     expect(DisplayName.safeParse('Ke\u0007mar').success).toBe(false);
+  });
+});
+
+describe('FeedbackInput', () => {
+  const base = {
+    kind: 'bug',
+    message: 'The Now screen shows me as busy',
+    page: '/now',
+    device: 'Safari on iPhone',
+    installed: true,
+    canContact: false,
+  };
+  it('trims the message, turns CRLF into LF and keeps newlines and tabs', () => {
+    expect(FeedbackInput.parse({ ...base, message: '  Line 1\r\n\tLine 2 ' }).message).toBe(
+      'Line 1\n\tLine 2',
+    );
+  });
+  it('accepts 2000 characters, counting an emoji as one', () => {
+    expect(FeedbackInput.safeParse({ ...base, message: '🐛'.repeat(2000) }).success).toBe(true);
+  });
+  it('rejects a blank or 2001-character message and control characters', () => {
+    expect(FeedbackInput.safeParse({ ...base, message: ' \n ' }).success).toBe(false);
+    expect(FeedbackInput.safeParse({ ...base, message: 'a'.repeat(2001) }).success).toBe(false);
+    expect(FeedbackInput.safeParse({ ...base, message: 'a\u0000b' }).success).toBe(false);
+    expect(FeedbackInput.safeParse({ ...base, message: 'a\rb' }).success).toBe(false);
+  });
+  it('rejects an unknown kind', () => {
+    expect(FeedbackInput.safeParse({ ...base, kind: 'rant' }).success).toBe(false);
+  });
+  it('accepts only a bare path: no query string or hash (they can hold invite codes)', () => {
+    expect(FeedbackInput.safeParse({ ...base, page: null }).success).toBe(true);
+    expect(FeedbackInput.safeParse({ ...base, page: '/groups/abc/settings' }).success).toBe(true);
+    expect(FeedbackInput.safeParse({ ...base, page: '/i/abc?ref=1' }).success).toBe(false);
+    expect(FeedbackInput.safeParse({ ...base, page: '/now#top' }).success).toBe(false);
+    expect(FeedbackInput.safeParse({ ...base, page: 'https://x.test/now' }).success).toBe(false);
   });
 });

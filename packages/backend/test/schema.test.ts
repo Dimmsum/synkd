@@ -16,6 +16,7 @@ import {
   TIERS,
 } from '@synkd/shared';
 import {
+  FEEDBACK_ERRORS,
   GROUP_ERRORS,
   OFFLINE_FRIEND_ERRORS,
   PING_ERRORS,
@@ -51,6 +52,7 @@ describe('migrations', () => {
       'availability_prefs',
       'blocks',
       'events',
+      'feedback',
       'friendships',
       'group_members',
       'groups',
@@ -261,6 +263,7 @@ const CLIENT_DEFINER_FUNCTIONS = [
   'set_handle(text)',
   'set_status(text,text,timestamp with time zone)',
   'start_parse_job(uuid)',
+  'submit_feedback(text,text,text,text,boolean,boolean)',
   'transfer_group_admin(uuid,uuid)',
   'unblock_user(uuid)',
   'unfriend(uuid)',
@@ -306,6 +309,7 @@ const PRIVATE_FUNCTIONS = [
   'private.check_event_offline_friend()',
   'private.check_parse_draft(jsonb)',
   'private.check_tier(integer)',
+  'private.clean_feedback_message(text)',
   'private.clean_file_name(text)',
   'private.clean_group_emoji(text)',
   'private.clean_group_name(text)',
@@ -461,12 +465,13 @@ describe('functions', () => {
   });
 });
 
-describe('GROUP_ERRORS, OFFLINE_FRIEND_ERRORS, PUSH_SUBSCRIPTION_ERRORS, PING_ERRORS and SCHEDULE_FILE_ERRORS (src/index.ts) match what the migrations raise', () => {
+describe('FEEDBACK_ERRORS, GROUP_ERRORS, OFFLINE_FRIEND_ERRORS, PUSH_SUBSCRIPTION_ERRORS, PING_ERRORS and SCHEDULE_FILE_ERRORS (src/index.ts) match what the migrations raise', () => {
   it('every message is raised somewhere, verbatim', async () => {
     const sql = (await Promise.all((await migrationFiles()).map((f) => readFile(f, 'utf8')))).join(
       '\n',
     );
     for (const message of [
+      ...Object.values(FEEDBACK_ERRORS),
       ...Object.values(GROUP_ERRORS),
       ...Object.values(OFFLINE_FRIEND_ERRORS),
       ...Object.values(PUSH_SUBSCRIPTION_ERRORS),

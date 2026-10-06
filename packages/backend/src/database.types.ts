@@ -150,6 +150,53 @@ export type Database = {
           },
         ];
       };
+      feedback: {
+        Row: {
+          can_contact: boolean;
+          created_at: string;
+          device_label: string | null;
+          id: string;
+          installed: boolean;
+          kind: string;
+          message: string;
+          page: string | null;
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          can_contact?: boolean;
+          created_at?: string;
+          device_label?: string | null;
+          id?: string;
+          installed?: boolean;
+          kind: string;
+          message: string;
+          page?: string | null;
+          status?: string;
+          user_id: string;
+        };
+        Update: {
+          can_contact?: boolean;
+          created_at?: string;
+          device_label?: string | null;
+          id?: string;
+          installed?: boolean;
+          kind?: string;
+          message?: string;
+          page?: string | null;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'feedback_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       friendships: {
         Row: {
           created_at: string;
@@ -1293,6 +1340,17 @@ export type Database = {
         };
       };
       start_parse_job: { Args: { file_id: string }; Returns: string };
+      submit_feedback: {
+        Args: {
+          can_contact?: boolean;
+          device_label?: string;
+          installed?: boolean;
+          kind: string;
+          message: string;
+          page?: string;
+        };
+        Returns: string;
+      };
       transfer_group_admin: {
         Args: { group_id: string; new_admin_id: string };
         Returns: undefined;

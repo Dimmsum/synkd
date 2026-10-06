@@ -376,3 +376,19 @@ export const PARSE_JOB_CHANGED_EVENT = 'parse_job_changed';
 export function userChannel(userId: string): string {
   return `${REALTIME_USER_CHANNEL_PREFIX}${userId}`;
 }
+
+/**
+ * In-app feedback (FR-WEB-10, WF-137): what kind of feedback it is. The database checks the same
+ * list in `submit_feedback` (backend migration 20261005200000_feedback.sql).
+ */
+export const FEEDBACK_KINDS = ['bug', 'idea', 'other'] as const;
+export type FeedbackKind = (typeof FEEDBACK_KINDS)[number];
+
+/** Longest feedback message, in Unicode code points (FR-WEB-10). */
+export const FEEDBACK_MESSAGE_MAX_LENGTH = 2000;
+
+/** Longest page path stored with feedback, e.g. `/groups/<uuid>/settings` (FR-WEB-10). */
+export const FEEDBACK_PAGE_MAX_LENGTH = 200;
+
+/** Feedback messages per user per day (NFR-SEC-9). `submit_feedback` enforces it ('feedback'). */
+export const FEEDBACK_PER_DAY = 10;

@@ -31,7 +31,7 @@ The single tracker for **everything that needs doing** on synkd: features, setup
 ### IDs
 - Every issue has a permanent ID: `WF-###`. **IDs are never reused or renumbered.**
 - Numbers are grouped by phase (Phase 0 = 001–019, Phase 1 = 020–039, and so on). That makes an ID easy to place, but the gaps aren't meaningful.
-- **New issues (including bugs) take the next free number after the highest existing ID.** The next free number is **WF-137**.
+- **New issues (including bugs) take the next free number after the highest existing ID.** The next free number is **WF-138**.
 - Use the ID in branch names and commit messages, e.g. `feat(parser): recurring extraction (WF-028)`.
 
 ### Category (the kind of work)
@@ -106,7 +106,7 @@ These have no unfinished dependencies:
 | [WF-070](#wf-070--short-gap-rule) | Short-gap rule (stretch) | `feature` |
 | [WF-050](#wf-050--pause-sharing) | Pause sharing (stretch; the column and redaction already exist) | `feature` |
 
-**Milestone A code is merged** (2026-09-30). What's `in-review` is waiting for the owner's migrations, environment variables and a real run on a deploy and on phones: WF-004, 005, 006, 015, 026–032, 035, 040, 042–045, 047, 062, 063, 064, 065, 068, 090–093, 111, 127, 130–136. Still `in-progress`: WF-010 (legal values), WF-011 (named synkd; domain and checks left), WF-013 (OpenRouter settings), WF-037 (event and ping purges), WF-128 (slot-finder part, waits for WF-098). **Waiting on the owner:** WF-002 (hosting: Railway for now, Vercel is the PRD target), WF-003 (apply migrations), WF-006 (branch protection).
+**Milestone A code is merged** (2026-09-30). What's `in-review` is waiting for the owner's migrations, environment variables and a real run on a deploy and on phones: WF-004, 005, 006, 015, 026–032, 035, 040, 042–045, 047, 062, 063, 064, 065, 068, 090–093, 111, 127, 130–137. Still `in-progress`: WF-010 (legal values), WF-011 (named synkd; domain and checks left), WF-013 (OpenRouter settings), WF-037 (event and ping purges), WF-128 (slot-finder part, waits for WF-098). **Waiting on the owner:** WF-002 (hosting: Railway for now, Vercel is the PRD target), WF-003 (apply migrations), WF-006 (branch protection).
 
 > WF-020 (collecting samples) still gates WF-023's model choice and WF-028's accuracy target. The parser runs on provisional models until then.
 
@@ -288,6 +288,7 @@ Everything else at P0, which adds:
 | WF-134 | Unbuilt screens show mock people and placeholder results to real users | bug | web | P0 | 3 | A | in-review | — |
 | WF-135 | Remove friend, block, leave, make admin and delete group happen on one tap with no confirmation | bug | web | P1 | 2 | A | in-review | — |
 | WF-136 | Polish from the 2026-10-03 E2E run (plurals, copy, tap targets, a11y) | bug | web | P2 | 6 | A | in-review | — |
+| WF-137 | In-app feedback and bug reports | feature | web, backend | P0 | 6 | A | in-review | 014 |
 
 ---
 
@@ -1478,7 +1479,7 @@ Google Calendar can be part of the beta with up to 100 test users even before WF
 **Acceptance criteria**
 - [ ] Launched to one friend circle, then to one seed community (30–100 users)
 - [ ] The metrics in PRD §10 are being tracked in PostHog
-- [ ] A way to give feedback is set up (in-app link or a WhatsApp group)
+- [x] A way to give feedback is set up (in-app link or a WhatsApp group): the in-app form, WF-137
 - [ ] The [ASSUMPTION] values in the PRD are updated with beta data
 
 #### WF-122 · User research interviews
@@ -1524,6 +1525,26 @@ A temporary way to meet data-subject rights at public launch, before the self-se
 - [ ] A written runbook plus internal SQL functions to (a) export all of a user's data as JSON and (b) delete their account (the same steps WF-114 will automate)
 - [ ] Every request is logged with the date received and the date completed, and completed within **30 days**
 - [ ] Retire the manual process once WF-113 and WF-114 are `done`
+
+---
+
+#### WF-137 · In-app feedback and bug reports
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Depends on:** WF-014
+- **PRD:** FR-WEB-10, NFR-SEC-1, NFR-SEC-9, NFR-SEC-11, D41
+
+A way for testers and beta users to report bugs and send ideas from inside the app, so the team can fix and build based on what people actually hit. Covers WF-121's "a way to give feedback" criterion.
+
+> Built (migration `20261005200000_feedback.sql`): `public.feedback`, written only by `submit_feedback(kind, message, page, device_label, installed, can_contact)` (security definer, 10 a day as `feedback`). No client can read or write the table; the team reads it in the Supabase dashboard and triages with `status`. Web: `FeedbackDialog`/`FeedbackButton` (`components/app/feedback-dialog.tsx`) and the `sendFeedback` action. Entry points: the bottom of the desktop sidebar, the bottom of the phone menu, and "Report this problem" on the error page. Privacy policy §2.1 and §6 list feedback. **Owner:** apply the migration, then read new feedback with `select * from feedback where status = 'new' order by created_at desc` (join `users` on `user_id` for the Clerk ID when `can_contact` is true).
+
+**Acceptance criteria**
+- [x] A signed-in user can send feedback from the sidebar, the phone menu and the error page
+- [x] The form takes a kind (bug, idea, other), a plain-text message of up to 2,000 characters, and an opt-in to be contacted
+- [x] The page path (no query string or hash), a coarse device label and installed/not are attached; no raw user agent, IP or location
+- [x] Only the team can read feedback: no client can select it, its author included (tests)
+- [x] Rate limited to 10 a day; the message is never logged
+- [x] Deleting the account deletes its feedback
+- [ ] Owner applies the migration and sends a test message from a phone
 
 ---
 

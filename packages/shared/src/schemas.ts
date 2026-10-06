@@ -4,6 +4,9 @@ import {
   DISPLAY_NAME_MAX_LENGTH,
   EVENT_CATEGORIES,
   EVENT_TITLE_MAX_LENGTH,
+  FEEDBACK_KINDS,
+  FEEDBACK_MESSAGE_MAX_LENGTH,
+  FEEDBACK_PAGE_MAX_LENGTH,
   MANUAL_STATUSES,
   OFFLINE_FRIEND_NICKNAME_MAX_LENGTH,
   PING_TEXT_MAX_LENGTH,
@@ -212,3 +215,39 @@ export const DisplayName = z
   })
   .refine((t) => !/\p{Cc}/u.test(t), { message: 'No control characters' });
 export type DisplayName = z.infer<typeof DisplayName>;
+
+/**
+ * In-app feedback (FR-WEB-10, WF-137). `message` is plain text: trimmed, 1–2000 characters (code
+ * points), no control characters except tab and newline. `page` is the path the form was opened
+ * on, without its query string or hash (those can hold invite codes). `device` is the coarse
+ * label from `deviceLabel()` (e.g. "Safari on iPhone"), never the raw user agent (NFR-SEC-1).
+ * `submit_feedback` applies the same rules. Never log `message` (NFR-SEC-11).
+ */
+export const FeedbackInput = z.object({
+  kind: z.enum(FEEDBACK_KINDS),
+  // Windows line endings become newlines first, as in the database.
+  message: z
+    .string()
+    .transform((t) => t.replace(/\r\n/g, '\n').trim())
+    .pipe(
+      z
+        .string()
+        .min(1, 'Tell us what happened or what you’d like')
+        .refine((t) => [...t].length <= FEEDBACK_MESSAGE_MAX_LENGTH, {
+          message: `At most ${FEEDBACK_MESSAGE_MAX_LENGTH} characters`,
+        })
+        // eslint-disable-next-line no-control-regex
+        .refine((t) => !/[\u0000-\u0008\u000B-\u001F\u007F]/.test(t), {
+          message: 'No control characters',
+        }),
+    ),
+  page: z
+    .string()
+    .max(FEEDBACK_PAGE_MAX_LENGTH)
+    .regex(/^\/[^\s?#]*$/, 'Expected a path like /now')
+    .nullable(),
+  device: z.string().trim().min(1).max(60).nullable(),
+  installed: z.boolean(),
+  canContact: z.boolean(),
+});
+export type FeedbackInput = z.infer<typeof FeedbackInput>;

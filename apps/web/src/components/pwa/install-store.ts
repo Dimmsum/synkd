@@ -50,7 +50,8 @@ function storage(): KeyValueStore | null {
   }
 }
 
-function standalone(): boolean {
+/** Running as the installed app (also used to tag feedback, WF-137). */
+export function standalone(): boolean {
   const nav = navigator as Navigator & { standalone?: boolean };
   return (
     nav.standalone === true ||

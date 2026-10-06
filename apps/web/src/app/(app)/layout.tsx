@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { GroupEmoji, PersonAvatar } from '@synkd/ui/components/person-avatar';
 import { Eyebrow, Logo, LogoMark } from '@synkd/ui/components/misc';
+import { FeedbackButton } from '@/components/app/feedback-dialog';
 import { MobileNav, SidebarNav } from '@/components/app/nav';
 import { StatusChip } from '@/components/app/status-chip';
 import { InstallBanner } from '@/components/pwa/install-prompt';
@@ -77,7 +78,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </Link>
           ))}
         </div>
-        <div className="mt-auto">
+        <div className="mt-auto flex flex-col gap-2">
+          {/* Bug reports and ideas (FR-WEB-10, WF-137). */}
+          <FeedbackButton className="justify-start gap-3 px-2.5 font-medium text-body-foreground [&_svg:not([class*='size-'])]:size-[18px]" />
           <StatusChip variant="card" {...chip}>
             <PersonAvatar name={viewer.name} hue={viewer.hue} />
           </StatusChip>
