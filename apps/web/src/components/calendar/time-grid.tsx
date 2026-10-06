@@ -1,5 +1,5 @@
-import { formatHourLabel } from '@whosfree/ui/lib/time';
-import { cn } from '@whosfree/ui/lib/utils';
+import { formatHourLabel } from '@synkd/ui/lib/time';
+import { cn } from '@synkd/ui/lib/utils';
 
 export interface GridColumn {
   key: string;

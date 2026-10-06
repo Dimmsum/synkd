@@ -1,11 +1,11 @@
 import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { PenLine, Upload, UserRound } from 'lucide-react';
-import { TIER_LABELS } from '@whosfree/shared';
-import { buttonVariants } from '@whosfree/ui/components/button';
-import { SourceBadge } from '@whosfree/ui/components/misc';
-import { PersonAvatar } from '@whosfree/ui/components/person-avatar';
-import { addDays, startOfWeek } from '@whosfree/ui/lib/time';
+import { TIER_LABELS } from '@synkd/shared';
+import { buttonVariants } from '@synkd/ui/components/button';
+import { SourceBadge } from '@synkd/ui/components/misc';
+import { PersonAvatar } from '@synkd/ui/components/person-avatar';
+import { addDays, startOfWeek } from '@synkd/ui/lib/time';
 import { PageHeader } from '@/components/app/page-header';
 import { ConnectionScheduleSection } from '@/components/calendar/connection-schedule';
 import { PersonSwitcher, type SwitcherPerson } from '@/components/calendar/person-switcher';

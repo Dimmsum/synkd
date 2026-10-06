@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ShieldCheck, UserPlus } from 'lucide-react';
 import { SignUp } from '@clerk/nextjs';
-import { GroupEmoji } from '@whosfree/ui/components/person-avatar';
+import { GroupEmoji } from '@synkd/ui/components/person-avatar';
 import { SignUpSteps } from '@/components/auth/sign-up-steps';
 import { getAnyInvite, getRememberedInviteCode } from '@/lib/data/invites';
 

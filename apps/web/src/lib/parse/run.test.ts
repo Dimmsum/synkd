@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ParseRun } from '@whosfree/backend';
-import type { ParseOutcome } from '@whosfree/parser/node';
+import type { ParseRun } from '@synkd/backend';
+import type { ParseOutcome } from '@synkd/parser/node';
 import { processRun, type RunDeps } from './run';
 
 const BYTES = new TextEncoder().encode('%PDF-1.7 synthetic');

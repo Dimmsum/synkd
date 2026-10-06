@@ -2,10 +2,10 @@
 
 import { useId, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { MAX_OFFLINE_FRIENDS, OFFLINE_FRIEND_NICKNAME_MAX_LENGTH } from '@whosfree/shared';
+import { MAX_OFFLINE_FRIENDS, OFFLINE_FRIEND_NICKNAME_MAX_LENGTH } from '@synkd/shared';
 import { Lock, PenLine, Pencil, Upload, UserRoundPlus } from 'lucide-react';
-import { Button, buttonVariants } from '@whosfree/ui/components/button';
-import { Checkbox } from '@whosfree/ui/components/checkbox';
+import { Button, buttonVariants } from '@synkd/ui/components/button';
+import { Checkbox } from '@synkd/ui/components/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -14,10 +14,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@whosfree/ui/components/dialog';
-import { Input } from '@whosfree/ui/components/input';
-import { Label } from '@whosfree/ui/components/label';
-import { cn } from '@whosfree/ui/lib/utils';
+} from '@synkd/ui/components/dialog';
+import { Input } from '@synkd/ui/components/input';
+import { Label } from '@synkd/ui/components/label';
+import { cn } from '@synkd/ui/lib/utils';
 import { createOfflineFriend, updateOfflineFriend } from '@/lib/actions/offline-friends';
 import { OFFLINE_FRIEND_LIMIT_MESSAGE } from '@/lib/offline-friends';
 import {
@@ -105,7 +105,7 @@ function FormError({ error }: { error: string | undefined }) {
 }
 
 /**
- * Add a friend who isn't on whosfree (FR-SOC-14, J8 step 1): a nickname, an optional emoji and
+ * Add a friend who isn't on synkd (FR-SOC-14, J8 step 1): a nickname, an optional emoji and
  * the permission confirmation the database requires (FR-SOC-16). Then straight on to their
  * schedule: upload it or type it in. Disabled with the reason at the cap (FR-SOC-18).
  */
@@ -144,7 +144,7 @@ export function AddOfflineFriendButton({
       <span className={cn('inline-flex flex-col gap-1', className)}>
         <Button variant={variant} size="sm" disabled aria-describedby="offline-cap">
           <UserRoundPlus aria-hidden="true" />
-          Add someone not on whosfree
+          Add someone not on synkd
         </Button>
         <span id="offline-cap" className="max-w-xs text-xs text-muted-foreground">
           {OFFLINE_FRIEND_LIMIT_MESSAGE}
@@ -164,7 +164,7 @@ export function AddOfflineFriendButton({
       <DialogTrigger asChild>
         <Button variant={variant} size="sm" className={className}>
           <UserRoundPlus aria-hidden="true" />
-          Add someone not on whosfree
+          Add someone not on synkd
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90dvh] overflow-y-auto">
@@ -218,7 +218,7 @@ export function AddOfflineFriendButton({
             }}
           >
             <DialogHeader>
-              <DialogTitle>Add someone who isn&apos;t on whosfree</DialogTitle>
+              <DialogTitle>Add someone who isn&apos;t on synkd</DialogTitle>
               <DialogDescription>
                 Add a friend&apos;s timetable to see when they&apos;re free, before they join.
               </DialogDescription>

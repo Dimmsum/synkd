@@ -9,7 +9,7 @@
 
 import 'server-only';
 import sharp from 'sharp';
-import { AVATAR_SIZE_PX, AVATAR_STORED_MAX_BYTES, type AvatarUploadType } from '@whosfree/shared';
+import { AVATAR_SIZE_PX, AVATAR_STORED_MAX_BYTES, type AvatarUploadType } from '@synkd/shared';
 
 export { sniffImageType } from './sniff';
 export type { AvatarUploadType };

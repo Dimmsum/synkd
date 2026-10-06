@@ -11,7 +11,7 @@ import {
   SCHEDULE_FILE_MAX_BYTES,
   SCHEDULE_IMAGE_MAX_EDGE_PX,
   type ScheduleFileMimeType,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 
 const EXTENSION_TYPES: Record<string, ScheduleFileMimeType> = {
   pdf: 'application/pdf',

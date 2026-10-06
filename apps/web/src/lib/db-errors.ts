@@ -5,7 +5,7 @@
 // errors just as plain), except that a schedule error may name the user's own event on their own
 // screen so they can find it. Never log these messages.
 
-import { DB_ERROR } from '@whosfree/backend';
+import { DB_ERROR } from '@synkd/backend';
 import {
   PARSE_LIMIT_MESSAGE,
   TOO_MANY_PENDING_MESSAGE,

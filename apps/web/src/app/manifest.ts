@@ -7,8 +7,8 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',
-    name: "Who's Free",
-    short_name: "Who's Free",
+    name: 'synkd',
+    short_name: 'synkd',
     description: 'See which friends are free right now and ping them in one tap.',
     lang: 'en-JM',
     dir: 'ltr',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { OfflineFriend } from '@whosfree/backend';
+import type { OfflineFriend } from '@synkd/backend';
 import {
   computePresence,
   offlineFriendPresenceInput,

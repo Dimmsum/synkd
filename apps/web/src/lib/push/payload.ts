@@ -52,7 +52,7 @@ export const DEFAULT_PUSH_URL = '/inbox';
 export const FALLBACK_PUSH: PushPayload = {
   v: PUSH_PAYLOAD_VERSION,
   kind: 'ping',
-  title: "Who's Free",
+  title: 'synkd',
   body: 'You have something new. Open the app to see it.',
   url: DEFAULT_PUSH_URL,
 };

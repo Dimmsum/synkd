@@ -13,8 +13,8 @@
 import 'server-only';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database, Json, ParseRun } from '@whosfree/backend';
-import { SCHEDULE_FILES_BUCKET, type ParseDraft, type ParseErrorCode } from '@whosfree/shared';
+import type { Database, Json, ParseRun } from '@synkd/backend';
+import { SCHEDULE_FILES_BUCKET, type ParseDraft, type ParseErrorCode } from '@synkd/shared';
 
 /** What the run route, the sweep and the import actions need from the secret key. */
 export interface ParseAdmin {

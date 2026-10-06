@@ -18,9 +18,9 @@ import {
   SCHEDULE_FILE_MIME_TYPES,
   type ParseErrorCode,
   type ParseJobStatus,
-} from '@whosfree/shared';
-import type { Json } from '@whosfree/backend';
-import { dateKey } from '@whosfree/ui/lib/time';
+} from '@synkd/shared';
+import type { Json } from '@synkd/backend';
+import { dateKey } from '@synkd/ui/lib/time';
 import { getParseJobState } from '@/lib/data/imports';
 import { scheduleErrorMessage, TRY_AGAIN, uploadErrorMessage } from '@/lib/db-errors';
 import { removeNow, requireParseAdmin } from '@/lib/parse/admin';

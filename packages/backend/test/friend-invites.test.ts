@@ -3,7 +3,7 @@
 // send_friend_request, so tiers are checked through events_for_viewer.
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { INVITE_CODE_PATTERN } from '@whosfree/shared';
+import { INVITE_CODE_PATTERN } from '@synkd/shared';
 import { DB_ERROR } from '../src/errors';
 import { GROUP_ERRORS } from '../src/index';
 import { createTestDb } from './harness/db';

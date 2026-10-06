@@ -1,12 +1,12 @@
-// Offline friends (D44, FR-SOC-14 to FR-SOC-19, WF-127, WF-128): people who aren't on whosfree,
+// Offline friends (D44, FR-SOC-14 to FR-SOC-19, WF-127, WF-128): people who aren't on synkd,
 // added by the viewer with a nickname and given a schedule by upload or manual entry. Pure and
 // safe for the browser: how they're ordered and described, the cap and error wording. Their
 // statuses are worked out on the server (lib/presence/offline-friends.ts).
 
 import type { Route } from 'next';
-import { DB_ERROR, OFFLINE_FRIEND_ERRORS } from '@whosfree/backend';
-import { DEFAULT_AVAILABLE_HOURS, MAX_OFFLINE_FRIENDS } from '@whosfree/shared';
-import { formatClockRange, type Instant } from '@whosfree/ui/lib/time';
+import { DB_ERROR, OFFLINE_FRIEND_ERRORS } from '@synkd/backend';
+import { DEFAULT_AVAILABLE_HOURS, MAX_OFFLINE_FRIENDS } from '@synkd/shared';
+import { formatClockRange, type Instant } from '@synkd/ui/lib/time';
 import { describeStatus, type StatusText } from '@/lib/status';
 import type { OfflineFriendView } from '@/lib/types';
 
@@ -26,7 +26,7 @@ const rank = (f: OfflineFriendView) =>
   f.status === 'free' ? 0 : f.status === 'no_schedule' || f.status === 'unknown' ? 2 : 1;
 
 /**
- * The "Not on whosfree" section's order: free first (longest free time first), then busy or
+ * The "Not on synkd" section's order: free first (longest free time first), then busy or
  * away (free again soonest first), then anyone without a schedule; ties by nickname.
  */
 export function sortOfflineFriends(friends: readonly OfflineFriendView[]): OfflineFriendView[] {
@@ -63,7 +63,7 @@ export const friendedHref = (personId: string) =>
 export const canAddOfflineFriend = (count: number) => count < MAX_OFFLINE_FRIENDS;
 
 /** What the add button says when the viewer is at the cap (FR-SOC-18). */
-export const OFFLINE_FRIEND_LIMIT_MESSAGE = `You can add up to ${MAX_OFFLINE_FRIENDS} people who aren’t on whosfree. Delete one to add someone new.`;
+export const OFFLINE_FRIEND_LIMIT_MESSAGE = `You can add up to ${MAX_OFFLINE_FRIENDS} people who aren’t on synkd. Delete one to add someone new.`;
 
 /** The fields of a PostgrestError we read. */
 interface DbError {

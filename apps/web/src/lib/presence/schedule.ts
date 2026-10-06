@@ -4,8 +4,8 @@
 // shown and runs the availability engine's `timeline` over it here, so the calendar agrees with
 // their status on the Now screen. Nothing here widens what a row says (FR-VIS-5, D41).
 
-import { timeline, type StatusSegment } from '@whosfree/availability';
-import { addDays, minutesIntoDay, zonedTimeToInstant } from '@whosfree/ui/lib/time';
+import { timeline, type StatusSegment } from '@synkd/availability';
+import { addDays, minutesIntoDay, zonedTimeToInstant } from '@synkd/ui/lib/time';
 import type { ScheduleBlock } from '@/lib/types';
 import { activityFor, type PresenceInput } from './compute';
 

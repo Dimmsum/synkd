@@ -14,8 +14,8 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { Bell, BellOff, BellRing, Smartphone } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
-import { cn } from '@whosfree/ui/lib/utils';
+import { Button } from '@synkd/ui/components/button';
+import { cn } from '@synkd/ui/lib/utils';
 import { sendTestPush } from '@/lib/actions/push';
 import { disablePush, enablePush } from '@/lib/push/client';
 import { IosInstallSteps, INSTALL_PAGE_HREF } from '@/components/pwa/install-prompt';
@@ -54,13 +54,13 @@ function explain(status: Exclude<PushStatus, 'loading'>): Explanation {
       return {
         icon: BellOff,
         title: 'Notifications are blocked',
-        body: 'Your browser is blocking notifications from Who’s Free. To get them, allow notifications for this site in your browser or phone settings, then come back here.',
+        body: 'Your browser is blocking notifications from synkd. To get them, allow notifications for this site in your browser or phone settings, then come back here.',
       };
     case 'ios-needs-install':
       return {
         icon: Smartphone,
-        title: 'Add Who’s Free to your Home Screen first',
-        body: 'On iPhone and iPad, notifications only work in the installed app (iOS 16.4 or later). Add it to your Home Screen, open Who’s Free from there and turn them on.',
+        title: 'Add synkd to your Home Screen first',
+        body: 'On iPhone and iPad, notifications only work in the installed app (iOS 16.4 or later). Add it to your Home Screen, open synkd from there and turn them on.',
       };
     case 'ios-too-old':
       return {
@@ -219,7 +219,7 @@ export function PushInboxHint() {
     text = (
       <>
         <Link href={INSTALL_GUIDE_HREF} className={linkClass}>
-          Add Who’s Free to your Home Screen
+          Add synkd to your Home Screen
         </Link>{' '}
         to get notifications. Until then, pings show up here.
       </>

@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { DEFAULT_TIER, type Tier } from '@whosfree/shared';
-import { Button } from '@whosfree/ui/components/button';
-import { TierPicker } from '@whosfree/ui/components/tier-picker';
+import { DEFAULT_TIER, type Tier } from '@synkd/shared';
+import { Button } from '@synkd/ui/components/button';
+import { TierPicker } from '@synkd/ui/components/tier-picker';
 import {
   requestFriendByInvite,
   respondToFriendRequest,

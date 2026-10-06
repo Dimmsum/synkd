@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ChevronRight, UsersRound } from 'lucide-react';
-import { EmptyState } from '@whosfree/ui/components/misc';
-import { GroupEmoji } from '@whosfree/ui/components/person-avatar';
-import { StatusBadge } from '@whosfree/ui/components/status-badge';
+import { EmptyState } from '@synkd/ui/components/misc';
+import { GroupEmoji } from '@synkd/ui/components/person-avatar';
+import { StatusBadge } from '@synkd/ui/components/status-badge';
 import { PageHeader } from '@/components/app/page-header';
 import { NewGroupDialog } from '@/components/groups/new-group-dialog';
 import { getGroups } from '@/lib/data/people';

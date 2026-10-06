@@ -10,7 +10,7 @@ import {
   PARSE_ATTEMPTS_PER_DAY,
   PARSE_JOB_MAX_ATTEMPTS,
   SCHEDULE_UPLOADS_PER_DAY,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import { DB_ERROR, SCHEDULE_FILE_ERRORS } from '../src/index';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';

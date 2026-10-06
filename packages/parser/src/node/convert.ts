@@ -2,7 +2,7 @@
 /// <reference path="./heic-decode.d.ts" />
 // Turns an uploaded schedule file into images a vision model can read (FR-IMP-1, NFR-SEC-6,
 // D38, D46). Node only: it uses sharp (native libvips) and two WASM engines, so it is exported
-// from `@whosfree/parser/node` and must never reach a browser bundle.
+// from `@synkd/parser/node` and must never reach a browser bundle.
 //
 // Moved from the WF-024 spike (docs/spikes/WF-024-vercel-vs-worker.md):
 // - PDF → bitmap: PDFium compiled to WASM (`@hyzyla/pdfium`, MIT). Its Node entry loads
@@ -29,7 +29,7 @@ import {
   SCHEDULE_FILE_MAX_PDF_PAGES,
   SCHEDULE_IMAGE_MAX_EDGE_PX,
   type ParseErrorCode,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 
 /** Long-edge cap for images sent to the vision model (NFR-PERF-6 uses the same 2000 px). */
 export const MAX_EDGE_PX = SCHEDULE_IMAGE_MAX_EDGE_PX;

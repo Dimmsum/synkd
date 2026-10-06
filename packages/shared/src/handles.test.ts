@@ -39,8 +39,8 @@ describe('Handle', () => {
     }
   });
 
-  it.each(['WhosFree', 'whosfree_help', 'the_whosfree_team', 'xWHOSFREEx'])(
-    'rejects handles containing "whosfree" (%j)',
+  it.each(['Synkd', 'synkd_help', 'the_synkd_team', 'xSYNKDx', 'GetSynked', 'synked_app'])(
+    'rejects handles containing "synkd" or "synked" (%j)',
     (h) => {
       expect(Handle.safeParse(h).success).toBe(false);
     },
@@ -64,7 +64,7 @@ describe('RESERVED_HANDLES', () => {
   it('covers the app routes', () => {
     for (const r of ['admin', 'support', 'help', 'settings', 'api', 'now', 'groups', 'inbox', 'i'])
       expect(isReservedHandle(r)).toBe(true);
-    for (const r of ['invite', 'whosfree', 'Invite']) expect(isReservedHandle(r)).toBe(true);
+    for (const r of ['invite', 'synkd', 'Invite']) expect(isReservedHandle(r)).toBe(true);
     expect(isReservedHandle('badminton')).toBe(false);
   });
 });

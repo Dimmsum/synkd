@@ -1,8 +1,8 @@
 import * as React from 'react';
-import type { SourceType } from '@whosfree/shared';
+import type { SourceType } from '@synkd/shared';
 import { CalendarDays, FileText, PenLine, TriangleAlert, type LucideIcon } from 'lucide-react';
-import { cn } from '@whosfree/ui/lib/utils';
-import { formatClockRange } from '@whosfree/ui/lib/time';
+import { cn } from '@synkd/ui/lib/utils';
+import { formatClockRange } from '@synkd/ui/lib/time';
 
 /** A time range in the design's mono style, e.g. "9:00 – 10:30 AM". Takes local minutes. */
 export function TimeRange({
@@ -114,7 +114,7 @@ export function Logo({ className }: { className?: string }) {
   return (
     <span className={cn('inline-flex items-center gap-2.5', className)}>
       <LogoMark />
-      <span className="text-[19px] font-bold tracking-[-0.02em]">Who&apos;s Free</span>
+      <span className="text-[19px] font-bold tracking-[-0.02em]">synkd</span>
     </span>
   );
 }

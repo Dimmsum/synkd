@@ -1,6 +1,6 @@
-# whosfree — Issues
+# synkd — Issues
 
-The single tracker for **everything that needs doing** on whosfree: features, setup, spikes, compliance tasks and **bugs**. Every issue lists what it **depends on**, so you can tell whether it's ready to start.
+The single tracker for **everything that needs doing** on synkd: features, setup, spikes, compliance tasks and **bugs**. Every issue lists what it **depends on**, so you can tell whether it's ready to start.
 
 - Source of requirements: [PRD.md](PRD.md) (v0.6). The backend is **Supabase** (PRD D40, D41). Issues refer to PRD requirement IDs (`FR-…`, `NFR-…`) and decisions (`D…`).
 - Last updated: 2026-09-30
@@ -100,14 +100,13 @@ These have no unfinished dependencies:
 
 | ID | Title | Category |
 |---|---|---|
-| [WF-011](#wf-011--decide-final-name-and-register-domain) | Decide final name and register domain | `chore` |
 | [WF-020](#wf-020--collect-20-real-schedule-samples-eval-set) | Collect 20+ real schedule samples (eval set) | `test` |
 | [WF-119](#wf-119--jamaica-dpa-legal-review-and-oic-registration) | Jamaica DPA: legal review and OIC registration | `compliance` |
 | [WF-122](#wf-122--user-research-interviews) | User research interviews | `research` |
 | [WF-070](#wf-070--short-gap-rule) | Short-gap rule (stretch) | `feature` |
 | [WF-050](#wf-050--pause-sharing) | Pause sharing (stretch; the column and redaction already exist) | `feature` |
 
-**Milestone A code is merged** (2026-09-30). What's `in-review` is waiting for the owner's migrations, environment variables and a real run on a deploy and on phones: WF-004, 005, 006, 015, 026–032, 035, 040, 042–045, 047, 062, 063, 064, 065, 068, 090–093, 111, 127, 130–136. Still `in-progress`: WF-010 (legal values), WF-013 (OpenRouter settings), WF-037 (event and ping purges), WF-128 (slot-finder part, waits for WF-098). **Waiting on the owner:** WF-002 (hosting: Railway for now, Vercel is the PRD target), WF-003 (apply migrations), WF-006 (branch protection).
+**Milestone A code is merged** (2026-09-30). What's `in-review` is waiting for the owner's migrations, environment variables and a real run on a deploy and on phones: WF-004, 005, 006, 015, 026–032, 035, 040, 042–045, 047, 062, 063, 064, 065, 068, 090–093, 111, 127, 130–136. Still `in-progress`: WF-010 (legal values), WF-011 (named synkd; domain and checks left), WF-013 (OpenRouter settings), WF-037 (event and ping purges), WF-128 (slot-finder part, waits for WF-098). **Waiting on the owner:** WF-002 (hosting: Railway for now, Vercel is the PRD target), WF-003 (apply migrations), WF-006 (branch protection).
 
 > WF-020 (collecting samples) still gates WF-023's model choice and WF-028's accuracy target. The parser runs on provisional models until then.
 
@@ -146,7 +145,7 @@ The MVP is all **74 P0 issues**, delivered in three steps so that people can sta
 | Parser | WF-013, 020, 021, 022, 023, 024, 025 |
 | Schedule import | WF-026, 027, 028, 029, 030, 031 |
 | **Friends** | WF-040 (profiles), 042 (friend requests + tier choice), 047 (block/remove) |
-| **Offline friends** | WF-127 (add someone not on whosfree + import their timetable), 128 (show them on Now, detail, Find a time) |
+| **Offline friends** | WF-127 (add someone not on synkd + import their timetable), 128 (show them on Now, detail, Find a time) |
 | Groups & privacy | WF-041 (tiers + redaction), 043 (groups), 045 (invites + join) |
 | Availability & Now | WF-060, 061, 062, 063, 064, 068 (onboarding) |
 | Pings | WF-090, 091, 092, 093, 111 (install guide, needed for iOS push) |
@@ -197,7 +196,7 @@ Everything else at P0, which adds:
 | WF-008 | Sentry and PostHog | infra | ops | P0 | 0 | B | todo | 002 |
 | WF-009 | Landing page | feature | web | P0 | 0 | B | todo | 002 |
 | WF-010 | Privacy policy, terms, contact pages | compliance | legal, web | P0 | 0 | A | in-progress | 002 |
-| WF-011 | Decide final name and register domain | chore | ops | P0 | 0 | B | todo | — |
+| WF-011 | Decide final name and register domain | chore | ops | P0 | 0 | B | in-progress | — |
 | WF-012 | Google Cloud project and OAuth consent screen | chore | gcal | P0 | 0 | B | todo | 010, 011 |
 | WF-013 | Set up OpenRouter account and data policy | chore | parser | P0 | 0 | A | in-progress | — |
 | WF-014 | Signed-in app shell, navigation, 404/error pages | feature | web | P0 | 0 | A | done | 004 |
@@ -279,7 +278,7 @@ Everything else at P0, which adds:
 | WF-124 | Schedule-expiry reminder | feature | backend | P1 | 6 | stretch | todo | 030, 091 |
 | WF-125 | Google event titles only while a T3 grant exists | security | gcal | P0 | 4 | B | todo | 041, 081 |
 | WF-126 | Manual export/deletion request process | compliance | legal | P0 | 6 | Gate | todo | 010 |
-| WF-127 | Offline friends: add someone not on whosfree and import their timetable | feature | social, backend, web | P0 | 2 | A | in-review | 030, 031 |
+| WF-127 | Offline friends: add someone not on synkd and import their timetable | feature | social, backend, web | P0 | 2 | A | in-review | 030, 031 |
 | WF-128 | Show offline friends on Now, detail page and Find a time | feature | web, availability | P0 | 3 | A | in-progress | 064, 127 |
 | WF-129 | Creating a group fails with "You don't have permission" (42501) | bug | backend | P0 | 2 | A | done | — |
 | WF-130 | Generated handle for every new user | feature | backend, web | P0 | 2 | A | in-review | 040 |
@@ -318,7 +317,7 @@ Create `apps/web` (Next.js App Router, Tailwind, shadcn/ui) and `packages/ui`.
 
 > Merged: Next.js 16 app and `packages/ui` with every Milestone A screen on mock data (`apps/web/src/lib/data/*` and `lib/actions/*` are the wiring points, ~100 `TODO(WF-…)` markers). Loads the repo-root `.env`. **Blocked on the owner:** connecting the repo to Vercel.
 >
-> **For now the owner is deploying to Railway** (2026-09-30): `railway.json` at the repo root builds with Railpack (`pnpm --filter @whosfree/web build`, then `next start` on `$PORT`, health check `/offline`). Vercel is still the PRD target (§8.4); record a decision before making Railway permanent.
+> **For now the owner is deploying to Railway** (2026-09-30): `railway.json` at the repo root builds with Railpack (`pnpm --filter @synkd/web build`, then `next start` on `$PORT`, health check `/offline`). Vercel is still the PRD target (§8.4); record a decision before making Railway permanent.
 
 **Acceptance criteria**
 - [x] `apps/web` runs locally with `pnpm dev`
@@ -333,11 +332,11 @@ Create `apps/web` (Next.js App Router, Tailwind, shadcn/ui) and `packages/ui`.
 
 Create `packages/backend` holding the Supabase project (`supabase/` with `config.toml` and SQL migrations), with dev and prod projects.
 
-> Everything except the hosted project is done: migrations in `packages/backend/supabase/migrations`, PGlite tests with a Supabase shim, and types generated by the real Supabase CLI (`pnpm --filter @whosfree/backend db:types`; a test fails if they drift). Once the project exists, run a smoke test against it.
+> Everything except the hosted project is done: migrations in `packages/backend/supabase/migrations`, PGlite tests with a Supabase shim, and types generated by the real Supabase CLI (`pnpm --filter @synkd/backend db:types`; a test fails if they drift). Once the project exists, run a smoke test against it.
 >
 > **Hosted project: `init.sql` applied on 2026-09-30** (every migration through `20261002300100_offline_friends_isolation.sql`). Apply later migrations one by one, in filename order.
 >
-> **Migrations are applied by hand by the owner.** `packages/backend/supabase/init.sql` bundles every migration in one transaction for a fresh project; for an existing project, apply only the new migration files in order. After adding or changing a migration, run `pnpm --filter @whosfree/backend db:generate` (types + init.sql); tests fail if either is stale.
+> **Migrations are applied by hand by the owner.** `packages/backend/supabase/init.sql` bundles every migration in one transaction for a fresh project; for an existing project, apply only the new migration files in order. After adding or changing a migration, run `pnpm --filter @synkd/backend db:generate` (types + init.sql); tests fail if either is stale.
 
 **Acceptance criteria**
 - [x] `supabase/` is initialised in the package, and the migrations apply cleanly to a fresh database
@@ -370,7 +369,7 @@ Google or email-and-password sign-in (D45) through Clerk, connected to Supabase 
 - **Depends on:** WF-004
 - **PRD:** FR-AUTH-6, NFR-COMP-7, D13, D29
 
-> Backend done (merged): `checkAge` / `localDateIn` in `@whosfree/shared` (today = the Jamaica calendar date; 29 Feb birthdays count from 1 Mar), then `confirm_age(birth_year)` with the user's own token. Write-once. Left: the web form and middleware.
+> Backend done (merged): `checkAge` / `localDateIn` in `@synkd/shared` (today = the Jamaica calendar date; 29 Feb birthdays count from 1 Mar), then `confirm_age(birth_year)` with the user's own token. Write-once. Left: the web form and middleware.
 
 > Web merged: `/sign-up/age` → `confirmAge` action (full date stays in the action; only `birth_year` is sent), `/sign-up/not-eligible` signs the user out. Boundary tests are the shared ones in `packages/shared/src/age.test.ts` (the web duplicate was removed). Needs the live check with WF-004.
 
@@ -441,16 +440,18 @@ The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy
 - [x] The drafts cover offline friends (D44): the privacy policy explains we hold a nickname and schedule for people who aren't users, only for the user who added them; the terms require their permission
 
 #### WF-011 · Decide final name and register domain
-- **Category:** `chore` · **Area:** `ops` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
+- **Category:** `chore` · **Area:** `ops` · **Priority:** P0 · **Milestone:** B · **Status:** `in-progress`
 - **Depends on:** —
-- **PRD:** D23, NFR-COMP-6
+- **PRD:** D23, D48, NFR-COMP-6
 
-"whosfree" is a working name. The final name must be decided **before** the Google verification submission (WF-086), because rebranding afterwards may trigger a new review.
+"whosfree" was a working name. The final name must be decided **before** the Google verification submission (WF-086), because rebranding afterwards may trigger a new review.
+
+> **Named synkd** (owner, 2026-10-05, D48). The code, copy, legal drafts and docs use it; `@whosfree/*` packages are now `@synkd/*`, and handles containing "synkd" or "synked" are reserved (migration `20261005100000_rename_synkd_handles.sql`). The domain will be `getsynked.com` or similar: the app and tests use `getsynked.com` as a placeholder (contact addresses in `privacy@`/`support@`). Left: the trademark and social-handle check, registering the domain, and renaming the hosted services (Clerk app name, Google OAuth consent screen, Railway/Supabase project names).
 
 **Acceptance criteria**
-- [ ] Final name chosen, with a basic trademark and social-handle check done
+- [ ] Final name chosen, with a basic trademark and social-handle check done (name chosen: synkd; checks not done yet)
 - [ ] Domain registered and pointed at Vercel
-- [ ] PRD D23 updated
+- [x] PRD D23 updated (superseded by D48)
 
 #### WF-012 · Google Cloud project and OAuth consent screen
 - **Category:** `chore` · **Area:** `gcal` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
@@ -536,7 +537,7 @@ The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy
 
 A script in `packages/parser` that runs a model and prompt against the eval set and scores the results.
 
-> Merged, built ahead of WF-013/WF-020 (no live call made yet; the first real run is WF-023). `packages/parser`: `parseSchedule` through OpenRouter (validated with the shared `ParseDraft`, `data_collection: deny`, ZDR on by default, temperature 0), scoring (recall/precision/F1, exact and ±5 min times, recurrence, an edit-count estimate for "≤ 3 edits"), and a CLI: `pnpm --filter @whosfree/parser eval:check`, `eval --model <id> --prompt v1`, `eval:compare`. Samples go in `evals/schedules/` (gitignored) as `<name>.<ext>` + `<name>.expected.json`; results in `packages/parser/eval/results/` (gitignored). See `packages/parser/eval/README.md`. **For WF-027/028:** zod strips location *fields* but not a room typed into a title, so D35 needs a post-processing check there. **For WF-039:** there's no CI gate or baseline yet.
+> Merged, built ahead of WF-013/WF-020 (no live call made yet; the first real run is WF-023). `packages/parser`: `parseSchedule` through OpenRouter (validated with the shared `ParseDraft`, `data_collection: deny`, ZDR on by default, temperature 0), scoring (recall/precision/F1, exact and ±5 min times, recurrence, an edit-count estimate for "≤ 3 edits"), and a CLI: `pnpm --filter @synkd/parser eval:check`, `eval --model <id> --prompt v1`, `eval:compare`. Samples go in `evals/schedules/` (gitignored) as `<name>.<ext>` + `<name>.expected.json`; results in `packages/parser/eval/results/` (gitignored). See `packages/parser/eval/README.md`. **For WF-027/028:** zod strips location *fields* but not a room typed into a title, so D35 needs a post-processing check there. **For WF-039:** there's no CI gate or baseline yet.
 
 **Acceptance criteria**
 - [x] Scores each sample on event recall and precision, time accuracy, recurrence accuracy, and an estimate of "≤ 3 edits needed"
@@ -564,7 +565,7 @@ Can Vercel (Node) functions on the Next.js server handle PDF rasterisation and H
 
 > Spike done: [docs/spikes/WF-024-vercel-vs-worker.md](docs/spikes/WF-024-vercel-vs-worker.md). **Recommendation: drop the worker** (medium-high confidence). PDFium (WASM) + libheif (WASM) + sharp convert every FR-IMP-1 input in about 0.02–3.3 s locally, under 1 GB of memory, adding about 25 MB to the function, with no custom binaries. Vercel's 4.5 MB body limit means uploads must go straight to Supabase Storage through a signed upload URL (affects WF-026). The prototype route is on branch `spike/wf-024` (not merged; gated to 404 in production without `SPIKE_WF024_TOKEN`). **Left (owner):** run the write-up's §10 checklist on a Vercel preview of that branch, then decide. If it passes: record D46 in the PRD (text in the report), set WF-025 to `wontfix`, move `convert.ts` into the parser for WF-027, and delete the spike route.
 
-> **Decided (owner, 2026-09-30): drop the worker** (D46, PRD v0.12). The §10 Vercel checklist was skipped (the app runs on Railway for now, where none of Vercel's limits apply), so the first criterion stays open as accepted risk. The converter moved to `@whosfree/parser/node` (exact pins, magic bytes, ~50 MP HEIC cap, PDF page caps, `limitInputPixels`, one conversion at a time); the spike route was never merged. A production build traces the PDFium WASM and keeps sharp external.
+> **Decided (owner, 2026-09-30): drop the worker** (D46, PRD v0.12). The §10 Vercel checklist was skipped (the app runs on Railway for now, where none of Vercel's limits apply), so the first criterion stays open as accepted risk. The converter moved to `@synkd/parser/node` (exact pins, magic bytes, ~50 MP HEIC cap, PDF page caps, `limitInputPixels`, one conversion at a time); the spike route was never merged. A production build traces the PDFium WASM and keeps sharp external.
 
 - [ ] A prototype of PDF → image and HEIC → JPEG inside a Next.js route handler deployed on Vercel
 - [x] Documented limits (runtime, memory, native dependencies)
@@ -777,7 +778,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 
 > From WF-041: `users.handle` isn't client-writable yet (add the grant with the format rules). Showing other users' names and avatars needs a security-definer function that applies blocks.
 
-> Backend done (merged): handle rules in `@whosfree/shared` (`Handle`, reserved words) and SQL; `set_handle` (10/day), `get_profile`, `find_user_by_handle` (exact match, 100/hour); blocks hidden both ways. Left: web wiring.
+> Backend done (merged): handle rules in `@synkd/shared` (`Handle`, reserved words) and SQL; `set_handle` (10/day), `get_profile`, `find_user_by_handle` (exact match, 100/hour); blocks hidden both ways. Left: web wiring.
 
 > Web merged: edit name, timezone and handle (`set_handle`, friendly WF101–103/PT429 messages); finding people by exact handle and by friend link `/add/<id>` (with QR). **Avatar replacement is blocked:** there's no avatars Storage bucket yet (needs a migration and upload UI).
 
@@ -878,7 +879,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 
 **Acceptance criteria**
 - [ ] A Share button uses the Web Share API, falling back to a `wa.me` link
-- [ ] Open Graph tags make WhatsApp preview the link as "Join *{group}* on whosfree"
+- [ ] Open Graph tags make WhatsApp preview the link as "Join *{group}* on synkd"
 
 #### WF-047 · Block, remove friend, leave group
 - **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
@@ -925,7 +926,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [ ] A toggle sets `sharingPaused`, and everyone then sees "Sharing paused"
 - [ ] Resuming restores the previous tiers
 
-#### WF-127 · Offline friends: add someone not on whosfree and import their timetable
+#### WF-127 · Offline friends: add someone not on synkd and import their timetable
 - **Category:** `feature` · **Area:** `social`, `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
 - **Depends on:** WF-030, WF-031
 - **PRD:** FR-SOC-14, FR-SOC-15, FR-SOC-16, FR-SOC-18, FR-SOC-19, NFR-COMP-9, R14, D44, J8
@@ -952,13 +953,13 @@ Makes the app useful before someone's friends join (R2): they can upload or type
 
 The Find a time part waits for WF-098. The invite action uses friend invite links (WF-042).
 
-> Merged: Now has a "Not on whosfree" section (engine over their schedule with 08:00–22:00 in the viewer's timezone); `/friends/offline/[id]` shows their status, day and week, edit, re-upload / type in, delete and **Invite to whosfree** (shares the viewer's friend link). No ping anywhere; status is icon plus words. **Left:** picking them in the slot finder (WF-098).
+> Merged: Now has a "Not on synkd" section (engine over their schedule with 08:00–22:00 in the viewer's timezone); `/friends/offline/[id]` shows their status, day and week, edit, re-upload / type in, delete and **Invite to synkd** (shares the viewer's friend link). No ping anywhere; status is icon plus words. **Left:** picking them in the slot finder (WF-098).
 
 **Acceptance criteria**
-- [x] The Now screen has a **Not on whosfree** section with each offline friend's status and "until X", computed by the availability engine from their schedule and the default available hours (08:00–22:00)
-- [x] A detail page shows their day and week, with edit, re-upload, delete and **Invite to whosfree**
-- [ ] They can be picked as participants in the slot finder once WF-098 exists, clearly marked as not on whosfree
-- [x] They can't be pinged; **Invite to whosfree** shares a friend invite link instead
+- [x] The Now screen has a **Not on synkd** section with each offline friend's status and "until X", computed by the availability engine from their schedule and the default available hours (08:00–22:00)
+- [x] A detail page shows their day and week, with edit, re-upload, delete and **Invite to synkd**
+- [ ] They can be picked as participants in the slot finder once WF-098 exists, clearly marked as not on synkd
+- [x] They can't be pinged; **Invite to synkd** shares a friend invite link instead
 - [x] Status is never shown by colour alone (NFR-UX-1)
 
 #### WF-130 · Generated handle for every new user
@@ -1046,7 +1047,7 @@ Every account gets a unique handle made from its name when it's created, so frie
 
 > From WF-062/063: the Now function must read `availability_prefs` and `status_overrides` inside its definer function (clients can't read other users' rows). Suggest showing a status label only at T3, like event titles.
 
-> Backend merged (migrations `20261002400000_now_for_viewer.sql`, `20261002400100_now_realtime_signals.sql`): `now_for_viewer(range_start, range_end)` returns each connection with tier, `paused`, `has_schedule`, shared `group_ids`, timezone, hours, overrides and redacted sources/events, in the engine's input shape (types `NowConnection` etc. in `@whosfree/backend`). Triggers send an empty `now_changed` Broadcast on private channel `user:<users.id>` (`userChannel()` in `@whosfree/shared`), once per transaction. Offline friends are excluded. **Left (web):** call it, run `statusAt` per connection (catch errors per connection), sections, group filter, subscribe to the channel (debounced re-fetch), client timer, non-colour status. Then remove the mock layer.
+> Backend merged (migrations `20261002400000_now_for_viewer.sql`, `20261002400100_now_realtime_signals.sql`): `now_for_viewer(range_start, range_end)` returns each connection with tier, `paused`, `has_schedule`, shared `group_ids`, timezone, hours, overrides and redacted sources/events, in the engine's input shape (types `NowConnection` etc. in `@synkd/backend`). Triggers send an empty `now_changed` Broadcast on private channel `user:<users.id>` (`userChannel()` in `@synkd/shared`), once per transaction. Offline friends are excluded. **Left (web):** call it, run `statusAt` per connection (catch errors per connection), sections, group filter, subscribe to the channel (debounced re-fetch), client timer, non-colour status. Then remove the mock layer.
 
 > Web merged: `getNowForViewer` calls `now_for_viewer` and runs `statusAt` per connection on the server (one bad schedule shows that person as "Status unavailable", not a crash); the viewer's own status uses the same engine with offline-friend rows filtered. The client subscribes to `user:<id>` (`lib/supabase/browser.ts`, publishable key + Clerk token) and does a debounced `router.refresh()` on `now_changed`; a local timer moves people between sections at each "until X". Friends, friend detail and group pages show real statuses (as of page load). **Left:** verify the ≤ 5 s Realtime path live (needs the two `2026100240…` migrations applied and Realtime authorization enabled). The mock layer remains only for group week/slots (WF-066/098), schedule (WF-065), inbox (WF-092), imports (WF-027–032) and the visibility overview (WF-048).
 
@@ -1684,7 +1685,7 @@ Log bugs here using the [bug template](#bug-template). Each bug takes the next f
 
 **Actual → expected**
 - [x] "1 friends", "1 members" (Friends, Groups, sidebar) → "1 friend", "1 member". (`lib/plural.ts` `countOf`, also on the group page and Now's group panel.)
-- [x] The tier picker says "What **New** will see" for a user named "New member": the first word of the default name. Use the handle while the name is still the default (email sign-up asks for no name; see WF-130's open item). (`lib/names.ts` `shortName`; `DEFAULT_DISPLAY_NAME` in `@whosfree/shared`.)
+- [x] The tier picker says "What **New** will see" for a user named "New member": the first word of the default name. Use the handle while the name is still the default (email sign-up asks for no name; see WF-130's open item). (`lib/names.ts` `shortName`; `DEFAULT_DISPLAY_NAME` in `@synkd/shared`.)
 - [x] The review screen for an offline friend's file still says "Your file" and "Your week". (Now "<nickname>'s file/week".)
 - [x] An event that ends before it starts (overnight, by design) is listed as "10:00 – 9:00 AM" with no "overnight" or "next day" marker. (`formatClockRange` adds "(next day)".)
 - [x] On desktop, the review week grid in the 640 px onboarding column scrolls sideways, and Fri–Sun start off-screen. (The review editor goes side by side on a container query, `@4xl`, not the `xl` viewport breakpoint.)

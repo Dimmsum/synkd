@@ -22,12 +22,12 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Who's Free — see who's free right now",
-    template: "%s · Who's Free",
+    default: "synkd — see who's free right now",
+    template: '%s · synkd',
   },
   description:
     'See which friends are free right now, ping them in one tap, and find a time that works for the whole group. You choose who sees what.',
-  applicationName: "Who's Free",
+  applicationName: 'synkd',
   // The manifest itself is app/manifest.ts (WF-090).
   ...pwaMetadata,
 };

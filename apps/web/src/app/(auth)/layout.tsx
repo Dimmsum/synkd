@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Logo } from '@whosfree/ui/components/misc';
+import { Logo } from '@synkd/ui/components/misc';
 import { TimezoneCookie } from '@/components/auth/timezone-cookie';
 
 // Sign-in, sign-up and the sign-up steps (FR-WEB-2). Clerk's components render flat inside
@@ -10,7 +10,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <TimezoneCookie />
       <Link
         href="/"
-        aria-label="Who's Free home"
+        aria-label="synkd home"
         className="mb-6 inline-flex min-h-11 items-center rounded-lg sm:mb-8"
       >
         <Logo />

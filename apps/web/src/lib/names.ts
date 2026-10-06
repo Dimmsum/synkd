@@ -1,6 +1,6 @@
 // What to call someone in a sentence ("What Alice will see", WF-136).
 
-import { DEFAULT_DISPLAY_NAME } from '@whosfree/shared';
+import { DEFAULT_DISPLAY_NAME } from '@synkd/shared';
 
 /**
  * The first word of their name, or `@handle` while the name is still the default one sign-up

@@ -6,7 +6,7 @@ import { LEGAL_DOCUMENTS } from '@/lib/legal';
 export const metadata: Metadata = {
   title: LEGAL_DOCUMENTS.terms.title,
   description:
-    "The terms for using Who's Free: who can use it, acceptable use, friends, groups and pings, and how accurate availability is.",
+    'The terms for using synkd: who can use it, acceptable use, friends, groups and pings, and how accurate availability is.',
 };
 
 // FR-WEB-4, NFR-COMP-7, WF-010. Rendered from docs/legal/terms.md at build time.

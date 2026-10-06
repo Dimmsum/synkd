@@ -1,7 +1,7 @@
 // What the screens say about uploads and parse jobs (FR-IMP-13, FR-IMP-14, FR-IMP-19). Pure and
 // client-safe: the upload card, Pending uploads and the server actions share it.
 
-import { PARSE_ATTEMPTS_PER_DAY, type ParseErrorCode, type ParseJobStatus } from '@whosfree/shared';
+import { PARSE_ATTEMPTS_PER_DAY, type ParseErrorCode, type ParseJobStatus } from '@synkd/shared';
 
 /** Why a parse failed, in words, with what to try (FR-IMP-14). */
 export function parseFailureMessage(code: ParseErrorCode | null): string {

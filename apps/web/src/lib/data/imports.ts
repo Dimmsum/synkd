@@ -3,9 +3,9 @@
 // under RLS (owner-only), so another user's job, file or friend simply isn't found (D41).
 
 import 'server-only';
-import { DEFAULT_TIMEZONE, ParseDraft, PARSE_ERROR_CODES } from '@whosfree/shared';
-import type { ParseErrorCode, ParseJobStatus } from '@whosfree/shared';
-import { dateKey } from '@whosfree/ui/lib/time';
+import { DEFAULT_TIMEZONE, ParseDraft, PARSE_ERROR_CODES } from '@synkd/shared';
+import type { ParseErrorCode, ParseJobStatus } from '@synkd/shared';
+import { dateKey } from '@synkd/ui/lib/time';
 import type { Iso, OfflineFriendRef, ParseJob, PendingUpload } from '@/lib/types';
 import { defaultManualPeriod, MANUAL_JOB_ID } from '@/lib/schedule-draft';
 import { isUuid } from '@/lib/social/mappers';

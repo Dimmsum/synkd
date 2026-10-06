@@ -2,7 +2,7 @@
 
 import { SignOutButton as ClerkSignOutButton } from '@clerk/nextjs';
 import { LogOut } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
+import { Button } from '@synkd/ui/components/button';
 import { disablePushBeforeSignOut } from '@/lib/push/client';
 
 /**

@@ -5,8 +5,8 @@
 // the user's current step.
 
 import { redirect } from 'next/navigation';
-import { checkAge, localDateIn } from '@whosfree/shared';
-import type { AgeCheckFailure } from '@whosfree/shared';
+import { checkAge, localDateIn } from '@synkd/shared';
+import type { AgeCheckFailure } from '@synkd/shared';
 import { createServerSupabase } from '@/lib/supabase/server';
 
 export type FormState = { error?: string } | undefined;

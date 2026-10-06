@@ -7,9 +7,9 @@ import {
   MANUAL_STATUSES,
   STATUS_LABEL_MAX_LENGTH,
   type ManualStatus,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import { ChevronDown, RotateCcw } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
+import { Button } from '@synkd/ui/components/button';
 import {
   Dialog,
   DialogContent,
@@ -18,12 +18,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@whosfree/ui/components/dialog';
-import { Input } from '@whosfree/ui/components/input';
-import { Label } from '@whosfree/ui/components/label';
-import { RadioGroup, RadioGroupItem } from '@whosfree/ui/components/radio-group';
-import { StatusBadge, StatusIcon, type StatusTone } from '@whosfree/ui/components/status-badge';
-import { cn } from '@whosfree/ui/lib/utils';
+} from '@synkd/ui/components/dialog';
+import { Input } from '@synkd/ui/components/input';
+import { Label } from '@synkd/ui/components/label';
+import { RadioGroup, RadioGroupItem } from '@synkd/ui/components/radio-group';
+import { StatusBadge, StatusIcon, type StatusTone } from '@synkd/ui/components/status-badge';
+import { cn } from '@synkd/ui/lib/utils';
 import { setManualStatus } from '@/lib/actions/status';
 import { nextLocalTime, type ActiveOverride } from '@/lib/manual-status';
 

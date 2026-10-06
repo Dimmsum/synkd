@@ -1,6 +1,6 @@
 import type { Route } from 'next';
 import { CalendarOff, CircleAlert, Pause } from 'lucide-react';
-import { EmptyState } from '@whosfree/ui/components/misc';
+import { EmptyState } from '@synkd/ui/components/misc';
 import { ConnectionGrid } from '@/components/calendar/connection-grid';
 import { CalendarToolbar, type CalendarView } from '@/components/calendar/toolbar';
 import type { ConnectionSchedule } from '@/lib/types';

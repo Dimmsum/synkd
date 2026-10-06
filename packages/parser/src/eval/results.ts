@@ -1,6 +1,6 @@
 // The eval result file: one JSON file per run, compared across runs (WF-022, FR-ADM-3).
 // Bump RESULT_FORMAT_VERSION when the shape changes in a way old files can't be read as.
-import { ParseDraft } from '@whosfree/shared';
+import { ParseDraft } from '@synkd/shared';
 import { z } from 'zod';
 import { PARSE_ERROR_KINDS, PDF_ENGINES } from '../openrouter';
 

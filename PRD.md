@@ -1,11 +1,11 @@
-# whosfree — Product Requirements Document
+# synkd — Product Requirements Document
 
 | Field | Value |
 |---|---|
-| Product | whosfree (working name, see D23) |
-| Document version | 0.13 |
+| Product | synkd (D48; formerly the working name "whosfree") |
+| Document version | 0.14 |
 | Status | Draft. All open questions resolved, ready for Phase 0 (see [§14](#14-open-questions)) |
-| Last updated | 2026-10-01 |
+| Last updated | 2026-10-05 |
 | Owner | Dimetri Lee |
 | Launch market | Jamaica, adults 18+ with busy schedules |
 
@@ -20,11 +20,12 @@
 | 0.6 | 2026-09-30 | **Backend moves from Convex to Supabase** (D40): Postgres with row-level security, Supabase Storage, Realtime and Cron. Clerk stays for sign-in, connected through Supabase's third-party auth. **Authorisation and tier redaction are enforced in Postgres**, and TypeScript server logic runs on the Next.js server (D41). Updated the architecture (§8), data model (§9), NFRs and risks to match. |
 | 0.7 | 2026-09-30 | Recorded decisions from building the availability engine (D42): recurrence and timezones are handled in-house instead of with `rrule` and `date-fns-tz`, `exdates` are occurrence start instants, and week numbers count from the Monday week containing the schedule's start date (FR-IMP-5). |
 | 0.8 | 2026-09-30 | Data model matches the first migrations (D43): blocks get their own directed `blocks` table instead of a `blocked` friendship status; `events` use `startsAt`/`endsAt`; group permissions are four boolean columns; a source's period is three columns. |
+| 0.14 | 2026-10-05 | The product is named **synkd** (D48), replacing the working name "whosfree". The domain will be along the lines of `getsynked.com` (not yet registered). Handles containing "synkd" or "synked" are reserved (FR-AUTH-2). |
 | 0.13 | 2026-10-01 | Every account gets a **handle generated from its name** at sign-up, which can be changed but not removed (D47, FR-AUTH-2). |
 | 0.12 | 2026-09-30 | **No Railway worker** (D46, after the WF-024 spike): PDF and HEIC conversion and the OpenRouter call run on the Next.js server, with uploads going straight to Supabase Storage and parse jobs queued in Postgres with a cron sweep. Updated §8, the parse flow and the NFRs that mentioned the worker. |
 | 0.11 | 2026-09-30 | Phone navigation is a **hamburger menu** in the header, not the design's bottom bar (FR-WEB-9). |
 | 0.10 | 2026-09-30 | Sign-in accepts **email and password** as well as Google (D45, FR-AUTH-1). |
-| 0.9 | 2026-09-30 | Added **offline friends** (D44, FR-SOC-14 to FR-SOC-19, J8): a user can add someone who isn't on whosfree and upload or type in that person's timetable, so the app is useful before their friends join. Private to the uploader, a nickname only, with a permission confirmation. Part of Milestone A. |
+| 0.9 | 2026-09-30 | Added **offline friends** (D44, FR-SOC-14 to FR-SOC-19, J8): a user can add someone who isn't on synkd and upload or type in that person's timetable, so the app is useful before their friends join. Private to the uploader, a nickname only, with a permission confirmation. Part of Milestone A. |
 
 > **How to read this document**
 > - Requirements have IDs (`FR-<AREA>-<n>`, `NFR-<AREA>-<n>`) so issues, PRs and tests can refer to them.
@@ -70,7 +71,7 @@ Busy people's schedules are spread across several places: class timetables, work
 Calendar apps don't fix this. Google Calendar sharing works one person at a time, is clumsy on mobile, and knows nothing about the schedules that only exist as a **PDF, screenshot or photo**, which is how most class timetables and work rosters arrive.
 
 ### Product in one sentence
-whosfree is an installable web app (PWA). It turns your schedule files and your Google Calendar into a live free/busy status, shares that status with the friends and groups you pick at the level of detail you pick, and lets you ping a free friend or find a time when the whole group is free.
+synkd is an installable web app (PWA). It turns your schedule files and your Google Calendar into a live free/busy status, shares that status with the friends and groups you pick at the level of detail you pick, and lets you ping a free friend or find a time when the whole group is free.
 
 ---
 
@@ -89,7 +90,7 @@ whosfree is an installable web app (PWA). It turns your schedule files and your 
 ### Non-goals (MVP)
 | # | Non-goal | Why |
 |---|---|---|
-| NG1 | Live location sharing, or storing or sharing where an event takes place (room or address) | Safety risk. whosfree shares *availability*, not *whereabouts* (D1). We don't store locations at all (D35). |
+| NG1 | Live location sharing, or storing or sharing where an event takes place (room or address) | Safety risk. synkd shares *availability*, not *whereabouts* (D1). We don't store locations at all (D35). |
 | NG2 | A full calendar editor or a replacement for Google Calendar | We read calendars. We don't manage them. |
 | NG3 | Full chat or messaging threads | WhatsApp already covers chat. Pings with short text are a nudge, not a conversation (D14). |
 | NG4 | Integrations with institutions (school SIS, employer HR or rostering systems) | These need partnerships. Revisit after traction. |
@@ -139,7 +140,7 @@ Shanice is why every group gets its own visibility tier, chosen when you join it
 ## 5. User journeys (MVP)
 
 ### J1: Onboarding (first-time user, usually arriving from an invite link)
-1. Taps an invite link on WhatsApp, e.g. `whosfree.app/i/abc123`. The **invite page** (FR-WEB-3) says "Aaliyah invited you to *Flat 4* on whosfree".
+1. Taps an invite link on WhatsApp, e.g. `getsynked.com/i/abc123`. The **invite page** (FR-WEB-3) says "Aaliyah invited you to *Flat 4* on synkd".
 2. **Signs up** with Google through Clerk, enters their date of birth to confirm they're 18 or over, and accepts the terms and privacy notice (FR-WEB-2, FR-AUTH-6).
 3. Answers **"When are you usually up and about?"** using a slider pre-set to **08:00–22:00 every day**. These become their available hours, which they can later change day by day (FR-AVL-2, D24).
 4. **Uploads a schedule** (a PDF, photo or screenshot), or skips this and adds one later.
@@ -184,11 +185,11 @@ Shanice is why every group gets its own visibility tier, chosen when you join it
 3. Can remove members, regenerate the invite link, transfer admin to someone else, or delete the group.
 
 
-### J8: Friend who isn't on whosfree (D44)
-1. Taps **Add a friend who isn't on whosfree**, types a nickname ("Tash"), and confirms they have Tash's permission to add her schedule.
+### J8: Friend who isn't on synkd (D44)
+1. Taps **Add a friend who isn't on synkd**, types a nickname ("Tash"), and confirms they have Tash's permission to add her schedule.
 2. Uploads a photo or PDF of Tash's timetable (or types it in), reviews the draft and confirms, exactly as for their own schedule.
-3. Tash appears on their Now screen in a **Not on whosfree** section ("Free until 2:00 PM") and in Find a time. Nobody else can see her.
-4. Taps **Invite Tash to whosfree** to send her a link. If she joins and they become friends, they're offered to delete the offline copy.
+3. Tash appears on their Now screen in a **Not on synkd** section ("Free until 2:00 PM") and in Find a time. Nobody else can see her.
+4. Taps **Invite Tash to synkd** to send her a link. If she joins and they become friends, they're offered to delete the offline copy.
 ---
 
 ## 6. Functional requirements
@@ -202,7 +203,7 @@ Shanice is why every group gets its own visibility tier, chosen when you join it
 | FR-WEB-4 | **Legal pages**: privacy policy (including Google's Limited Use disclosure), terms of service and a contact page. Google's verification requires these (NFR-COMP-6). The source text lives in [docs/legal/privacy-policy.md](docs/legal/privacy-policy.md) and [docs/legal/terms.md](docs/legal/terms.md) (drafts pending legal review, WF-119). | M |
 | FR-WEB-5 | **Onboarding flow** pages (J1). | M |
 | FR-WEB-6 | **Help/FAQ**, including a step-by-step guide to installing the app on iOS and a page explaining privacy tiers. | S |
-| FR-WEB-7 | **Link previews** (Open Graph) for invite links, so WhatsApp shows "Join *Flat 4* on whosfree". The group name becomes visible to anyone who has the link. | S |
+| FR-WEB-7 | **Link previews** (Open Graph) for invite links, so WhatsApp shows "Join *Flat 4* on synkd". The group name becomes visible to anyone who has the link. | S |
 | FR-WEB-8 | A **404 page and error pages** that point people somewhere useful. | M |
 | FR-WEB-9 | **Navigation:** desktop uses the left sidebar from the design. On phones the app follows the design (`Who's Free scheduling UI/`) **except** for its bottom navigation bar: there is no bottom bar, and the same destinations and groups open from a **hamburger menu** in the top header, as a drawer. | M |
 
@@ -232,10 +233,10 @@ Shanice is why every group gets its own visibility tier, chosen when you join it
 | FR-SOC-11 | **Groups are capped at 20 members** (D17). When a group is full, invite links show "This group is full". The cap is a config value so it can be raised later. | M |
 | FR-SOC-12 | Suggest friends based on the groups you share. | C |
 | FR-SOC-13 | **Join requests**: the admin can switch a group to "approval required", and joins then need approval from the admin or someone with `manageMembers`. | C |
-| FR-SOC-14 | **Offline friends** (D44): a user can add a person who isn't on whosfree, identified only by a **nickname** they choose, and give them a schedule by **uploading their timetable** (same parse → review → confirm flow as FR-IMP) or by **manual entry**. | M |
+| FR-SOC-14 | **Offline friends** (D44): a user can add a person who isn't on synkd, identified only by a **nickname** they choose, and give them a schedule by **uploading their timetable** (same parse → review → confirm flow as FR-IMP) or by **manual entry**. | M |
 | FR-SOC-15 | An offline friend and their schedule are **visible only to the user who added them**: never shown to anyone else, never searchable, never matched or merged with a real account, and never shared at any tier. The uploader sees full detail (it's their own data). | M |
 | FR-SOC-16 | Adding an offline friend requires the user to **confirm they have that person's permission** to store their schedule, and the terms forbid adding someone's schedule without it. | M |
-| FR-SOC-17 | Offline friends appear on the **Now screen** in their own "Not on whosfree" section, have a **detail page**, and can be chosen in the **slot finder**. They can't be pinged; instead there is an **Invite to whosfree** action. | M |
+| FR-SOC-17 | Offline friends appear on the **Now screen** in their own "Not on synkd" section, have a **detail page**, and can be chosen in the **slot finder**. They can't be pinged; instead there is an **Invite to synkd** action. | M |
 | FR-SOC-18 | Users can **edit, re-upload or delete** an offline friend at any time. Deleting removes their schedule straight away. A user can have at most **20 offline friends** (a config value). **[ASSUMPTION]** | M |
 | FR-SOC-19 | When an offline friend joins and becomes a real friend, the user is offered to **delete the offline copy**; the two are never merged automatically. | S |
 
@@ -373,7 +374,7 @@ Location or room is **never stored or shared**, at any tier (NG1, D35).
 | FR-PWA-2 | A service worker caches the **app shell** and the **last-known Now data**, so the app opens offline with a "Last updated 5 min ago" banner. | M |
 | FR-PWA-3 | **Install prompt**: Android uses the native `beforeinstallprompt` prompt. iOS gets a step-by-step "Add to Home Screen" guide, because iOS only allows push notifications for installed apps. | M |
 | FR-PWA-4 | **Web Push** permission is requested through an explanation screen first, never on first load. | M |
-| FR-PWA-5 | **Web Share Target**: sharing a screenshot of a schedule *into* whosfree from the phone's share sheet starts the import flow. | C |
+| FR-PWA-5 | **Web Share Target**: sharing a screenshot of a schedule *into* synkd from the phone's share sheet starts the import flow. | C |
 | FR-PWA-6 | An app **update** flow: "New version available. Tap to refresh". | S |
 
 ### 6.12 Settings, data rights & safety (SET)
@@ -534,7 +535,7 @@ Location or room is **never stored or shared**, at any tier (NG1, D35).
 ### 8.2 Monorepo layout
 
 ```
-whosfree/
+synkd/
 ├── apps/
 │   └── web/                # Next.js (App Router) PWA + landing/auth/legal pages → Vercel
 ├── packages/
@@ -720,7 +721,7 @@ No fixed dates (D10). Each phase ends when its exit criteria are met.
 | **1: Import spike, then build** | Collect samples, build the eval harness, **compare 2–3 vision models through OpenRouter**, decide whether the worker is needed (decided: it isn't, D46). Then build upload → parse → review → commit, manual entry, My uploads, and file expiry. | **≥ 70% parse acceptance** on the eval set. The whole flow works on a phone. |
 | **2: Social & visibility** | Friends, groups (admin, permissions, 20-member cap), invite pages and links, WhatsApp sharing, blocking, choosing a tier at join, "Who can see me", server-side redaction. | Two test users in a group see each other at the tier each chose, permissions are enforced, and tests prove the redaction works. |
 | **3: Availability & Now** | `packages/availability`, available hours, manual status, the Now screen with "until X", friend detail, real-time updates. | Engine coverage ≥ 90%. The Now screen updates within 5 s. |
-| **4: Google Calendar** | Incremental OAuth, sync, webhooks and polling, private events, disconnect and delete. | A Google Calendar change appears in whosfree within 5 minutes (15 in the worst case). |
+| **4: Google Calendar** | Incremental OAuth, sync, webhooks and polling, private events, disconnect and delete. | A Google Calendar change appears in synkd within 5 minutes (15 in the worst case). |
 | **5: Ping & slot finder** | Web Push, templates plus free text, replies, rate limits, mute and quiet hours, reporting, the slot finder, sharing a slot. | A ping and its reply complete in under 10 s on Android. Slot-finder tests pass for 20 people. |
 | **6: PWA polish & closed beta** | Install flow, offline mode, iOS guide, accessibility pass, final privacy notice and terms, DPA registration, **launch to one friend circle, then one seed community** of 30–100 users. | The §10 metrics are being collected and beta feedback is in. |
 | **7: Iterate** | Fix the biggest problems from the beta, then .ics import and shared templates. | A decision on what comes next. |
@@ -797,7 +798,7 @@ The **[ASSUMPTION]** markers still in this document (for example the file-size a
 | OQ12 | Web presence? | **Landing page, auth pages and so on** | D21 |
 | OQ13 | Workspace domains at universities? | **Not limited to universities.** Replaced by the general risk R11. | D11 |
 | OQ14 | What do users with no schedule show as? | **"Hasn't added a schedule yet"** instead of "unknown" | D22 |
-| OQ15 | Is "whosfree" final? | **No**, it's a working name | D23 |
+| OQ15 | Is "whosfree" final? | **No**: the product is named **synkd** | D23, D48 |
 
 ---
 
@@ -827,7 +828,7 @@ The **[ASSUMPTION]** markers still in this document (for example the file-size a
 | D20 | 2026-09-30 | **Users choose their visibility tier for each group before joining** (and for each friend when accepting). **T1 is the default and the minimum.** | You control your privacy before you join, and every group gets a useful baseline. |
 | D21 | 2026-09-30 | **Public web pages: landing, sign-in/sign-up, invite pages, legal pages, help.** | Needed to acquire users, handle invites and pass Google verification. |
 | D22 | 2026-09-30 | **Users without a schedule show "Hasn't added a schedule yet". Users who paused sharing show "Sharing paused".** These replace the generic "unknown" status. | Clearer for viewers, and it gives an obvious "nudge them" action. |
-| D23 | 2026-09-30 | **"whosfree" is a working name.** | Decide the final name before submitting for Google verification, because rebranding afterwards may trigger a new review. |
+| D23 | 2026-09-30 | **"whosfree" is a working name.** (Superseded by D48.) | Decide the final name before submitting for Google verification, because rebranding afterwards may trigger a new review. |
 | D24 | 2026-09-30 | **Default available hours come from an onboarding question, "When are you usually up and about?", with a slider pre-set to 08:00–22:00 every day. Users can edit each day later.** | Most people never change defaults, so the default should be sensible, and asking once makes people think about it. |
 | D25 | 2026-09-30 | **Stale data is flagged only when it matters.** A ⚠️ "Schedule may be out of date" appears when a source has failed, hasn't synced in over 24 hours, or has passed its end date. No timestamps while things are healthy. | Keeps the Now screen clean while still warning about wrong statuses. |
 | D26 | 2026-09-30 | **New group members get `invite` and `groupPing` by default. `manageMembers` and `editGroup` are held back.** | Invites help growth, and control over the group stays with the admin. |
@@ -848,10 +849,11 @@ The **[ASSUMPTION]** markers still in this document (for example the file-size a
 | D41 | 2026-09-30 | **Authorisation and tier redaction are enforced in Postgres** (RLS plus `security definer` functions). TypeScript server logic (availability engine, Google sync, push, parse jobs) runs on the Next.js server on Vercel. Realtime sends only "something changed" signals, never other users' rows. | No client path can bypass redaction, and the shared TypeScript packages run unchanged in Node. |
 | D42 | 2026-09-30 | **Recurrence and timezones are handled in-house** in the availability engine, not with `rrule` or `date-fns-tz`. Occurrences keep the first occurrence's local wall-clock times. Week numbers count from the Monday week containing the schedule's start date. | We only need a small RRULE subset, and `rrule`'s timezone handling is a common source of DST bugs. Doing it ourselves keeps the rules explicit and fully tested. |
 | D43 | 2026-09-30 | **Blocks are a separate, directed table**, not a friendship status. | A shared friendship row would let the blocked person see the block. Two people can block each other independently, and blocks also apply between people who aren't friends. |
-| D44 | 2026-09-30 | **Offline friends**: users can add people who aren't on whosfree and upload or type in their timetables. Private to the uploader, nickname only, with a permission confirmation, and never merged with a real account. Part of Milestone A. | The app has to be useful before someone's friends join (R2, cold start), and people already have their friends' timetables. |
+| D44 | 2026-09-30 | **Offline friends**: users can add people who aren't on synkd and upload or type in their timetables. Private to the uploader, nickname only, with a permission confirmation, and never merged with a real account. Part of Milestone A. | The app has to be useful before someone's friends join (R2, cold start), and people already have their friends' timetables. |
 | D45 | 2026-09-30 | **Sign-in accepts email and password as well as Google.** Clerk handles passwords, email verification and resets; we never see or store a password. Names are required at email sign-up. | Not everyone wants to use their Google account (A3, R11), and some school-managed Google accounts block third-party apps. Clerk supports both with no extra backend work. |
 | D46 | 2026-09-30 | **No separate worker service.** PDF and HEIC conversion (PDFium and libheif as WASM, plus `sharp`) and the OpenRouter call run on the Next.js server in a dedicated internal route. Uploads go straight to Supabase Storage through signed upload URLs. Parse jobs are queued in Postgres with a lease and retried by a cron sweep. Replaces the worker part of D6. | The WF-024 spike showed conversion fits comfortably in a Node function (WASM, no custom binaries), so a second service, its HMAC channel and a second deploy target aren't worth it (R8). `dispatch(jobId)` keeps it swappable. |
 | D47 | 2026-10-01 | **Every user has a handle, generated from their name at sign-up.** The database picks it when it creates the account (the name lowercased, accents dropped, letters and digits only, up to 20 characters, with a random number added if it's taken or reserved). Users can change it to any free handle but can't clear it. Existing accounts without one are given one. Replaces the optional handle in FR-AUTH-2. | Friends find each other by handle (FR-SOC-1), so an account without one can only be added by link or QR code. Generating it in Postgres keeps uniqueness and the reserved words in one place. |
+| D48 | 2026-10-05 | **The product is named synkd** (lowercase), replacing the working name "whosfree". The domain will be `getsynked.com` or similar (to be registered, WF-011). Internal database identifiers (`whosfree.friend_pair`, `whosfree.now_signalled`, `whosfree_user_channel_receive_own`), the `WF-###` issue IDs and the design export folders keep the old name. | Decided before Google verification (D23), so no re-review. Renaming applied database identifiers would mean redefining functions for no user-visible gain. |
 
 ---
 

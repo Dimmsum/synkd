@@ -8,7 +8,7 @@
 // events on the same days and weeks that touch or overlap become one event spanning them.
 // Either result keeps the lowest confidence, so a doubtful event stays highlighted until edited.
 
-import { DAYS_OF_WEEK, type DayOfWeek } from '@whosfree/shared';
+import { DAYS_OF_WEEK, type DayOfWeek } from '@synkd/shared';
 import type { DraftEvent } from '@/lib/types';
 
 const DAY_MINUTES = 24 * 60;

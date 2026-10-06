@@ -1,5 +1,5 @@
 import type { Route } from 'next';
-import { ONBOARDING_STEPS as STEP_ORDER, type OnboardingStep } from '@whosfree/shared';
+import { ONBOARDING_STEPS as STEP_ORDER, type OnboardingStep } from '@synkd/shared';
 
 export type { OnboardingStep };
 

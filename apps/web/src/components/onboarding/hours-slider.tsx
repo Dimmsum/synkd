@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { DAYS_OF_WEEK, DEFAULT_AVAILABLE_HOURS } from '@whosfree/shared';
+import { DAYS_OF_WEEK, DEFAULT_AVAILABLE_HOURS } from '@synkd/shared';
 import { Moon, Sun } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
-import { Slider } from '@whosfree/ui/components/slider';
-import { formatClock } from '@whosfree/ui/lib/time';
+import { Button } from '@synkd/ui/components/button';
+import { Slider } from '@synkd/ui/components/slider';
+import { formatClock } from '@synkd/ui/lib/time';
 import { advanceOnboarding } from '@/lib/actions/onboarding';
 import { saveAvailableHours } from '@/lib/actions/settings';
 

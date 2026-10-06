@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { DEFAULT_TIER, type Tier } from '@whosfree/shared';
-import { Button } from '@whosfree/ui/components/button';
-import { Switch } from '@whosfree/ui/components/switch';
-import { TierPicker } from '@whosfree/ui/components/tier-picker';
+import { DEFAULT_TIER, type Tier } from '@synkd/shared';
+import { Button } from '@synkd/ui/components/button';
+import { Switch } from '@synkd/ui/components/switch';
+import { TierPicker } from '@synkd/ui/components/tier-picker';
 import { setFriendTier } from '@/lib/actions/social';
 
 /**

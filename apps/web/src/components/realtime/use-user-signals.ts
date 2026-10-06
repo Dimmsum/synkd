@@ -8,7 +8,7 @@
 import { startTransition, useEffect, useEffectEvent, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from '@clerk/nextjs';
-import { userChannel } from '@whosfree/shared';
+import { userChannel } from '@synkd/shared';
 import { debounce } from '@/lib/presence/debounce';
 import { subscribeUserSignals } from '@/lib/realtime/subscribe';
 import { createBrowserSupabase } from '@/lib/supabase/browser';

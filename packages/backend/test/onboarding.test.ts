@@ -2,7 +2,7 @@
 // finished, so it can be resumed later on any device and finished users aren't sent back.
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { ONBOARDING_STEPS } from '@whosfree/shared';
+import { ONBOARDING_STEPS } from '@synkd/shared';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
 import { codeOf } from './harness/errors';

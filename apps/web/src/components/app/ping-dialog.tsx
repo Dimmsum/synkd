@@ -1,9 +1,9 @@
 'use client';
 
 import { useId, useState, useTransition } from 'react';
-import { PING_TEMPLATES, PING_TEXT_MAX_LENGTH, type PingTemplate } from '@whosfree/shared';
+import { PING_TEMPLATES, PING_TEXT_MAX_LENGTH, type PingTemplate } from '@synkd/shared';
 import { CircleCheck, Send } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
+import { Button } from '@synkd/ui/components/button';
 import {
   Dialog,
   DialogContent,
@@ -12,10 +12,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@whosfree/ui/components/dialog';
-import { Label } from '@whosfree/ui/components/label';
-import { Textarea } from '@whosfree/ui/components/textarea';
-import { cn } from '@whosfree/ui/lib/utils';
+} from '@synkd/ui/components/dialog';
+import { Label } from '@synkd/ui/components/label';
+import { Textarea } from '@synkd/ui/components/textarea';
+import { cn } from '@synkd/ui/lib/utils';
 import { sendPing } from '@/lib/actions/pings';
 import { pingCharsLeft, pingPolicy } from '@/lib/ping-rules';
 import type { PresenceStatus } from '@/lib/types';

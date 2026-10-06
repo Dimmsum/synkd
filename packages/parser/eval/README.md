@@ -32,7 +32,7 @@ evals/schedules/
 ```
 
 - **Schedule file**: `.pdf`, `.png`, `.jpg`/`.jpeg`, `.webp`, or `.heic`/`.heif` (FR-IMP-1). No OpenRouter vision model takes HEIC, so HEIC samples are listed as `skipped` until you convert them. On macOS: `sips -s format jpeg photo.heic --out photo.jpg`. In production the upload step does this conversion (WF-024/WF-026).
-- **Expected file** (`<name>.expected.json`): a `ParseDraft` from `@whosfree/shared`. It's validated with that same zod schema, with one convenience: `confidence` can be left out and defaults to 1. Unknown keys (e.g. a `notes` field) are ignored, and there is no location field (D35).
+- **Expected file** (`<name>.expected.json`): a `ParseDraft` from `@synkd/shared`. It's validated with that same zod schema, with one convenience: `confidence` can be left out and defaults to 1. Unknown keys (e.g. a `notes` field) are ignored, and there is no location field (D35).
 - **Sub-folders** are optional. The first folder name becomes the sample's **group** (e.g. `uni`, `school`, `roster`, `photo`), and results are broken down by group.
 - Consent records (WF-020) can live in the same folder. Files that aren't schedules are ignored.
 
@@ -84,7 +84,7 @@ Writing expected files:
 Check the set without spending anything (no API key needed):
 
 ```sh
-pnpm --filter @whosfree/parser eval:check
+pnpm --filter @synkd/parser eval:check
 ```
 
 It lists every problem at once: schedules without an expected file, expected files without a schedule, schema errors (by path, without quoting the file), and files whose contents don't match their extension. `eval` runs the same check before it makes any request.
@@ -94,7 +94,7 @@ It lists every problem at once: schedules without an expected file, expected fil
 Put `OPENROUTER_API_KEY` in the root `.env` or export it in your shell. The CLI reads only that one variable from `.env`, and only for `eval`. Nothing else in the package reads the environment: `parseSchedule` takes the key as an argument, so the web app can't pick it up by importing the package (NFR-SEC-8). Then, from the repo root:
 
 ```sh
-pnpm --filter @whosfree/parser eval --model google/gemini-2.5-flash --prompt v1
+pnpm --filter @synkd/parser eval --model google/gemini-2.5-flash --prompt v1
 ```
 
 | Option | Default | |
@@ -118,10 +118,10 @@ There are no retries and no fallback models: each sample gets exactly one reques
 
 ```sh
 # The two newest result files (older = A, the baseline)
-pnpm --filter @whosfree/parser eval:compare
+pnpm --filter @synkd/parser eval:compare
 
 # Or two specific files
-pnpm --filter @whosfree/parser eval:compare packages/parser/eval/results/A.json packages/parser/eval/results/B.json
+pnpm --filter @synkd/parser eval:compare packages/parser/eval/results/A.json packages/parser/eval/results/B.json
 ```
 
 This prints every metric for A and B with the change and whether it's better or worse, then each sample's edit count in both runs. It warns when the runs used different samples, or when the same prompt version has different text (the file was edited without bumping the version).

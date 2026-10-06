@@ -11,7 +11,7 @@
 import { revalidatePath } from 'next/cache';
 import { after } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { AVATAR_UPLOAD_MAX_BYTES } from '@whosfree/shared';
+import { AVATAR_UPLOAD_MAX_BYTES } from '@synkd/shared';
 import { AvatarImageError, processAvatar, sniffImageType } from '@/lib/avatars/image';
 import { createAvatarStore, type AvatarStore } from '@/lib/avatars/store';
 import { TRY_AGAIN } from '@/lib/db-errors';

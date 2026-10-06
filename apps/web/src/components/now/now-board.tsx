@@ -4,12 +4,12 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { CalendarSearch, Share2, UserRoundPlus, UsersRound } from 'lucide-react';
-import { buttonVariants } from '@whosfree/ui/components/button';
-import { EmptyState } from '@whosfree/ui/components/misc';
-import { GroupEmoji } from '@whosfree/ui/components/person-avatar';
-import { STATUS_TONES, StatusIcon, type StatusTone } from '@whosfree/ui/components/status-badge';
-import { dateKey, formatMonthDay, formatTime, weekdayShort } from '@whosfree/ui/lib/time';
-import { cn } from '@whosfree/ui/lib/utils';
+import { buttonVariants } from '@synkd/ui/components/button';
+import { EmptyState } from '@synkd/ui/components/misc';
+import { GroupEmoji } from '@synkd/ui/components/person-avatar';
+import { STATUS_TONES, StatusIcon, type StatusTone } from '@synkd/ui/components/status-badge';
+import { dateKey, formatMonthDay, formatTime, weekdayShort } from '@synkd/ui/lib/time';
+import { cn } from '@synkd/ui/lib/utils';
 import { ConnectionRow } from '@/components/app/connection-row';
 import { PageHeader, Panel } from '@/components/app/page-header';
 import { OfflineFriendRow } from '@/components/offline-friends/offline-friend-row';
@@ -20,15 +20,15 @@ import type { Connection, GroupSummary, OfflineFriendView } from '@/lib/types';
 import { countOf } from '@/lib/plural';
 import { useNowSignals, usePresenceClock, useRefetch } from './use-now-updates';
 
-/** Opens "Add someone not on whosfree" on the Friends page (WF-127, J8 step 1). */
-const ADD_OFFLINE_HREF = '/friends?add=offline#not-on-whosfree' as Route;
+/** Opens "Add someone not on synkd" on the Friends page (WF-127, J8 step 1). */
+const ADD_OFFLINE_HREF = '/friends?add=offline#not-on-synkd' as Route;
 
 /**
  * The live part of the Now screen (FR-VIEW-1/2/3, PRD §8.5, WF-064): who's free right now and
  * until when, kept current by Realtime signals (re-fetch) and a local timer ("until X" passing).
  * `now` is the instant the server worked the statuses out at; `filter` is the group filter,
  * rendered on the server. `offlineFriends` are the people the viewer added who aren't on
- * whosfree (WF-128), shown in their own section (null when they couldn't be read).
+ * synkd (WF-128), shown in their own section (null when they couldn't be read).
  */
 export function NowBoard({
   viewerId,
@@ -69,7 +69,7 @@ export function NowBoard({
       ? sortOfflineFriends(offlineFriends.map((f) => presenceAt(f, t)))
       : null;
   const offlineSection = offline ? (
-    <NotOnWhosfreeSection friends={offline} now={now} timeZone={timeZone} />
+    <NotOnSynkdSection friends={offline} now={now} timeZone={timeZone} />
   ) : null;
   const groupName = (id: string) => groups.find((g) => g.id === id)?.name;
   const contextFor = (c: Connection) =>
@@ -123,7 +123,7 @@ export function NowBoard({
                 {offline && offline.length === 0 ? (
                   <Link href={ADD_OFFLINE_HREF} className={buttonVariants({ variant: 'outline' })}>
                     <UserRoundPlus aria-hidden="true" />
-                    Add a friend who isn&apos;t on whosfree
+                    Add a friend who isn&apos;t on synkd
                   </Link>
                 ) : null}
               </div>
@@ -217,11 +217,11 @@ function NowSection({
 }
 
 /**
- * "Not on whosfree" (FR-SOC-17, J8 step 3, WF-128): the people the viewer added who aren't on
- * whosfree, with their status and "until X" from their own schedule. Only the viewer sees it.
+ * "Not on synkd" (FR-SOC-17, J8 step 3, WF-128): the people the viewer added who aren't on
+ * synkd, with their status and "until X" from their own schedule. Only the viewer sees it.
  * No Ping buttons: they can't be pinged.
  */
-function NotOnWhosfreeSection({
+function NotOnSynkdSection({
   friends,
   now,
   timeZone,
@@ -232,13 +232,13 @@ function NotOnWhosfreeSection({
 }) {
   return (
     <Panel
-      id="not-on-whosfree"
+      id="not-on-synkd"
       title={
         <span className="flex items-center gap-2">
           <span className="flex size-6 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <UsersRound aria-hidden="true" className="size-3.5" />
           </span>
-          Not on whosfree
+          Not on synkd
           <span className="ml-1 rounded-full bg-muted px-2 text-xs font-semibold text-muted-foreground">
             {friends.length}
           </span>
@@ -251,7 +251,7 @@ function NotOnWhosfreeSection({
         >
           <UserRoundPlus aria-hidden="true" className="size-4" />
           Add
-          <span className="sr-only"> a friend who isn’t on whosfree</span>
+          <span className="sr-only"> a friend who isn’t on synkd</span>
         </Link>
       }
       bodyClassName="px-2 md:px-3"

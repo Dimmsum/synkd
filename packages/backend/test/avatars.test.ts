@@ -9,7 +9,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { AVATAR_BUCKET, AVATAR_STORED_MAX_BYTES } from '@whosfree/shared';
+import { AVATAR_BUCKET, AVATAR_STORED_MAX_BYTES } from '@synkd/shared';
 import { createTestDb, migrationFiles } from './harness/db';
 import type { TestDb } from './harness/db';
 import { addGroup, befriend, block } from './harness/seed';

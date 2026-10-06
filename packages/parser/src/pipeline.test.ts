@@ -1,4 +1,4 @@
-import { PARSE_MODEL_FALLBACK, PARSE_MODEL_PRIMARY, PARSER_VERSION } from '@whosfree/shared';
+import { PARSE_MODEL_FALLBACK, PARSE_MODEL_PRIMARY, PARSER_VERSION } from '@synkd/shared';
 import { describe, expect, it } from 'vitest';
 import { isRetryableStatus, modelOrder, normaliseDraft, parseScheduleImages } from './pipeline';
 import { SAMPLE_DRAFT, completion, fakeFetch, jsonResponse } from './testing';

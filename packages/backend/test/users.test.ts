@@ -1,7 +1,7 @@
 // WF-003: the users table, current_user_id() and their RLS (PRD §9, D41).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { DEFAULT_TIMEZONE } from '@whosfree/shared';
+import { DEFAULT_TIMEZONE } from '@synkd/shared';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
 import { addUser } from './harness/seed';

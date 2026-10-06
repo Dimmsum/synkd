@@ -8,7 +8,7 @@ import {
   DAYS_OF_WEEK,
   DEFAULT_TIMEZONE,
   SCHEDULE_EXCEPTION_LABEL_MAX_LENGTH,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import {
   CalendarOff,
   ExternalLink,
@@ -22,12 +22,12 @@ import {
   TriangleAlert,
   X,
 } from 'lucide-react';
-import { Button, buttonVariants } from '@whosfree/ui/components/button';
-import { Checkbox } from '@whosfree/ui/components/checkbox';
-import { Input } from '@whosfree/ui/components/input';
-import { Label } from '@whosfree/ui/components/label';
-import { dateKey, formatClockRange } from '@whosfree/ui/lib/time';
-import { cn } from '@whosfree/ui/lib/utils';
+import { Button, buttonVariants } from '@synkd/ui/components/button';
+import { Checkbox } from '@synkd/ui/components/checkbox';
+import { Input } from '@synkd/ui/components/input';
+import { Label } from '@synkd/ui/components/label';
+import { dateKey, formatClockRange } from '@synkd/ui/lib/time';
+import { cn } from '@synkd/ui/lib/utils';
 import { blockPosition, TimeGrid, type GridColumn } from '@/components/calendar/time-grid';
 import { confirmSchedule } from '@/lib/actions/imports';
 import { mergeEvents, splitEvent, splitKind } from '@/lib/draft-edit';

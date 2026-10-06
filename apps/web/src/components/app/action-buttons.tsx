@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from 'react';
 import { BellRing, Check } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
-import { cn } from '@whosfree/ui/lib/utils';
+import { Button } from '@synkd/ui/components/button';
+import { cn } from '@synkd/ui/lib/utils';
 import type { ActionResult } from '@/lib/actions/result';
 import { nudgeToAddSchedule } from '@/lib/actions/pings';
 

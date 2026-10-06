@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { InboxPing } from '@whosfree/backend';
+import type { InboxPing } from '@synkd/backend';
 import { hueFor } from '@/lib/hue';
 import { splitInbox, toPing } from './mappers';
 

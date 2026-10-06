@@ -1,7 +1,7 @@
 // The profile form (FR-AUTH-2, WF-040): checks the display name, handle and timezone with the same
 // rules as the database before anything is sent. Pure, so it can be tested without a database.
 
-import { DisplayName, Handle, normalizeHandleInput } from '@whosfree/shared';
+import { DisplayName, Handle, normalizeHandleInput } from '@synkd/shared';
 import { isKnownTimezone } from '@/lib/auth/profile';
 
 export interface ProfileInput {

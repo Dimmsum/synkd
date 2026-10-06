@@ -3,7 +3,7 @@
 // Pure functions, no I/O. The definitions are documented in `packages/parser/eval/README.md`;
 // keep the two in sync. The headline number is "parse acceptance": the share of samples a user
 // could confirm with at most 3 edits (PRD §10).
-import type { DateRange, EventDraft, ParseDraft, WeekPattern } from '@whosfree/shared';
+import type { DateRange, EventDraft, ParseDraft, WeekPattern } from '@synkd/shared';
 
 /** Titles at least this similar can be matched even when the times differ. */
 export const TITLE_MATCH_THRESHOLD = 0.5;

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Route } from 'next';
-import { cn } from '@whosfree/ui/lib/utils';
+import { cn } from '@synkd/ui/lib/utils';
 import type { CalendarView } from '@/components/calendar/toolbar';
 
 export interface SwitcherPerson {

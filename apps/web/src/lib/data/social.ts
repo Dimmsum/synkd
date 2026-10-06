@@ -14,7 +14,7 @@ import type {
   GroupMember,
   MyGroup,
   PublicProfile,
-} from '@whosfree/backend';
+} from '@synkd/backend';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { groupsByMember, isUuid } from '@/lib/social/mappers';
 

@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CircleX, UsersRound } from 'lucide-react';
-import { buttonVariants } from '@whosfree/ui/components/button';
-import { EmptyState } from '@whosfree/ui/components/misc';
-import { GroupEmoji } from '@whosfree/ui/components/person-avatar';
+import { buttonVariants } from '@synkd/ui/components/button';
+import { EmptyState } from '@synkd/ui/components/misc';
+import { GroupEmoji } from '@synkd/ui/components/person-avatar';
 import { PageHeader } from '@/components/app/page-header';
 import { AddPersonView } from '@/components/friends/add-person';
 import { JoinGroupForm } from '@/components/onboarding/join-group';

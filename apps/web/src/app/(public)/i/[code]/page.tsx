@@ -2,24 +2,24 @@ import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { auth } from '@clerk/nextjs/server';
 import { CircleX, EyeOff, UserPlus, UsersRound } from 'lucide-react';
-import { buttonVariants } from '@whosfree/ui/components/button';
-import { GroupEmoji } from '@whosfree/ui/components/person-avatar';
-import { Logo } from '@whosfree/ui/components/misc';
+import { buttonVariants } from '@synkd/ui/components/button';
+import { GroupEmoji } from '@synkd/ui/components/person-avatar';
+import { Logo } from '@synkd/ui/components/misc';
 import { getAnyInvite, type FriendInviteSummary } from '@/lib/data/invites';
 
 export async function generateMetadata({ params }: PageProps<'/i/[code]'>): Promise<Metadata> {
   const found = await getAnyInvite((await params).code);
   if (found.kind === 'friend') {
     if (found.invite.state !== 'ok') return { title: 'Invite', robots: { index: false } };
-    // WF-042: "Add Kemar on Who's Free". Only the inviter's name (FR-WEB-3).
-    const title = `Add ${found.invite.inviterName} on Who's Free`;
+    // WF-042: "Add Kemar on synkd". Only the inviter's name (FR-WEB-3).
+    const title = `Add ${found.invite.inviterName} on synkd`;
     const description = `${found.invite.inviterName} invited you to be friends. See when you're both free and link up.`;
     return { title, description, openGraph: { title, description }, robots: { index: false } };
   }
   const invite = found.invite;
   if (invite.state === 'invalid') return { title: 'Invite', robots: { index: false } };
-  // FR-WEB-7 / WF-046: WhatsApp previews read "Join Flat 4 on Who's Free".
-  const title = `Join ${invite.groupName} on Who's Free`;
+  // FR-WEB-7 / WF-046: WhatsApp previews read "Join Flat 4 on synkd".
+  const title = `Join ${invite.groupName} on synkd`;
   return {
     title,
     description: `${invite.inviterName} invited you. See when the group is free and link up.`,
@@ -44,7 +44,7 @@ export default async function InvitePage({ params }: PageProps<'/i/[code]'>) {
 
   return (
     <div className="flex min-h-dvh flex-col items-center px-4 py-6 sm:justify-center sm:py-12">
-      <Link href="/" aria-label="Who's Free home" className="mb-8 rounded-lg">
+      <Link href="/" aria-label="synkd home" className="mb-8 rounded-lg">
         <Logo />
       </Link>
       <main className="flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border bg-card p-6 text-center sm:p-8">
@@ -62,7 +62,7 @@ export default async function InvitePage({ params }: PageProps<'/i/[code]'>) {
               </p>
             </div>
             <Link href="/" className={buttonVariants({ variant: 'outline', className: 'w-full' })}>
-              What is Who&apos;s Free?
+              What is synkd?
             </Link>
           </>
         ) : (
@@ -99,7 +99,7 @@ export default async function InvitePage({ params }: PageProps<'/i/[code]'>) {
                   Join {invite.groupName}
                 </Link>
                 <p className="text-sm text-muted-foreground">
-                  Already on Who&apos;s Free?{' '}
+                  Already on synkd?{' '}
                   <Link
                     href={{ pathname: '/sign-in', query: { redirect_url: joinPath } }}
                     className="inline-flex min-h-11 items-center font-semibold text-primary-ink underline-offset-2 hover:underline"
@@ -132,7 +132,7 @@ function FriendInvitePage({
   const joinPath = `/join/${invite.code}` as Route;
   return (
     <div className="flex min-h-dvh flex-col items-center px-4 py-6 sm:justify-center sm:py-12">
-      <Link href="/" aria-label="Who's Free home" className="mb-8 rounded-lg">
+      <Link href="/" aria-label="synkd home" className="mb-8 rounded-lg">
         <Logo />
       </Link>
       <main className="flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border bg-card p-6 text-center sm:p-8">
@@ -150,7 +150,7 @@ function FriendInvitePage({
               </p>
             </div>
             <Link href="/" className={buttonVariants({ variant: 'outline', className: 'w-full' })}>
-              What is Who&apos;s Free?
+              What is synkd?
             </Link>
           </>
         ) : (
@@ -178,7 +178,7 @@ function FriendInvitePage({
                   Sign up to add {invite.inviterName.split(' ')[0]}
                 </Link>
                 <p className="text-sm text-muted-foreground">
-                  Already on Who&apos;s Free?{' '}
+                  Already on synkd?{' '}
                   <Link
                     href={{ pathname: '/sign-in', query: { redirect_url: joinPath } }}
                     className="inline-flex min-h-11 items-center font-semibold text-primary-ink underline-offset-2 hover:underline"

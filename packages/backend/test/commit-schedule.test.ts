@@ -1,14 +1,14 @@
 // WF-030: commit_schedule saves a confirmed schedule as one source with its
 // period plus RRULE/EXDATE events (FR-IMP-7, FR-IMP-8, FR-IMP-12, §9
 // modelling decision, D35, D42, D44). Covers the draft checks, the encoding
-// (identical to eventTimesFromDraft in @whosfree/availability), an engine
+// (identical to eventTimesFromDraft in @synkd/availability), an engine
 // round trip of what the user reads back under RLS, replacing a schedule,
 // the offline-friend target, the rate limit and who can call it.
 
 import fc from 'fast-check';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { busyIntervals, eventTimesFromDraft } from '@whosfree/availability';
-import type { AvailabilityInput, ScheduleSource } from '@whosfree/availability';
+import { busyIntervals, eventTimesFromDraft } from '@synkd/availability';
+import type { AvailabilityInput, ScheduleSource } from '@synkd/availability';
 import {
   DAYS_OF_WEEK,
   EVENT_TITLE_MAX_LENGTH,
@@ -17,8 +17,8 @@ import {
   SCHEDULE_MAX_EXCEPTIONS,
   ScheduleCommit,
   SchedulePeriod,
-} from '@whosfree/shared';
-import type { DayOfWeek, EventDraft, WeekPattern } from '@whosfree/shared';
+} from '@synkd/shared';
+import type { DayOfWeek, EventDraft, WeekPattern } from '@synkd/shared';
 import { DB_ERROR, OFFLINE_FRIEND_ERRORS } from '../src/index';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';

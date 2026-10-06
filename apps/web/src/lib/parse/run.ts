@@ -8,9 +8,9 @@
 // draft, a title or the model's output.
 
 import { createHash } from 'node:crypto';
-import type { ParseRun } from '@whosfree/backend';
-import type { ParseOutcome } from '@whosfree/parser/node';
-import { SCHEDULE_FILE_MAX_BYTES, type ParseErrorCode } from '@whosfree/shared';
+import type { ParseRun } from '@synkd/backend';
+import type { ParseOutcome } from '@synkd/parser/node';
+import { SCHEDULE_FILE_MAX_BYTES, type ParseErrorCode } from '@synkd/shared';
 import { isRejectedFile } from '@/lib/parse-messages';
 import type { ParseAdmin } from './admin';
 

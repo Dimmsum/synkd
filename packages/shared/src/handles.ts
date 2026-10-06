@@ -1,6 +1,7 @@
 // Handle rules (WF-040, FR-AUTH-2). The database enforces the same rules with
-// CHECK constraints on `users.handle` (backend migration
-// 20261001100100_profiles_and_handles.sql); a backend test checks that the
+// CHECK constraints on `users.handle` (backend migrations
+// 20261001100100_profiles_and_handles.sql and
+// 20261005100000_rename_synkd_handles.sql); a backend test checks that the
 // reserved list there matches RESERVED_HANDLES exactly.
 import { z } from 'zod';
 
@@ -17,7 +18,7 @@ export const HANDLE_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/;
 /**
  * Handles nobody can take (compared ignoring case): app routes, staff-like
  * names and words that could be mistaken for the app itself. Any handle
- * containing "whosfree" is also refused.
+ * containing one of RESERVED_HANDLE_SUBSTRINGS is also refused.
  */
 export const RESERVED_HANDLES = [
   'about',
@@ -89,19 +90,21 @@ export const RESERVED_HANDLES = [
   'users',
   'webhook',
   'webhooks',
-  'whosfree',
   'www',
 ] as const;
 
-/** The substring no handle may contain, ignoring case. */
-export const RESERVED_HANDLE_SUBSTRING = 'whosfree';
+/**
+ * Substrings no handle may contain, ignoring case: the app's name and the
+ * spelling in its domain (D48), which also covers "getsynked".
+ */
+export const RESERVED_HANDLE_SUBSTRINGS = ['synkd', 'synked'] as const;
 
 const reserved = new Set<string>(RESERVED_HANDLES);
 
 /** True if `handle` is reserved (ignoring case). */
 export function isReservedHandle(handle: string): boolean {
   const key = handle.toLowerCase();
-  return reserved.has(key) || key.includes(RESERVED_HANDLE_SUBSTRING);
+  return reserved.has(key) || RESERVED_HANDLE_SUBSTRINGS.some((s) => key.includes(s));
 }
 
 /** What the user typed, trimmed and without one leading `@`. The database normalises the same way. */

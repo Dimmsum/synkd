@@ -3,7 +3,7 @@
 // FR-SOC-5, FR-SOC-6, FR-SOC-10, D1, D20, D27, D35, D41).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { TIER_VISIBLE_EVENT_FIELDS } from '@whosfree/shared';
+import { TIER_VISIBLE_EVENT_FIELDS } from '@synkd/shared';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
 import {

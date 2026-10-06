@@ -5,7 +5,7 @@ import {
   type EventDraft,
   type SchedulePeriod,
   type WeekPattern,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import { describe, expect, it } from 'vitest';
 import { eventTimesFromDraft, expandEvent, type Occurrence } from './recurrence';
 import { DAY_MS, HOUR_MS } from './time';

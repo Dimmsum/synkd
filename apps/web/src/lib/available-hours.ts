@@ -1,7 +1,7 @@
 // Available hours (FR-AVL-2, D24, WF-062): converting between what the database stores and what
 // the editors show. Pure, so it can be tested without a database.
 //
-// `availability_prefs.weekly` is `AvailableHours[]` from @whosfree/shared: at most one window per
+// `availability_prefs.weekly` is `AvailableHours[]` from @synkd/shared: at most one window per
 // day, no overnight windows (end after start), in mon..sun order. A day with no entry is not
 // available at all, and the availability engine shows it as Away all day. The editors show all
 // seven days with an on/off switch instead.
@@ -11,7 +11,7 @@ import {
   DAYS_OF_WEEK,
   DEFAULT_AVAILABLE_HOURS,
   type DayOfWeek,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import type { AvailableHoursDay } from '@/lib/types';
 
 /**

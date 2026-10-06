@@ -1,13 +1,8 @@
 import Link from 'next/link';
 import type { Route } from 'next';
-import { AvatarStack } from '@whosfree/ui/components/person-avatar';
-import {
-  formatClockRange,
-  formatDayLabel,
-  formatMonthDay,
-  weekdayShort,
-} from '@whosfree/ui/lib/time';
-import { cn } from '@whosfree/ui/lib/utils';
+import { AvatarStack } from '@synkd/ui/components/person-avatar';
+import { formatClockRange, formatDayLabel, formatMonthDay, weekdayShort } from '@synkd/ui/lib/time';
+import { cn } from '@synkd/ui/lib/utils';
 import { freeCounts, freeWindows, rankSlots } from '@/lib/overlap';
 import type { OverlapWeek as OverlapWeekData, Person } from '@/lib/types';
 import { blockPosition, TimeGrid, type GridColumn } from './time-grid';

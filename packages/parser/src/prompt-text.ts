@@ -1,7 +1,7 @@
 // The production extraction prompt (WF-028), embedded so the server bundle needs no file reads.
 // GENERATED from prompts/v3.md, which stays the source of truth for the eval harness (WF-022):
 // a test fails if the two differ. After editing the Markdown, regenerate this file (see
-// prompt.test.ts) and bump PARSE_PROMPT_VERSION / PARSER_VERSION in @whosfree/shared.
+// prompt.test.ts) and bump PARSE_PROMPT_VERSION / PARSER_VERSION in @synkd/shared.
 // prettier-ignore
 export const PROMPT_V3_TEXT = [
   "You extract a person's schedule from the attached images (photos, screenshots or the pages of a PDF of one timetable, class schedule, work roster or shift schedule) and return it as JSON.",

@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { INBOX_CHANGED_EVENT } from '@whosfree/shared';
+import { INBOX_CHANGED_EVENT } from '@synkd/shared';
 import { useRefetch, useUserSignals } from '@/components/realtime/use-user-signals';
 import { markPingsRead, replyToPing } from '@/lib/actions/pings';
 import {

@@ -5,7 +5,7 @@
 // database hands users.avatar_url to (block-aware functions, D43). See backend migration
 // 20261003200200_avatars_bucket.sql.
 
-import { AVATAR_BUCKET } from '@whosfree/shared';
+import { AVATAR_BUCKET } from '@synkd/shared';
 
 const NAME = /^[A-Za-z0-9_-]{22}\.webp$/;
 

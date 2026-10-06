@@ -1,5 +1,5 @@
 {
-  "name": "@whosfree/availability",
+  "name": "@synkd/availability",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,12 +12,12 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@whosfree/shared": "workspace:*"
+    "@synkd/shared": "workspace:*"
   },
   "devDependencies": {
     "@fast-check/vitest": "^0.5.0",
     "@vitest/coverage-v8": "^4.1.11",
-    "@whosfree/config": "workspace:*",
+    "@synkd/config": "workspace:*",
     "eslint": "^10.11.0",
     "fast-check": "^4.10.2",
     "typescript": "~6.0.3",

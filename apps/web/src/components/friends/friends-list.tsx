@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
-import { Input } from '@whosfree/ui/components/input';
-import { TIER_LABELS } from '@whosfree/shared';
-import { cn } from '@whosfree/ui/lib/utils';
+import { Input } from '@synkd/ui/components/input';
+import { TIER_LABELS } from '@synkd/shared';
+import { cn } from '@synkd/ui/lib/utils';
 import { ConnectionRow } from '@/components/app/connection-row';
 import type { Connection, GroupSummary } from '@/lib/types';
 

@@ -11,10 +11,10 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@whosfree/ui/components",
-    "utils": "@whosfree/ui/lib/utils",
-    "hooks": "@whosfree/ui/hooks",
-    "lib": "@whosfree/ui/lib",
-    "ui": "@whosfree/ui/components"
+    "components": "@synkd/ui/components",
+    "utils": "@synkd/ui/lib/utils",
+    "hooks": "@synkd/ui/hooks",
+    "lib": "@synkd/ui/lib",
+    "ui": "@synkd/ui/components"
   }
 }

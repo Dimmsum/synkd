@@ -9,7 +9,7 @@
 // (FR-VIS-5, D41).
 
 import { cache } from 'react';
-import { dateKey } from '@whosfree/ui/lib/time';
+import { dateKey } from '@synkd/ui/lib/time';
 import type {
   Connection,
   FriendDetail,

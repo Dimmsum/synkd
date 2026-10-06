@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { buttonVariants } from '@whosfree/ui/components/button';
+import { buttonVariants } from '@synkd/ui/components/button';
 import { OnboardingShell } from '@/components/onboarding/shell';
 import { PushPermission } from '@/components/push/push-permission';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
@@ -17,7 +17,7 @@ export default function OnboardingInstallPage() {
     <OnboardingShell
       step="install"
       title="Get pings straight away"
-      subtitle="Put Who's Free on your home screen, then turn on notifications."
+      subtitle="Put synkd on your home screen, then turn on notifications."
     >
       <InstallPrompt surface="onboarding" />
       {/* The install card above already carries the iPhone steps. */}

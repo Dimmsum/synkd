@@ -1,12 +1,12 @@
 // WF-064: now_for_viewer, the Now screen's data. Every connection comes back
-// already redacted to the viewer's tier, in the shape @whosfree/availability
+// already redacted to the viewer's tier, in the shape @synkd/availability
 // takes (PRD §8.5, FR-VIEW-1, FR-VIEW-2, FR-VIS-3, FR-VIS-4, FR-VIS-5,
 // FR-VIS-6, FR-SOC-6, D22, D35, D41, D44).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { statusAt } from '@whosfree/availability';
-import type { AvailabilityInput } from '@whosfree/availability';
-import { AvailableHours } from '@whosfree/shared';
+import { statusAt } from '@synkd/availability';
+import type { AvailabilityInput } from '@synkd/availability';
+import { AvailableHours } from '@synkd/shared';
 import type { NowConnection } from '../src/index';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
@@ -421,7 +421,7 @@ describe('schedule state', () => {
   });
 });
 
-describe('feeding @whosfree/availability', () => {
+describe('feeding @synkd/availability', () => {
   /** What the server passes to statusAt for one row. */
   function engineInput(row: NowConnection): AvailabilityInput {
     return {

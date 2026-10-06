@@ -4,7 +4,7 @@
 // parse again, and live updates while a parse runs.
 
 import { RotateCcw, Trash } from 'lucide-react';
-import { PARSE_JOB_CHANGED_EVENT } from '@whosfree/shared';
+import { PARSE_JOB_CHANGED_EVENT } from '@synkd/shared';
 import { ActionButton } from '@/components/app/action-buttons';
 import { useRefetch, useUserSignals } from '@/components/realtime/use-user-signals';
 import { deletePendingUpload, startParse } from '@/lib/actions/imports';

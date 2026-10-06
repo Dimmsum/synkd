@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
+import { Button } from '@synkd/ui/components/button';
 import { ActionButton } from '@/components/app/action-buttons';
 import { OfflineAvatar } from '@/components/offline-friends/offline-friend-row';
 import { deleteOfflineFriend } from '@/lib/actions/offline-friends';
@@ -39,8 +39,8 @@ export function OfflineCopyPrompt({
           You and {friendName} are friends. Did you add them before they joined?
         </h2>
         <p className="text-[13px] text-muted-foreground">
-          If one of these people not on whosfree is them, you can delete that copy and its schedule
-          so they don&apos;t show up twice. We never merge the two for you.
+          If one of these people not on synkd is them, you can delete that copy and its schedule so
+          they don&apos;t show up twice. We never merge the two for you.
         </p>
       </div>
       <ul className="flex flex-col gap-2">

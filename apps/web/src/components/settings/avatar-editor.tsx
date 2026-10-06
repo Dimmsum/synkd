@@ -2,10 +2,10 @@
 
 import { useRef, useState, useTransition } from 'react';
 import { Camera, Trash2 } from 'lucide-react';
-import { AVATAR_UPLOAD_MAX_BYTES, AVATAR_UPLOAD_TYPES } from '@whosfree/shared';
-import { Avatar, AvatarFallback, AvatarImage } from '@whosfree/ui/components/avatar';
-import { Button } from '@whosfree/ui/components/button';
-import { initialsOf, personColor } from '@whosfree/ui/components/person-avatar';
+import { AVATAR_UPLOAD_MAX_BYTES, AVATAR_UPLOAD_TYPES } from '@synkd/shared';
+import { Avatar, AvatarFallback, AvatarImage } from '@synkd/ui/components/avatar';
+import { Button } from '@synkd/ui/components/button';
+import { initialsOf, personColor } from '@synkd/ui/components/person-avatar';
 import { removeAvatar, uploadAvatar } from '@/lib/actions/avatar';
 import { shrinkForUpload } from '@/lib/avatars/shrink';
 

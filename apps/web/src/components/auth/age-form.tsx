@@ -2,9 +2,9 @@
 
 import { useActionState, useId, useState } from 'react';
 import { Lock } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
-import { Input } from '@whosfree/ui/components/input';
-import { Label } from '@whosfree/ui/components/label';
+import { Button } from '@synkd/ui/components/button';
+import { Input } from '@synkd/ui/components/input';
+import { Label } from '@synkd/ui/components/label';
 import { confirmAge } from '@/lib/actions/auth';
 
 const MONTHS = [

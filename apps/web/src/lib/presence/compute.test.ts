@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { statusAt } from '@whosfree/availability';
-import type { NowConnection, NowEvent } from '@whosfree/backend';
+import { statusAt } from '@synkd/availability';
+import type { NowConnection, NowEvent } from '@synkd/backend';
 import {
   computePresence,
   nowRowInput,

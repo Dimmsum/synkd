@@ -13,8 +13,8 @@ import type {
   InviteSummary as DbInviteSummary,
   MyGroup,
   PublicProfile,
-} from '@whosfree/backend';
-import type { GroupPermissions, Tier } from '@whosfree/shared';
+} from '@synkd/backend';
+import type { GroupPermissions, Tier } from '@synkd/shared';
 import { hueFor } from '@/lib/hue';
 import type {
   Connection,

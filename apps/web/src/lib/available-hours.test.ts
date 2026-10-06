@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DAYS_OF_WEEK } from '@whosfree/shared';
+import { DAYS_OF_WEEK } from '@synkd/shared';
 import type { AvailableHoursDay } from '@/lib/types';
 import { daysToWeekly, weeklyToDays } from './available-hours';
 

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { FilePen } from 'lucide-react';
-import { cn } from '@whosfree/ui/lib/utils';
+import { cn } from '@synkd/ui/lib/utils';
 import { textLinkClass } from '@/components/public/info-page';
 import { isLegalDraft, legalValue, type LegalDocumentId, type LegalValueKey } from '@/lib/legal';
 import { readLegalDocument } from '@/lib/legal-docs';

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { AvailableHours, type DayOfWeek } from '@whosfree/shared';
+import { AvailableHours, type DayOfWeek } from '@synkd/shared';
 import { CopyCheck } from 'lucide-react';
-import { Button } from '@whosfree/ui/components/button';
-import { Input } from '@whosfree/ui/components/input';
-import { Switch } from '@whosfree/ui/components/switch';
-import { cn } from '@whosfree/ui/lib/utils';
+import { Button } from '@synkd/ui/components/button';
+import { Input } from '@synkd/ui/components/input';
+import { Switch } from '@synkd/ui/components/switch';
+import { cn } from '@synkd/ui/lib/utils';
 import { saveAvailableHours } from '@/lib/actions/settings';
 import type { AvailableHoursDay } from '@/lib/types';
 

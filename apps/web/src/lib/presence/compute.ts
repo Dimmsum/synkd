@@ -1,11 +1,11 @@
 // Statuses for the Now screen (PRD §8.5 "Now screen", FR-VIEW-1, FR-AVL-4, D18, WF-064).
 //
 // The server reads each person's tier-redacted schedule (`now_for_viewer`, or the viewer's own
-// rows under RLS) and runs @whosfree/availability over it here. Pure: no I/O and no clock, so
+// rows under RLS) and runs @synkd/availability over it here. Pure: no I/O and no clock, so
 // every mapping is unit-tested. Rows are already redacted by Postgres (FR-VIS-5, D41); nothing
 // here widens what a row says, it only turns it into words-ready view models.
 
-import { DEFAULT_UNTIL_HORIZON_MS, timeline } from '@whosfree/availability';
+import { DEFAULT_UNTIL_HORIZON_MS, timeline } from '@synkd/availability';
 import type {
   AvailabilityInput,
   ScheduleEvent,
@@ -13,8 +13,8 @@ import type {
   StatusCause,
   StatusOverride,
   StatusSegment,
-} from '@whosfree/availability';
-import type { NowConnection } from '@whosfree/backend';
+} from '@synkd/availability';
+import type { NowConnection } from '@synkd/backend';
 import {
   AvailableHours,
   DateRange,
@@ -24,7 +24,7 @@ import {
   LocalDate,
   ManualStatus,
   type SchedulePeriod,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import type { ActiveOverride, Activity, Connection, Presence, PresenceChange } from '@/lib/types';
 import { hueFor } from '@/lib/hue';
 

@@ -1,11 +1,11 @@
 // Postgres errors from the social functions (WF-040 to WF-047) → what the user reads.
 //
-// Mapped by SQLSTATE first (`DB_ERROR` in @whosfree/backend). The group, invite and join
+// Mapped by SQLSTATE first (`DB_ERROR` in @synkd/backend). The group, invite and join
 // functions share a few generic SQLSTATEs (P0001 a group rule, P0002 not found, 22023 bad
 // argument), so for those the stable message from `GROUP_ERRORS` picks the wording. Anything
 // else is a bug or an outage: the caller logs only the code (NFR-SEC-11) and shows TRY_AGAIN.
 
-import { DB_ERROR, GROUP_ERRORS } from '@whosfree/backend';
+import { DB_ERROR, GROUP_ERRORS } from '@synkd/backend';
 
 /** The fields of a PostgrestError we read. */
 export interface DbError {

@@ -16,7 +16,7 @@ const { sendPushToUser, resetPushWarningsForTests, DEFAULT_PUSH_TTL_SECONDS } =
 
 const USER = '6f1c1a3e-9a52-4c1e-9f55-2b0d0c1e7a11';
 const VAPID: VapidConfig = {
-  subject: 'mailto:support@whosfree.app',
+  subject: 'mailto:support@getsynked.com',
   publicKey:
     'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U',
   privateKey: 'UUxI4O8-FbRouAevSmBQ6o18hgE4nSG3qwvJTfKc-ls',

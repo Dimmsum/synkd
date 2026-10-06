@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { buttonVariants } from '@whosfree/ui/components/button';
-import { Logo } from '@whosfree/ui/components/misc';
+import { buttonVariants } from '@synkd/ui/components/button';
+import { Logo } from '@synkd/ui/components/misc';
 
 // FR-WEB-8: point people somewhere useful.
 export default function NotFound() {

@@ -16,7 +16,7 @@ import 'server-only';
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@whosfree/backend';
+import type { Database } from '@synkd/backend';
 
 export type ServerSupabase = SupabaseClient<Database>;
 

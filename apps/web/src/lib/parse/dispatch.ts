@@ -5,7 +5,7 @@
 // is idempotent (a job that isn't due, or that another run holds, isn't claimed again), so running
 // it here after a failed POST, or nudging it again while someone is watching, never runs it twice.
 
-import type { ParseJobStatus } from '@whosfree/shared';
+import type { ParseJobStatus } from '@synkd/shared';
 
 export interface DispatchDeps {
   /** CRON_SECRET, or null when it isn't set. */

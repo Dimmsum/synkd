@@ -1,8 +1,8 @@
 import type { Route } from 'next';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
-import { buttonVariants } from '@whosfree/ui/components/button';
-import { PersonAvatar } from '@whosfree/ui/components/person-avatar';
+import { buttonVariants } from '@synkd/ui/components/button';
+import { PersonAvatar } from '@synkd/ui/components/person-avatar';
 import { PageHeader } from '@/components/app/page-header';
 import { AddFromLinkForm } from '@/components/friends/add-from-link';
 import { shortName } from '@/lib/names';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EventDraft } from '@whosfree/shared';
+import { EventDraft } from '@synkd/shared';
 import type { DraftEvent } from '@/lib/types';
 import {
   durationMinutes,

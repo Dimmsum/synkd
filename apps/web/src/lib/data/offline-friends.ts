@@ -1,4 +1,4 @@
-// The viewer's offline friends (D44, WF-127, WF-128): people who aren't on whosfree, added by
+// The viewer's offline friends (D44, WF-127, WF-128): people who aren't on synkd, added by
 // the viewer. Read as the signed-in user: `list_offline_friends` runs under RLS, and their
 // `sources`/`events` are read directly under RLS filtered by `offline_friend_id`, so only the
 // viewer's own rows ever come back (FR-SOC-15). These rows never feed the viewer's own status:
@@ -8,9 +8,9 @@
 
 import 'server-only';
 import { cache } from 'react';
-import { DEFAULT_UNTIL_HORIZON_MS } from '@whosfree/availability';
-import type { OfflineFriend } from '@whosfree/backend';
-import { addDays, zonedTimeToInstant } from '@whosfree/ui/lib/time';
+import { DEFAULT_UNTIL_HORIZON_MS } from '@synkd/availability';
+import type { OfflineFriend } from '@synkd/backend';
+import { addDays, zonedTimeToInstant } from '@synkd/ui/lib/time';
 import { getViewerRow, requestNow } from '@/lib/data/now';
 import {
   describeSources,
@@ -79,7 +79,7 @@ async function offlineScheduleRows(
 
 /**
  * Every offline friend with their status now and the changes ahead (WF-128), for the Now
- * screen's "Not on whosfree" section and the Friends page. Worked out at the same instant as
+ * screen's "Not on synkd" section and the Friends page. Worked out at the same instant as
  * everyone else's. Null when they can't be read (the screens then leave them out rather than
  * fail).
  */

@@ -2,7 +2,7 @@
 // editor, and the checks before `commit_schedule` is called. Pure, so the editor, the server
 // action and the tests share them. The database checks the same rules again (ScheduleCommit).
 
-import { eventTimesFromDraft } from '@whosfree/availability';
+import { eventTimesFromDraft } from '@synkd/availability';
 import {
   DEFAULT_TIMEZONE,
   jamaicanHolidayExceptions,
@@ -13,8 +13,8 @@ import {
   type DateRange,
   type EventDraft,
   type SchedulePeriod,
-} from '@whosfree/shared';
-import { addDays, formatMonthDay } from '@whosfree/ui/lib/time';
+} from '@synkd/shared';
+import { addDays, formatMonthDay } from '@synkd/ui/lib/time';
 
 /** The job id of manual entry (`/import/manual/review`, `/onboarding/review?job=manual`). */
 export const MANUAL_JOB_ID = 'manual';

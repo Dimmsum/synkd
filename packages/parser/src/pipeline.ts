@@ -20,7 +20,7 @@ import {
   type EventDraft,
   type ParseDraft,
   type ParseErrorCode,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import { parseSchedule, type ParseErrorKind, type ScheduleFile } from './openrouter';
 import { PRODUCTION_PROMPT, type Prompt } from './prompt-core';
 import { scrubDraft } from './scrub';

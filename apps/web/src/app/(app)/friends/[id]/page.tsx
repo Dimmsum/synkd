@@ -2,12 +2,12 @@ import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Ban, CalendarSearch, ChevronLeft, UserMinus } from 'lucide-react';
-import { TIER_LABELS } from '@whosfree/shared';
-import { buttonVariants } from '@whosfree/ui/components/button';
-import { GroupEmoji, PersonAvatar } from '@whosfree/ui/components/person-avatar';
-import { StaleWarning } from '@whosfree/ui/components/misc';
-import { StatusBadge } from '@whosfree/ui/components/status-badge';
-import { TierBadge } from '@whosfree/ui/components/tier-picker';
+import { TIER_LABELS } from '@synkd/shared';
+import { buttonVariants } from '@synkd/ui/components/button';
+import { GroupEmoji, PersonAvatar } from '@synkd/ui/components/person-avatar';
+import { StaleWarning } from '@synkd/ui/components/misc';
+import { StatusBadge } from '@synkd/ui/components/status-badge';
+import { TierBadge } from '@synkd/ui/components/tier-picker';
 import {
   addDays,
   formatClockRange,
@@ -15,7 +15,7 @@ import {
   formatDuration,
   formatMonthDay,
   startOfWeek,
-} from '@whosfree/ui/lib/time';
+} from '@synkd/ui/lib/time';
 import { Panel } from '@/components/app/page-header';
 import { PingButton } from '@/components/app/ping-dialog';
 import { ConnectionScheduleSection } from '@/components/calendar/connection-schedule';

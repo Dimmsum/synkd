@@ -1,11 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { TIER_LABELS, TIERS, type Tier } from '@whosfree/shared';
+import { TIER_LABELS, TIERS, type Tier } from '@synkd/shared';
 import { EyeOff } from 'lucide-react';
-import { cn } from '@whosfree/ui/lib/utils';
-import { TIER_DETAILS, tierFromString } from '@whosfree/ui/lib/tiers';
-import { RadioGroup, RadioGroupItem } from '@whosfree/ui/components/radio-group';
+import { cn } from '@synkd/ui/lib/utils';
+import { TIER_DETAILS, tierFromString } from '@synkd/ui/lib/tiers';
+import { RadioGroup, RadioGroupItem } from '@synkd/ui/components/radio-group';
 
 /**
  * Pick the tier a friend or group will see (FR-VIS-1). T1 is preselected by callers and

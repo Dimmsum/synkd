@@ -1,4 +1,4 @@
-// `@whosfree/parser/node`: the server side of schedule parsing (WF-027, D46). Node only: it pulls
+// `@synkd/parser/node`: the server side of schedule parsing (WF-027, D46). Node only: it pulls
 // in sharp and the PDFium/libheif WASM engines, so it must never be imported from a client
 // component. The Next.js server's parse route is its only caller.
 export {

@@ -5,7 +5,7 @@ import {
   type DayOfWeek,
   type SchedulePeriod,
   type WeekPattern,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import { describe, expect, it } from 'vitest';
 import { statusAt } from './engine';
 import { freeIntervals, userFreeIntervals, type UserAvailability } from './group';

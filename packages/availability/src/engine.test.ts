@@ -5,7 +5,7 @@ import {
   MANUAL_STATUS_TO_STATUS,
   type AvailableHours,
   type Status,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import { describe, expect, it } from 'vitest';
 import { busyIntervals, DEFAULT_UNTIL_HORIZON_MS, statusAt, timeline } from './engine';
 import { DAY_MS, HOUR_MS, MINUTE_MS, msFromLocalTime } from './time';

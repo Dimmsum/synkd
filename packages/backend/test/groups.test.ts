@@ -3,7 +3,7 @@
 // FR-SOC-10, FR-VIS-1, FR-VIS-2, D17, D20, D43).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { DEFAULT_GROUP_MAX_MEMBERS, DEFAULT_MEMBER_PERMISSIONS } from '@whosfree/shared';
+import { DEFAULT_GROUP_MAX_MEMBERS, DEFAULT_MEMBER_PERMISSIONS } from '@synkd/shared';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
 import {

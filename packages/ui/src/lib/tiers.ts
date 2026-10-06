@@ -1,4 +1,4 @@
-import { DEFAULT_TIER, TIER_LABELS, TIERS, type Tier } from '@whosfree/shared';
+import { DEFAULT_TIER, TIER_LABELS, TIERS, type Tier } from '@synkd/shared';
 
 /** What each tier reveals (PRD §6.7). Examples use the PRD's wording. */
 export const TIER_DETAILS: Record<Tier, { title: string; description: string; example: string }> = {

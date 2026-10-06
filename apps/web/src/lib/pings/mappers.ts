@@ -2,8 +2,8 @@
 // the database: nobody blocked either way appears (FR-SOC-6), and each row carries only the
 // viewer's own unread flag.
 
-import type { InboxPing } from '@whosfree/backend';
-import { PING_REPLIES, PING_TEMPLATES, type PingReply, type PingTemplate } from '@whosfree/shared';
+import type { InboxPing } from '@synkd/backend';
+import { PING_REPLIES, PING_TEMPLATES, type PingReply, type PingTemplate } from '@synkd/shared';
 import { toPerson } from '@/lib/social/mappers';
 import type { Ping } from '@/lib/types';
 

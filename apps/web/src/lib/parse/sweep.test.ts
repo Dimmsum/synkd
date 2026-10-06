@@ -27,12 +27,12 @@ describe('internal route auth (CRON_SECRET)', () => {
   });
 
   it('reaches itself on INTERNAL_APP_URL, else the public URL', () => {
-    expect(internalBaseUrl({ NEXT_PUBLIC_APP_URL: 'https://whosfree.app/' })).toBe(
-      'https://whosfree.app',
+    expect(internalBaseUrl({ NEXT_PUBLIC_APP_URL: 'https://getsynked.com/' })).toBe(
+      'https://getsynked.com',
     );
     expect(
       internalBaseUrl({
-        NEXT_PUBLIC_APP_URL: 'https://whosfree.app',
+        NEXT_PUBLIC_APP_URL: 'https://getsynked.com',
         INTERNAL_APP_URL: 'http://127.0.0.1:3000',
       }),
     ).toBe('http://127.0.0.1:3000');

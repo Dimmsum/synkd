@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_DISPLAY_NAME } from '@whosfree/shared';
+import { DEFAULT_DISPLAY_NAME } from '@synkd/shared';
 import { shortName } from './names';
 
 describe('shortName (WF-136)', () => {

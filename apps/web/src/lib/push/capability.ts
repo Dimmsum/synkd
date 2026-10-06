@@ -2,7 +2,7 @@
 // R5). Pure functions over a snapshot of the browser, so every case is unit-tested; the client
 // component takes the snapshot (readPushEnvironment) and shows the matching explanation.
 
-import { PUSH_DEVICE_LABEL_MAX_LENGTH } from '@whosfree/shared';
+import { PUSH_DEVICE_LABEL_MAX_LENGTH } from '@synkd/shared';
 
 /**
  * - supported: we can ask for permission (after the explanation, never on load: FR-PWA-4).

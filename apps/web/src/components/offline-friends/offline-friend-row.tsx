@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import { Upload } from 'lucide-react';
-import { buttonVariants } from '@whosfree/ui/components/button';
-import { PersonAvatar } from '@whosfree/ui/components/person-avatar';
-import { StatusBadge, StatusMarker, type StatusTone } from '@whosfree/ui/components/status-badge';
-import { cn } from '@whosfree/ui/lib/utils';
+import { buttonVariants } from '@synkd/ui/components/button';
+import { PersonAvatar } from '@synkd/ui/components/person-avatar';
+import { StatusBadge, StatusMarker, type StatusTone } from '@synkd/ui/components/status-badge';
+import { cn } from '@synkd/ui/lib/utils';
 import { hueFor } from '@/lib/hue';
 import { describeOfflineStatus } from '@/lib/offline-friends';
 import type { OfflineFriendView } from '@/lib/types';
@@ -58,8 +58,8 @@ export function OfflineAvatar({
   );
 }
 
-/** The small "Not on whosfree" label, so they're never mistaken for an account (FR-SOC-17). */
-export function NotOnWhosfreeTag({ className }: { className?: string }) {
+/** The small "Not on synkd" label, so they're never mistaken for an account (FR-SOC-17). */
+export function NotOnSynkdTag({ className }: { className?: string }) {
   return (
     <span
       className={cn(
@@ -67,14 +67,14 @@ export function NotOnWhosfreeTag({ className }: { className?: string }) {
         className,
       )}
     >
-      Not on whosfree
+      Not on synkd
     </span>
   );
 }
 
 /**
  * One offline friend with their status and "until X" (WF-128). The nickname links to their
- * page. There's no Ping button: they aren't on whosfree (FR-SOC-17). Without a schedule, the
+ * page. There's no Ping button: they aren't on synkd (FR-SOC-17). Without a schedule, the
  * action is to add one.
  */
 export function OfflineFriendRow({
@@ -87,7 +87,7 @@ export function OfflineFriendRow({
   friend: OfflineFriendView;
   now: string;
   timeZone: string;
-  /** Show "Not on whosfree" next to the nickname. */
+  /** Show "Not on synkd" next to the nickname. */
   showTag?: boolean;
   className?: string;
 }) {
@@ -108,7 +108,7 @@ export function OfflineFriendRow({
           >
             {friend.nickname}
           </Link>
-          {showTag ? <NotOnWhosfreeTag /> : null}
+          {showTag ? <NotOnSynkdTag /> : null}
         </div>
         <StatusBadge tone={s.tone}>{s.label}</StatusBadge>
         {s.detail ? <span className="text-xs text-muted-foreground">{s.detail}</span> : null}

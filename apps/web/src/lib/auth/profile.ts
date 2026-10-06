@@ -1,6 +1,6 @@
 // The first-sign-in profile (WF-004): what `ensure_current_user` gets from the Clerk user.
 
-import { DEFAULT_DISPLAY_NAME, DEFAULT_TIMEZONE, DISPLAY_NAME_MAX_LENGTH } from '@whosfree/shared';
+import { DEFAULT_DISPLAY_NAME, DEFAULT_TIMEZONE, DISPLAY_NAME_MAX_LENGTH } from '@synkd/shared';
 
 /**
  * Cookie holding the browser's IANA timezone, set on the sign-in/sign-up pages so the users

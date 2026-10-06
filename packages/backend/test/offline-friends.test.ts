@@ -6,7 +6,7 @@
 // NFR-COMP-9, R14, D44).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { MAX_OFFLINE_FRIENDS, OFFLINE_FRIEND_NICKNAME_MAX_LENGTH } from '@whosfree/shared';
+import { MAX_OFFLINE_FRIENDS, OFFLINE_FRIEND_NICKNAME_MAX_LENGTH } from '@synkd/shared';
 import { OFFLINE_FRIEND_ERRORS } from '../src/index';
 import { createTestDb } from './harness/db';
 import type { NowConnection } from '../src/index';
@@ -160,7 +160,7 @@ describe('create_offline_friend (FR-SOC-14, FR-SOC-16)', () => {
     },
   );
 
-  it('checks the nickname like OfflineFriendNickname in @whosfree/shared', async () => {
+  it('checks the nickname like OfflineFriendNickname in @synkd/shared', async () => {
     const max = OFFLINE_FRIEND_NICKNAME_MAX_LENGTH;
     for (const bad of ['', '   ', null, 'a'.repeat(max + 1)])
       await expectPgError(

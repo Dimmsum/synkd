@@ -1,8 +1,8 @@
-import { PersonAvatar, personColor } from '@whosfree/ui/components/person-avatar';
-import { STATUS_TONES, StatusIcon, type StatusTone } from '@whosfree/ui/components/status-badge';
-import { TimeRange } from '@whosfree/ui/components/misc';
-import { formatClockRange } from '@whosfree/ui/lib/time';
-import { cn } from '@whosfree/ui/lib/utils';
+import { PersonAvatar, personColor } from '@synkd/ui/components/person-avatar';
+import { STATUS_TONES, StatusIcon, type StatusTone } from '@synkd/ui/components/status-badge';
+import { TimeRange } from '@synkd/ui/components/misc';
+import { formatClockRange } from '@synkd/ui/lib/time';
+import { cn } from '@synkd/ui/lib/utils';
 import { freeWindows } from '@/lib/overlap';
 import { activityLabel } from '@/lib/status';
 import type { MemberBusyDay, Person, VisibleBlock } from '@/lib/types';

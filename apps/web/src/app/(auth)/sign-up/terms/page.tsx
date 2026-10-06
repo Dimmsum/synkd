@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { EyeOff, MapPinOff, Trash } from 'lucide-react';
-import type { AccountStatus } from '@whosfree/backend';
+import type { AccountStatus } from '@synkd/backend';
 import { TermsForm } from '@/components/auth/terms-form';
 import { SignUpSteps } from '@/components/auth/sign-up-steps';
 import { createServerSupabase } from '@/lib/supabase/server';
@@ -32,7 +32,7 @@ export default async function TermsPage() {
         </h1>
         <p className="text-body-foreground">
           {renewal
-            ? 'Please read and accept the new version to keep using Who’s Free. Here’s how we treat your data.'
+            ? 'Please read and accept the new version to keep using synkd. Here’s how we treat your data.'
             : 'Before you start, here’s how we treat your data.'}
         </p>
       </div>

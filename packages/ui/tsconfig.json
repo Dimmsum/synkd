@@ -1,10 +1,10 @@
 {
-  "extends": "@whosfree/config/tsconfig/base.json",
+  "extends": "@synkd/config/tsconfig/base.json",
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "paths": {
-      "@whosfree/ui/*": ["./src/*"]
+      "@synkd/ui/*": ["./src/*"]
     }
   },
   "include": ["src", "vitest.config.ts"]

@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CircleX, EyeOff, ShieldCheck } from 'lucide-react';
-import { TIERS } from '@whosfree/shared';
-import { buttonVariants } from '@whosfree/ui/components/button';
-import { GroupEmoji } from '@whosfree/ui/components/person-avatar';
-import { TIER_DETAILS } from '@whosfree/ui/lib/tiers';
+import { TIERS } from '@synkd/shared';
+import { buttonVariants } from '@synkd/ui/components/button';
+import { GroupEmoji } from '@synkd/ui/components/person-avatar';
+import { TIER_DETAILS } from '@synkd/ui/lib/tiers';
 import { JoinGroupForm } from '@/components/onboarding/join-group';
 import { OnboardingShell } from '@/components/onboarding/shell';
 import { advanceOnboarding } from '@/lib/actions/onboarding';

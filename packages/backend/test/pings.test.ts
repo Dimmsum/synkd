@@ -11,7 +11,7 @@ import {
   PING_REPLIES,
   PING_TEMPLATES,
   userChannel,
-} from '@whosfree/shared';
+} from '@synkd/shared';
 import { DB_ERROR, PING_ERRORS } from '../src/index';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';

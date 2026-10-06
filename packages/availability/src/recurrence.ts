@@ -8,7 +8,7 @@
 // of using the `rrule` package: we only need a small weekly subset, and `rrule`'s timezone
 // handling ("fake UTC" dates, TZID quirks) is exactly where DST bugs come from.
 
-import type { EventDraft, SchedulePeriod } from '@whosfree/shared';
+import type { EventDraft, SchedulePeriod } from '@synkd/shared';
 import { overlaps, type Interval } from './interval';
 import { formatUtcDateTime, parseRRule, WEEKDAY_CODES, type RecurrenceRule } from './rrule';
 import {

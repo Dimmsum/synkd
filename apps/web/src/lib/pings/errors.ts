@@ -1,9 +1,9 @@
 // Database errors from the ping functions (WF-092, WF-093) → what the user reads. Pure. Mapped
-// by SQLSTATE (`DB_ERROR` in @whosfree/backend), and by message for 22023 (`PING_ERRORS`).
+// by SQLSTATE (`DB_ERROR` in @synkd/backend), and by message for 22023 (`PING_ERRORS`).
 // Messages never repeat what anyone typed (NFR-SEC-11), and "not connected" and "blocked" read
 // the same, so nobody learns they were blocked (FR-SOC-6).
 
-import { DB_ERROR, PING_ERRORS } from '@whosfree/backend';
+import { DB_ERROR, PING_ERRORS } from '@synkd/backend';
 import type { DbError } from '@/lib/social/errors';
 
 export interface PingErrorInfo {

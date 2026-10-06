@@ -3,7 +3,7 @@
 // viewer's own schedule from their offline friends' (D44), so every read here filters
 // `offline_friend_id is null`. Expansion and wording live in lib/my-schedule.ts.
 
-import { addDays, zonedTimeToInstant } from '@whosfree/ui/lib/time';
+import { addDays, zonedTimeToInstant } from '@synkd/ui/lib/time';
 import type { MyEvent, ScheduleSource } from '@/lib/types';
 import {
   describeSources,
@@ -31,7 +31,7 @@ async function ownSources(supabase: ServerSupabase): Promise<StoredSource[]> {
 
 /**
  * The viewer's combined schedule for the given consecutive dates (FR-VIEW-5): every busy
- * occurrence of their own events, expanded with @whosfree/availability in their timezone.
+ * occurrence of their own events, expanded with @synkd/availability in their timezone.
  * TODO(WF-080): Google Calendar events arrive here once synced; TODO(WF-065) shares the
  * expansion with the friend and group views.
  */

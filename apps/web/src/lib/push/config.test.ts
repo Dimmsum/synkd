@@ -13,17 +13,17 @@ describe('readVapidConfig', () => {
       readVapidConfig({
         NEXT_PUBLIC_VAPID_PUBLIC_KEY: PUBLIC,
         VAPID_PRIVATE_KEY: ` ${PRIVATE} `,
-        VAPID_SUBJECT: 'mailto:support@whosfree.app',
+        VAPID_SUBJECT: 'mailto:support@getsynked.com',
       }),
     ).toEqual({
       ok: true,
-      config: { publicKey: PUBLIC, privateKey: PRIVATE, subject: 'mailto:support@whosfree.app' },
+      config: { publicKey: PUBLIC, privateKey: PRIVATE, subject: 'mailto:support@getsynked.com' },
     });
     expect(
       readVapidConfig({
         NEXT_PUBLIC_VAPID_PUBLIC_KEY: PUBLIC,
         VAPID_PRIVATE_KEY: PRIVATE,
-        VAPID_SUBJECT: 'https://whosfree.app',
+        VAPID_SUBJECT: 'https://getsynked.com',
       }).ok,
     ).toBe(true);
   });
@@ -58,7 +58,7 @@ describe('readVapidConfig', () => {
       ],
     });
     expect(JSON.stringify(result)).not.toContain(secret);
-    for (const subject of ['support@whosfree.app', 'http://whosfree.app', 'mailto:nobody'])
+    for (const subject of ['support@getsynked.com', 'http://getsynked.com', 'mailto:nobody'])
       expect(
         readVapidConfig({
           NEXT_PUBLIC_VAPID_PUBLIC_KEY: PUBLIC,

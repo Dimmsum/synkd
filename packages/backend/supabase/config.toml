@@ -2,7 +2,7 @@
 # https://supabase.com/docs/guides/local-development/cli/config
 # A string used to distinguish different Supabase projects on the same host. Defaults to the
 # working directory name when running `supabase init`.
-project_id = "whosfree"
+project_id = "synkd"
 
 [api]
 enabled = true
@@ -369,7 +369,7 @@ enabled = false
 # user_pool_region = "us-east-1"
 
 # Use Clerk as a third-party provider alongside Supabase Auth.
-# whosfree signs users in with Clerk (D19, D41): Supabase trusts Clerk session tokens, and RLS
+# synkd signs users in with Clerk (D19, D41): Supabase trusts Clerk session tokens, and RLS
 # reads the Clerk user ID from the `sub` claim via public.current_user_id().
 # Disabled until the owner creates the Clerk application and the Supabase projects (WF-003/WF-004):
 # activate the Supabase integration in Clerk (https://clerk.com/setup/supabase), which adds the

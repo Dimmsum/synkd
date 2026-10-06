@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { GroupEmoji, PersonAvatar } from '@whosfree/ui/components/person-avatar';
-import { Eyebrow, Logo, LogoMark } from '@whosfree/ui/components/misc';
+import { GroupEmoji, PersonAvatar } from '@synkd/ui/components/person-avatar';
+import { Eyebrow, Logo, LogoMark } from '@synkd/ui/components/misc';
 import { MobileNav, SidebarNav } from '@/components/app/nav';
 import { StatusChip } from '@/components/app/status-chip';
 import { InstallBanner } from '@/components/pwa/install-prompt';
@@ -47,7 +47,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </a>
 
       <aside className="sticky top-0 hidden h-dvh w-[232px] shrink-0 flex-col gap-6 overflow-y-auto border-r bg-card px-4 pt-5 pb-4 md:flex">
-        <Link href="/now" className="rounded-lg px-1.5" aria-label="Who's Free, go to Now">
+        <Link href="/now" className="rounded-lg px-1.5" aria-label="synkd, go to Now">
           <Logo />
         </Link>
         <SidebarNav unread={unread} />
@@ -90,7 +90,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <MobileNav unread={unread} groups={groups} />
           <Link
             href="/now"
-            aria-label="Who's Free, go to Now"
+            aria-label="synkd, go to Now"
             className="flex size-11 items-center justify-center rounded-lg"
           >
             <LogoMark />

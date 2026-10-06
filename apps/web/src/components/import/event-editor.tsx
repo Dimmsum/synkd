@@ -8,8 +8,8 @@ import {
   EventDraft,
   type DayOfWeek,
   type EventCategory,
-} from '@whosfree/shared';
-import { Button } from '@whosfree/ui/components/button';
+} from '@synkd/shared';
+import { Button } from '@synkd/ui/components/button';
 import {
   Dialog,
   DialogContent,
@@ -17,11 +17,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@whosfree/ui/components/dialog';
-import { Input } from '@whosfree/ui/components/input';
-import { Label } from '@whosfree/ui/components/label';
-import { formatMonthDay } from '@whosfree/ui/lib/time';
-import { cn } from '@whosfree/ui/lib/utils';
+} from '@synkd/ui/components/dialog';
+import { Input } from '@synkd/ui/components/input';
+import { Label } from '@synkd/ui/components/label';
+import { formatMonthDay } from '@synkd/ui/lib/time';
+import { cn } from '@synkd/ui/lib/utils';
 import { formatWeekList, parseWeekList } from '@/lib/draft-edit';
 import { CATEGORY_LABELS } from '@/lib/status';
 import type { DraftEvent } from '@/lib/types';

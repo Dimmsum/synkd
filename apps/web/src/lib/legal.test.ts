@@ -3,7 +3,7 @@ import path from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_GROUP_MAX_MEMBERS } from '@whosfree/shared';
+import { DEFAULT_GROUP_MAX_MEMBERS } from '@synkd/shared';
 import { LegalDocument } from '@/components/public/legal-document';
 import {
   LEGAL_DOCUMENTS,

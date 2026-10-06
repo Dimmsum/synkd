@@ -2,7 +2,7 @@
 // sign-in, from the Clerk ID in the token only (FR-AUTH-2, FR-AUTH-3, D41).
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { DEFAULT_TIMEZONE, Handle } from '@whosfree/shared';
+import { DEFAULT_TIMEZONE, Handle } from '@synkd/shared';
 import { createTestDb } from './harness/db';
 import type { TestDb } from './harness/db';
 import { addUser } from './harness/seed';
@@ -206,8 +206,11 @@ describe('generated handles', () => {
     ['  José Núñez-García ', 'josenunezgarcia'],
     ['Zoë O’Brien', 'zoeobrien'],
     ['2Pac Shakur', 'pacshakur'],
-    ['Whos Free Fan', 'fan'],
-    ['whoswhosfreefree', 'user'],
+    ['Synkd Fan', 'fan'],
+    ['Get Synked', 'get'],
+    ['synsynkdkd', 'user'],
+    ['synsynkedked', 'user'],
+    ['Whos Free', 'whosfree'],
     ['李小龙', 'user'],
     ['😀', 'user'],
     [null, 'user'],

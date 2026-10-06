@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { NowConnection, NowEvent, NowOverride } from '@whosfree/backend';
+import type { NowConnection, NowEvent, NowOverride } from '@synkd/backend';
 import { nowRowInput } from './compute';
 import { blocksOnDates } from './schedule';
 

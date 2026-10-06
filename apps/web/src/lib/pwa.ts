@@ -39,7 +39,7 @@ export const pwaMetadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "Who's Free",
+    title: 'synkd',
     statusBarStyle: 'default',
     startupImage: SPLASH_SCREENS,
   },

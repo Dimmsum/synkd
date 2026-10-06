@@ -1,16 +1,16 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { LocalDate } from '@whosfree/shared';
-import { buttonVariants } from '@whosfree/ui/components/button';
+import { LocalDate } from '@synkd/shared';
+import { buttonVariants } from '@synkd/ui/components/button';
 import {
   addDays,
   formatWeekRange,
   startOfWeek,
   weekdayLong,
   formatMonthDay,
-} from '@whosfree/ui/lib/time';
-import { cn } from '@whosfree/ui/lib/utils';
+} from '@synkd/ui/lib/time';
+import { cn } from '@synkd/ui/lib/utils';
 
 export type CalendarView = 'day' | 'week';
 

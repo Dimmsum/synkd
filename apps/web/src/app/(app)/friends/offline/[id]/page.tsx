@@ -2,20 +2,20 @@ import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { CalendarPlus, ChevronLeft, FileText, Lock, PenLine, Upload } from 'lucide-react';
-import { buttonVariants } from '@whosfree/ui/components/button';
-import { EmptyState, SourceBadge } from '@whosfree/ui/components/misc';
-import { StatusBadge } from '@whosfree/ui/components/status-badge';
-import { addDays, startOfWeek } from '@whosfree/ui/lib/time';
+import { buttonVariants } from '@synkd/ui/components/button';
+import { EmptyState, SourceBadge } from '@synkd/ui/components/misc';
+import { StatusBadge } from '@synkd/ui/components/status-badge';
+import { addDays, startOfWeek } from '@synkd/ui/lib/time';
 import { Panel } from '@/components/app/page-header';
 import { ScheduleGrid } from '@/components/calendar/schedule-grid';
 import { CalendarToolbar, readCalendarParams } from '@/components/calendar/toolbar';
 import {
   DeleteOfflineFriendButton,
-  InviteToWhosfreeButton,
+  InviteToSynkdButton,
 } from '@/components/offline-friends/offline-friend-actions';
 import { EditOfflineFriendButton } from '@/components/offline-friends/offline-friend-form';
 import {
-  NotOnWhosfreeTag,
+  NotOnSynkdTag,
   OfflineAvatar,
   offlineManualHref,
   offlineUploadHref,
@@ -35,12 +35,12 @@ export async function generateMetadata({
   params,
 }: PageProps<'/friends/offline/[id]'>): Promise<Metadata> {
   const row = await getOfflineFriendRow((await params).id);
-  return { title: row?.nickname ?? 'Not on whosfree', robots: { index: false } };
+  return { title: row?.nickname ?? 'Not on synkd', robots: { index: false } };
 }
 
 // An offline friend's page (FR-SOC-17, FR-SOC-18, J8, WF-128): their status now, their day and
 // week, and everything the viewer can do about them: edit, re-upload or type in their schedule,
-// delete, and invite them to whosfree (they can't be pinged). Only the viewer who added them can
+// delete, and invite them to synkd (they can't be pinged). Only the viewer who added them can
 // open it: anyone else's id is "not found" (FR-SOC-15). Finding a time with them waits for the
 // slot finder (WF-098).
 export default async function OfflineFriendPage({
@@ -78,7 +78,7 @@ export default async function OfflineFriendPage({
             <OfflineAvatar friend={friend} size="xl" status={s.tone} />
             <div className="flex flex-col items-center gap-1">
               <h1 className="text-xl font-bold tracking-[-0.02em]">{name}</h1>
-              <NotOnWhosfreeTag />
+              <NotOnSynkdTag />
               <StatusBadge tone={s.tone} className="mt-1 text-sm">
                 {s.label}
               </StatusBadge>
@@ -89,7 +89,7 @@ export default async function OfflineFriendPage({
               Only you can see {name}. Free time counts {OFFLINE_FRIEND_HOURS_LABEL} each day.
             </p>
             <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-start">
-              <InviteToWhosfreeButton link={friendLinkUrl(viewer.id, appUrl())} nickname={name} />
+              <InviteToSynkdButton link={friendLinkUrl(viewer.id, appUrl())} nickname={name} />
               <EditOfflineFriendButton
                 friend={{ id: friend.id, nickname: name, emoji: friend.emoji }}
               />

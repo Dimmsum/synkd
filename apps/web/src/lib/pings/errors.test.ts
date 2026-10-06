@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DB_ERROR, PING_ERRORS } from '@whosfree/backend';
+import { DB_ERROR, PING_ERRORS } from '@synkd/backend';
 import { pingError } from './errors';
 
 describe('pingError', () => {

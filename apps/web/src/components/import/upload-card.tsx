@@ -18,9 +18,9 @@ import {
   SCHEDULE_FILES_BUCKET,
   type ParseErrorCode,
   type ParseJobStatus,
-} from '@whosfree/shared';
-import { Button, buttonVariants } from '@whosfree/ui/components/button';
-import { cn } from '@whosfree/ui/lib/utils';
+} from '@synkd/shared';
+import { Button, buttonVariants } from '@synkd/ui/components/button';
+import { cn } from '@synkd/ui/lib/utils';
 import { useUserSignals } from '@/components/realtime/use-user-signals';
 import { deletePendingUpload, getParseState, startParse, startUpload } from '@/lib/actions/imports';
 import { canRetry, isRejectedFile, parseFailureMessage } from '@/lib/parse-messages';

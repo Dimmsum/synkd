@@ -1,8 +1,8 @@
 'use client';
 
 import './globals.css';
-import { Button, buttonVariants } from '@whosfree/ui/components/button';
-import { Logo } from '@whosfree/ui/components/misc';
+import { Button, buttonVariants } from '@synkd/ui/components/button';
+import { Logo } from '@synkd/ui/components/misc';
 
 // FR-WEB-8: errors in the root layout itself (e.g. auth failing to load), which error.tsx can't
 // catch. It replaces the whole document, so it brings its own <html>, <body> and styles.
@@ -16,7 +16,7 @@ export default function GlobalError({
   return (
     <html lang="en-JM">
       <body>
-        <title>Something went wrong · Who&apos;s Free</title>
+        <title>Something went wrong · synkd</title>
         <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-4 text-center">
           <Logo />
           <div className="flex flex-col gap-2">
