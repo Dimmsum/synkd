@@ -96,17 +96,39 @@ Rule: the order is **A → Gate → B → stretch**. An issue never depends on o
 
 ## 2. Ready to start
 
-These have no unfinished dependencies:
+These have no unfinished dependencies, in milestone order:
 
-| ID | Title | Category |
-|---|---|---|
-| [WF-020](#wf-020--collect-20-real-schedule-samples-eval-set) | Collect 20+ real schedule samples (eval set) | `test` |
-| [WF-119](#wf-119--jamaica-dpa-legal-review-and-oic-registration) | Jamaica DPA: legal review and OIC registration | `compliance` |
-| [WF-122](#wf-122--user-research-interviews) | User research interviews | `research` |
-| [WF-070](#wf-070--short-gap-rule) | Short-gap rule (stretch) | `feature` |
-| [WF-050](#wf-050--pause-sharing) | Pause sharing (stretch; the column and redaction already exist) | `feature` |
+| ID | Title | Milestone | Category |
+|---|---|---|---|
+| [WF-020](#wf-020--collect-20-real-schedule-samples-eval-set) | Collect 20+ real schedule samples (eval set) | A | `test` |
+| [WF-023](#wf-023--spike-compare-vision-models-via-openrouter) | Spike: compare vision models via OpenRouter | A | `spike` |
+| [WF-119](#wf-119--jamaica-dpa-legal-review-and-oic-registration) | Jamaica DPA: legal review and OIC registration | Gate | `compliance` |
+| [WF-094](#wf-094--ping-rate-limits-mute-quiet-hours) | Ping rate limits, mute, quiet hours | Gate | `security` |
+| [WF-095](#wf-095--report-and-block-plus-moderation-queue) | Report and block, plus moderation queue | Gate | `security` |
+| [WF-120](#wf-120--security-review-authorisation-and-redaction-tests) | Security review (authorisation and redaction tests) | Gate | `security` |
+| [WF-098](#wf-098--group-slot-finder) | Group slot finder | B | `feature` |
+| [WF-033](#wf-033--re-upload-and-schedule-replacement) | Re-upload and schedule replacement | B | `feature` |
+| [WF-039](#wf-039--run-parser-evals-in-ci) | Run parser evals in CI | B | `test` |
+| [WF-048](#wf-048--who-can-see-me-page-and-overlap-hint) | "Who can see me" page and overlap hint | B | `feature` |
+| [WF-069](#wf-069--empty-states-and-nudge-to-add-schedule) | Empty states and "nudge to add schedule" | B | `feature` |
+| [WF-110](#wf-110--offline-cache-of-last-known-now) | Offline cache of last-known Now | B | `feature` |
+| [WF-113](#wf-113--export-my-data) | Export my data | B | `compliance` |
+| [WF-115](#wf-115--notification-settings) | Notification settings | B | `feature` |
+| [WF-122](#wf-122--user-research-interviews) | User research interviews | B | `research` |
+| [WF-038](#wf-038--camera-capture-on-upload) | Camera capture on upload | stretch | `feature` |
+| [WF-046](#wf-046--whatsapp-share-and-link-previews) | WhatsApp share and link previews | stretch | `feature` |
+| [WF-050](#wf-050--pause-sharing) | Pause sharing (the column and redaction already exist) | stretch | `feature` |
+| [WF-066](#wf-066--group-timeline-view) | Group timeline view | stretch | `feature` |
+| [WF-067](#wf-067--stale-data-warning) | Stale-data warning | stretch | `feature` |
+| [WF-070](#wf-070--short-gap-rule) | Short-gap rule | stretch | `feature` |
+| [WF-096](#wf-096--group-ping) | Group ping | stretch | `feature` |
+| [WF-097](#wf-097--ping-expiry) | Ping expiry | stretch | `feature` |
+| [WF-112](#wf-112--app-update-flow) | App update flow | stretch | `feature` |
+| [WF-118](#wf-118--admin-view-and-feature-flags) | Admin view and feature flags | stretch | `feature` |
+| [WF-123](#wf-123--help--faq-pages) | Help / FAQ pages | stretch | `docs` |
+| [WF-124](#wf-124--schedule-expiry-reminder) | Schedule-expiry reminder | stretch | `feature` |
 
-**Milestone A code is merged** (2026-09-30). What's `in-review` is waiting for the owner's migrations, environment variables and a real run on a deploy and on phones: WF-004, 005, 006, 015, 026–032, 035, 040, 042–045, 047, 062, 063, 064, 065, 068, 090–093, 111, 127, 130–137. Still `in-progress`: WF-010 (legal values), WF-011 (named synkd; domain and checks left), WF-013 (OpenRouter settings), WF-037 (event and ping purges), WF-128 (slot-finder part, waits for WF-098). **Waiting on the owner:** WF-002 (hosting: Railway for now, Vercel is the PRD target), WF-003 (apply migrations), WF-006 (branch protection).
+**Milestone A code is merged** (2026-09-30). On 2026-10-05 the owner closed every `in-review` issue (WF-004, 005, 006, 015, 026–032, 035, 040, 042–045, 047, 062–065, 068, 090–093, 111, 127, 130–137) as `done`. Criteria that hadn't been checked on a deploy or a phone at that point are marked *(not verified when closed on 2026-10-05)* in each issue. Still `in-progress`: WF-010 (legal values), WF-011 (named synkd; domain and checks left), WF-013 (OpenRouter settings), WF-037 (event and ping purges), WF-128 (slot-finder part, waits for WF-098). **Waiting on the owner:** WF-002 (hosting: Railway for now, Vercel is the PRD target), WF-003 (apply migrations), WF-006 (branch protection).
 
 > WF-020 (collecting samples) still gates WF-023's model choice and WF-028's accuracy target. The parser runs on provisional models until then.
 
@@ -189,9 +211,9 @@ Everything else at P0, which adds:
 | WF-001 | Initialise repo and Turborepo monorepo | chore | repo | P0 | 0 | A | done | — |
 | WF-002 | Scaffold Next.js web app | infra | web | P0 | 0 | A | blocked | 001 |
 | WF-003 | Set up Supabase backend package | infra | backend | P0 | 0 | A | blocked | 001 |
-| WF-004 | Clerk auth with Google + Supabase integration | feature | backend, web | P0 | 0 | A | in-review | 002, 003 |
-| WF-005 | Age gate (date of birth at sign-up) | feature | web, backend | P0 | 0 | A | in-review | 004 |
-| WF-006 | CI pipeline (lint, typecheck, test) | infra | repo | P0 | 0 | A | in-review | 001 |
+| WF-004 | Clerk auth with Google + Supabase integration | feature | backend, web | P0 | 0 | A | done | 002, 003 |
+| WF-005 | Age gate (date of birth at sign-up) | feature | web, backend | P0 | 0 | A | done | 004 |
+| WF-006 | CI pipeline (lint, typecheck, test) | infra | repo | P0 | 0 | A | done | 001 |
 | WF-007 | Environments and preview deploys | infra | ops | P0 | 0 | B | todo | 002, 003 |
 | WF-008 | Sentry and PostHog | infra | ops | P0 | 0 | B | todo | 002 |
 | WF-009 | Landing page | feature | web | P0 | 0 | B | todo | 002 |
@@ -200,47 +222,47 @@ Everything else at P0, which adds:
 | WF-012 | Google Cloud project and OAuth consent screen | chore | gcal | P0 | 0 | B | todo | 010, 011 |
 | WF-013 | Set up OpenRouter account and data policy | chore | parser | P0 | 0 | A | in-progress | — |
 | WF-014 | Signed-in app shell, navigation, 404/error pages | feature | web | P0 | 0 | A | done | 004 |
-| WF-015 | Consent record (versioned terms/privacy acceptance) | compliance | backend | P0 | 0 | A | in-review | 004, 010 |
+| WF-015 | Consent record (versioned terms/privacy acceptance) | compliance | backend | P0 | 0 | A | done | 004, 010 |
 | WF-020 | Collect 20+ real schedule samples (eval set) | test | parser | P0 | 1 | A | todo | — |
 | WF-021 | Shared schemas package (event draft, statuses, tiers) | feature | repo | P0 | 1 | A | done | 001 |
 | WF-022 | Parser eval harness | test | parser | P0 | 1 | A | done | 013, 020, 021 |
 | WF-023 | Spike: compare vision models via OpenRouter | spike | parser | P0 | 1 | A | todo | 022 |
 | WF-024 | Spike: Vercel functions vs Railway worker | spike | worker | P0 | 1 | A | done | 002 |
 | WF-025 | Scaffold worker service (Hono, Railway, HMAC) | infra | worker | P0 | 1 | A | wontfix | 001, 024 |
-| WF-026 | File upload, validation and `scheduleFiles` | feature | web, backend | P0 | 1 | A | in-review | 003, 014 |
-| WF-027 | Parse job pipeline (queue, worker call, callback, retries) | feature | backend, worker | P0 | 1 | A | in-review | 023, 025, 026 |
-| WF-028 | Recurring schedule extraction | feature | parser | P0 | 1 | A | in-review | 027 |
-| WF-029 | Review screen (grid, confidence, side-by-side, editing) | feature | web | P0 | 1 | A | in-review | 021, 027 |
-| WF-030 | Commit schedule to events (RRULE, date range, exceptions) | feature | backend | P0 | 1 | A | in-review | 029 |
-| WF-031 | Manual schedule entry | feature | web | P0 | 1 | A | in-review | 029 |
-| WF-032 | Pending uploads list (view, delete) | feature | web | P0 | 1 | B | in-review | 026 |
+| WF-026 | File upload, validation and `scheduleFiles` | feature | web, backend | P0 | 1 | A | done | 003, 014 |
+| WF-027 | Parse job pipeline (queue, worker call, callback, retries) | feature | backend, worker | P0 | 1 | A | done | 023, 025, 026 |
+| WF-028 | Recurring schedule extraction | feature | parser | P0 | 1 | A | done | 027 |
+| WF-029 | Review screen (grid, confidence, side-by-side, editing) | feature | web | P0 | 1 | A | done | 021, 027 |
+| WF-030 | Commit schedule to events (RRULE, date range, exceptions) | feature | backend | P0 | 1 | A | done | 029 |
+| WF-031 | Manual schedule entry | feature | web | P0 | 1 | A | done | 029 |
+| WF-032 | Pending uploads list (view, delete) | feature | web | P0 | 1 | B | done | 026 |
 | WF-033 | Re-upload and schedule replacement | feature | backend, web | P0 | 1 | B | todo | 030 |
 | WF-034 | Re-parse a stored file | feature | backend | P1 | 1 | stretch | wontfix | 027 |
-| WF-035 | Parse rate limiting | security | backend | P0 | 1 | Gate | in-review | 027 |
+| WF-035 | Parse rate limiting | security | backend | P0 | 1 | Gate | done | 027 |
 | WF-036 | Dated schedules (rosters) | feature | parser | P1 | 1 | stretch | todo | 023, 028 |
 | WF-037 | Retention jobs (files, events, pings) | compliance | backend | P0 | 1 | B | in-progress | 026, 030 |
 | WF-038 | Camera capture on upload | feature | web | P1 | 1 | stretch | todo | 026 |
 | WF-039 | Run parser evals in CI | test | parser | P0 | 1 | B | todo | 006, 022 |
-| WF-040 | Profiles and handles | feature | social | P0 | 2 | A | in-review | 004 |
+| WF-040 | Profiles and handles | feature | social | P0 | 2 | A | done | 004 |
 | WF-041 | Visibility tiers and server-side redaction | security | backend | P0 | 2 | A | done | 003, 021 |
-| WF-042 | Friend requests with tier choice | feature | social | P0 | 2 | A | in-review | 040, 041 |
-| WF-043 | Groups: create, edit, admin role, 20-member cap | feature | social | P0 | 2 | A | in-review | 040 |
-| WF-044 | Group member permissions | feature | social | P0 | 2 | Gate | in-review | 043 |
-| WF-045 | Invite links, invite page and join flow | feature | social, web | P0 | 2 | A | in-review | 041, 043 |
+| WF-042 | Friend requests with tier choice | feature | social | P0 | 2 | A | done | 040, 041 |
+| WF-043 | Groups: create, edit, admin role, 20-member cap | feature | social | P0 | 2 | A | done | 040 |
+| WF-044 | Group member permissions | feature | social | P0 | 2 | Gate | done | 043 |
+| WF-045 | Invite links, invite page and join flow | feature | social, web | P0 | 2 | A | done | 041, 043 |
 | WF-046 | WhatsApp share and link previews | feature | web | P1 | 2 | stretch | todo | 045 |
-| WF-047 | Block, remove friend, leave group | feature | social | P0 | 2 | A | in-review | 042, 043 |
+| WF-047 | Block, remove friend, leave group | feature | social | P0 | 2 | A | done | 042, 043 |
 | WF-048 | "Who can see me" page and overlap hint | feature | web | P0 | 2 | B | todo | 041, 042, 043 |
 | WF-049 | "How others see me" preview | feature | web | P1 | 2 | stretch | todo | 048, 061 |
 | WF-050 | Pause sharing | feature | backend, web | P1 | 2 | stretch | todo | 041 |
 | WF-060 | Availability engine core | feature | availability | P0 | 3 | A | done | 021 |
 | WF-061 | Recurrence expansion and multi-user free intervals | feature | availability | P0 | 3 | A | done | 060 |
-| WF-062 | Available hours (onboarding slider and settings) | feature | web, backend | P0 | 3 | A | in-review | 014, 060 |
-| WF-063 | Manual status override | feature | web, backend | P0 | 3 | A | in-review | 060 |
-| WF-064 | Now screen (real-time, redacted) | feature | web, backend | P0 | 3 | A | in-review | 041, 042, 043, 061 |
-| WF-065 | Friend detail and My schedule views | feature | web | P0 | 3 | B | in-review | 064 |
+| WF-062 | Available hours (onboarding slider and settings) | feature | web, backend | P0 | 3 | A | done | 014, 060 |
+| WF-063 | Manual status override | feature | web, backend | P0 | 3 | A | done | 060 |
+| WF-064 | Now screen (real-time, redacted) | feature | web, backend | P0 | 3 | A | done | 041, 042, 043, 061 |
+| WF-065 | Friend detail and My schedule views | feature | web | P0 | 3 | B | done | 064 |
 | WF-066 | Group timeline view | feature | web | P1 | 3 | stretch | todo | 064 |
 | WF-067 | Stale-data warning | feature | web, backend | P1 | 3 | stretch | todo | 064 |
-| WF-068 | End-to-end onboarding flow | feature | web | P0 | 3 | A | in-review | 005, 030, 045, 062 |
+| WF-068 | End-to-end onboarding flow | feature | web | P0 | 3 | A | done | 005, 030, 045, 062 |
 | WF-069 | Empty states and "nudge to add schedule" | feature | web | P0 | 3 | B | todo | 064 |
 | WF-070 | Short-gap rule | feature | availability | P1 | 3 | stretch | todo | 060 |
 | WF-080 | Google Calendar OAuth (own flow, encrypted tokens) | feature | gcal | P0 | 4 | B | todo | 003, 004, 012 |
@@ -251,10 +273,10 @@ Everything else at P0, which adds:
 | WF-085 | Sync health UI | feature | web | P1 | 4 | stretch | todo | 082 |
 | WF-086 | Submit Google OAuth verification | compliance | gcal | P0 | 4 | B | todo | 010, 012, 080 |
 | WF-087 | Handle Google accounts managed by an organisation | feature | gcal | P1 | 4 | stretch | todo | 080 |
-| WF-090 | PWA manifest and service worker (Serwist) | infra | pwa | P0 | 5 | A | in-review | 002 |
-| WF-091 | Web Push infrastructure | infra | pwa, backend | P0 | 5 | A | in-review | 004, 090 |
-| WF-092 | Send pings and inbox | feature | ping | P0 | 5 | A | in-review | 064, 091 |
-| WF-093 | Ping replies | feature | ping | P0 | 5 | A | in-review | 092 |
+| WF-090 | PWA manifest and service worker (Serwist) | infra | pwa | P0 | 5 | A | done | 002 |
+| WF-091 | Web Push infrastructure | infra | pwa, backend | P0 | 5 | A | done | 004, 090 |
+| WF-092 | Send pings and inbox | feature | ping | P0 | 5 | A | done | 064, 091 |
+| WF-093 | Ping replies | feature | ping | P0 | 5 | A | done | 092 |
 | WF-094 | Ping rate limits, mute, quiet hours | security | ping | P0 | 5 | Gate | todo | 092 |
 | WF-095 | Report and block, plus moderation queue | security | ping, backend | P0 | 5 | Gate | todo | 047, 092 |
 | WF-096 | Group ping | feature | ping | P1 | 5 | stretch | todo | 044, 092 |
@@ -262,7 +284,7 @@ Everything else at P0, which adds:
 | WF-098 | Group slot finder | feature | availability, web | P0 | 5 | B | todo | 043, 061 |
 | WF-099 | Share a slot | feature | web | P1 | 5 | stretch | todo | 096, 098 |
 | WF-110 | Offline cache of last-known Now | feature | pwa | P0 | 6 | B | todo | 064, 090 |
-| WF-111 | Install prompt and iOS guide | feature | pwa | P0 | 6 | A | in-review | 090 |
+| WF-111 | Install prompt and iOS guide | feature | pwa | P0 | 6 | A | done | 090 |
 | WF-112 | App update flow | feature | pwa | P1 | 6 | stretch | todo | 090 |
 | WF-113 | Export my data | compliance | backend | P0 | 6 | B | todo | 030, 042, 092 |
 | WF-114 | Delete my account | compliance | backend | P0 | 6 | B | todo | 030, 043, 080 |
@@ -278,17 +300,17 @@ Everything else at P0, which adds:
 | WF-124 | Schedule-expiry reminder | feature | backend | P1 | 6 | stretch | todo | 030, 091 |
 | WF-125 | Google event titles only while a T3 grant exists | security | gcal | P0 | 4 | B | todo | 041, 081 |
 | WF-126 | Manual export/deletion request process | compliance | legal | P0 | 6 | Gate | todo | 010 |
-| WF-127 | Offline friends: add someone not on synkd and import their timetable | feature | social, backend, web | P0 | 2 | A | in-review | 030, 031 |
+| WF-127 | Offline friends: add someone not on synkd and import their timetable | feature | social, backend, web | P0 | 2 | A | done | 030, 031 |
 | WF-128 | Show offline friends on Now, detail page and Find a time | feature | web, availability | P0 | 3 | A | in-progress | 064, 127 |
 | WF-129 | Creating a group fails with "You don't have permission" (42501) | bug | backend | P0 | 2 | A | done | — |
-| WF-130 | Generated handle for every new user | feature | backend, web | P0 | 2 | A | in-review | 040 |
-| WF-131 | Offline friend's upload stays on "Waiting in line" (parse job never dispatched) | bug | web | P0 | 2 | A | in-review | — |
-| WF-132 | Status chip shows the previous status "until now" right after a status change | bug | web | P1 | 3 | A | in-review | — |
-| WF-133 | Realtime join is sent without the token, so changes in the first ~7 s after a page load are lost | bug | web | P0 | 3 | A | in-review | — |
-| WF-134 | Unbuilt screens show mock people and placeholder results to real users | bug | web | P0 | 3 | A | in-review | — |
-| WF-135 | Remove friend, block, leave, make admin and delete group happen on one tap with no confirmation | bug | web | P1 | 2 | A | in-review | — |
-| WF-136 | Polish from the 2026-10-03 E2E run (plurals, copy, tap targets, a11y) | bug | web | P2 | 6 | A | in-review | — |
-| WF-137 | In-app feedback and bug reports | feature | web, backend | P0 | 6 | A | in-review | 014 |
+| WF-130 | Generated handle for every new user | feature | backend, web | P0 | 2 | A | done | 040 |
+| WF-131 | Offline friend's upload stays on "Waiting in line" (parse job never dispatched) | bug | web | P0 | 2 | A | done | — |
+| WF-132 | Status chip shows the previous status "until now" right after a status change | bug | web | P1 | 3 | A | done | — |
+| WF-133 | Realtime join is sent without the token, so changes in the first ~7 s after a page load are lost | bug | web | P0 | 3 | A | done | — |
+| WF-134 | Unbuilt screens show mock people and placeholder results to real users | bug | web | P0 | 3 | A | done | — |
+| WF-135 | Remove friend, block, leave, make admin and delete group happen on one tap with no confirmation | bug | web | P1 | 2 | A | done | — |
+| WF-136 | Polish from the 2026-10-03 E2E run (plurals, copy, tap targets, a11y) | bug | web | P2 | 6 | A | done | — |
+| WF-137 | In-app feedback and bug reports | feature | web, backend | P0 | 6 | A | done | 014 |
 
 ---
 
@@ -347,7 +369,7 @@ Create `packages/backend` holding the Supabase project (`supabase/` with `config
 - [ ] A Supabase dev project is created and linked, and Clerk is added as a third-party auth provider (**blocked on the owner**: create the Supabase and Clerk projects, then enable `[auth.third_party.clerk]` in `supabase/config.toml` and in the dashboard)
 
 #### WF-004 · Clerk auth with Google + Supabase integration
-- **Category:** `feature` · **Area:** `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-002, WF-003
 - **PRD:** FR-AUTH-1, FR-AUTH-3, FR-AUTH-5, FR-WEB-2, D19, D45
 
@@ -363,10 +385,10 @@ Google or email-and-password sign-in (D45) through Clerk, connected to Supabase 
 - [x] `/sign-in` and `/sign-up` use Clerk components
 - [x] The first sign-in creates a `users` row (`clerkId`, name, avatar, timezone defaulting to `America/Jamaica`)
 - [x] RLS policies and database functions identify the user from the Clerk token (`auth.jwt()->>'sub'`), and requests without a valid token can't read or write anything
-- [ ] The session survives closing and reopening the app
+- [ ] The session survives closing and reopening the app *(not verified when closed on 2026-10-05)*
 
 #### WF-005 · Age gate (date of birth at sign-up)
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-004
 - **PRD:** FR-AUTH-6, NFR-COMP-7, D13, D29
 
@@ -381,7 +403,7 @@ Google or email-and-password sign-in (D45) through Clerk, connected to Supabase 
 - [x] Unit tests cover the boundaries (someone turning 18 today, and someone turning 18 tomorrow)
 
 #### WF-006 · CI pipeline (lint, typecheck, test)
-- **Category:** `infra` · **Area:** `repo` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `infra` · **Area:** `repo` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-001
 - **PRD:** §8.4, NFR-SEC-10
 
@@ -390,7 +412,7 @@ Google or email-and-password sign-in (D45) through Clerk, connected to Supabase 
 **Acceptance criteria**
 - [x] GitHub Actions runs lint, typecheck and test on every PR, using the Turborepo cache
 - [x] Dependabot or Renovate is enabled, and secret scanning is on
-- [ ] Branch protection on `main` requires CI to pass (**owner decision**: it will stop direct pushes to `main`)
+- [ ] Branch protection on `main` requires CI to pass (**owner decision**: it will stop direct pushes to `main`) *(not done when closed on 2026-10-05; still the owner's decision)*
 
 #### WF-007 · Environments and preview deploys
 - **Category:** `infra` · **Area:** `ops` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
@@ -489,7 +511,7 @@ The drafts are written: [docs/legal/privacy-policy.md](docs/legal/privacy-policy
 - [x] Tap targets are at least 44×44 px
 
 #### WF-015 · Consent record (versioned terms/privacy acceptance)
-- **Category:** `compliance` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `compliance` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-004, WF-010
 - **PRD:** FR-SET-5
 
@@ -586,7 +608,7 @@ Can Vercel (Node) functions on the Next.js server handle PDF rasterisation and H
 - [ ] `/health` endpoint, Sentry wired in, and no state kept between requests
 
 #### WF-026 · File upload, validation and `scheduleFiles`
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-003, WF-014
 - **PRD:** FR-IMP-1, FR-IMP-15, NFR-SEC-6, NFR-PERF-6, D38
 
@@ -600,7 +622,7 @@ Can Vercel (Node) functions on the Next.js server handle PDF rasterisation and H
 - [x] Storage is private and files are only reachable through short-lived URLs
 
 #### WF-027 · Parse job pipeline (queue, worker call, callback, retries)
-- **Category:** `feature` · **Area:** `backend`, `worker` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `backend`, `worker` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-023, WF-025, WF-026
 - **PRD:** §8.5, FR-IMP-13, FR-IMP-14, NFR-REL-2, NFR-REL-4, NFR-SEC-7
 
@@ -615,7 +637,7 @@ Can Vercel (Node) functions on the Next.js server handle PDF rasterisation and H
 - [x] The UI shows live progress, and failures show retry, try another file, or enter manually
 
 #### WF-028 · Recurring schedule extraction
-- **Category:** `feature` · **Area:** `parser` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `parser` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-027
 - **PRD:** FR-IMP-3, FR-IMP-4, FR-IMP-5, D7
 
@@ -626,11 +648,11 @@ Can Vercel (Node) functions on the Next.js server handle PDF rasterisation and H
 - [x] Detects weekly, alternating-week (A/B or odd/even) and specific-week-number patterns
 - [x] Suggests the schedule's date range when the file contains dates
 - [x] Confidence is scored for each event
-- [ ] Rooms, addresses, ID numbers, names and photos in the file are **ignored and never output** (D35)
-- [ ] ≥ 70% acceptance on the recurring part of the eval set
+- [ ] Rooms, addresses, ID numbers, names and photos in the file are **ignored and never output** (D35) *(partly met when closed on 2026-10-05: the scrubber can't catch a bare room like "SLT 2" or a bare name)*
+- [ ] ≥ 70% acceptance on the recurring part of the eval set *(not met when closed on 2026-10-05; the target is carried by WF-023)*
 
 #### WF-029 · Review screen (grid, confidence, side-by-side, editing)
-- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-021, WF-027
 - **PRD:** FR-IMP-9, FR-IMP-10, FR-IMP-11, G1
 
@@ -641,10 +663,10 @@ Can Vercel (Node) functions on the Next.js server handle PDF rasterisation and H
 - [x] The original file is shown next to the grid (stacked on mobile, with a toggle)
 - [x] Events can be edited, deleted, added, split and merged, using an **event editor component that can be reused** (WF-031 needs it)
 - [x] Nothing is saved to the schedule until the user taps Confirm
-- [ ] Median time from upload to confirm is ≤ 3 minutes in testing
+- [ ] Median time from upload to confirm is ≤ 3 minutes in testing *(not verified when closed on 2026-10-05)*
 
 #### WF-030 · Commit schedule to events (RRULE, date range, exceptions)
-- **Category:** `feature` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-029
 - **PRD:** FR-IMP-7, FR-IMP-8, §9 modelling decision
 
@@ -660,7 +682,7 @@ Can Vercel (Node) functions on the Next.js server handle PDF rasterisation and H
 - [x] The **draft and the file's row are deleted in the same transaction** as the commit, and the Storage object is removed straight after. The expiry cron retries any removal that fails (D38).
 
 #### WF-031 · Manual schedule entry
-- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-029
 - **PRD:** FR-IMP-12
 
@@ -671,7 +693,7 @@ Can Vercel (Node) functions on the Next.js server handle PDF rasterisation and H
 - [x] Available from onboarding, from a failed parse, and from My schedule
 
 #### WF-032 · Pending uploads list (view, delete)
-- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** B · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** B · **Status:** `done`
 - **Depends on:** WF-026
 - **PRD:** FR-IMP-16, NFR-COMP-2, D38
 
@@ -680,9 +702,9 @@ Confirmed files are deleted straight away, so this list only shows uploads that 
 > Merged with WF-026/027: Pending uploads lists real files with their deletion date, live status, view, retry and delete (`delete_schedule_upload`).
 
 **Acceptance criteria**
-- [ ] `/uploads` lists unconfirmed files with the upload date and the date each will be deleted (7 days after upload)
-- [ ] Users can view or delete any pending file, and deleting one also deletes its draft
-- [ ] Tapping a pending file resumes its review
+- [x] `/uploads` lists unconfirmed files with the upload date and the date each will be deleted (7 days after upload)
+- [x] Users can view or delete any pending file, and deleting one also deletes its draft
+- [x] Tapping a pending file resumes its review
 
 #### WF-033 · Re-upload and schedule replacement
 - **Category:** `feature` · **Area:** `backend`, `web` · **Priority:** P0 · **Milestone:** B · **Status:** `todo`
@@ -706,7 +728,7 @@ Confirmed files are deleted straight away, so this list only shows uploads that 
 - [ ] The file's `deleteAt` does **not** change
 
 #### WF-035 · Parse rate limiting
-- **Category:** `security` · **Area:** `backend` · **Priority:** P0 · **Milestone:** Gate · **Status:** `in-review`
+- **Category:** `security` · **Area:** `backend` · **Priority:** P0 · **Milestone:** Gate · **Status:** `done`
 - **Depends on:** WF-027
 - **PRD:** FR-IMP-19, NFR-SEC-9, NFR-COST-1
 
@@ -773,7 +795,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 ### Phase 2: Social & visibility
 
 #### WF-040 · Profiles and handles
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-004
 - **PRD:** FR-AUTH-2
 
@@ -808,7 +830,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [x] Tests prove a viewer never receives fields above their tier
 
 #### WF-042 · Friend requests with tier choice
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-040, WF-041
 - **PRD:** FR-SOC-1, FR-VIS-1
 
@@ -824,7 +846,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [x] Friend requests are rate-limited (NFR-SEC-9)
 
 #### WF-043 · Groups: create, edit, admin role, 20-member cap
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-040
 - **PRD:** FR-SOC-2, FR-SOC-5, FR-SOC-7, FR-SOC-9, FR-SOC-10, FR-SOC-11, D17
 
@@ -842,7 +864,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [x] Joining a group doesn't create a friendship
 
 #### WF-044 · Group member permissions
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** Gate · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** Gate · **Status:** `done`
 - **Depends on:** WF-043
 - **PRD:** FR-SOC-8, D26
 
@@ -857,7 +879,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [x] Every related mutation checks permissions on the server
 
 #### WF-045 · Invite links, invite page and join flow
-- **Category:** `feature` · **Area:** `social`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `social`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-041, WF-043
 - **PRD:** FR-SOC-3, FR-WEB-3, FR-VIS-1, §8.5 (joining a group)
 
@@ -883,7 +905,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [ ] Open Graph tags make WhatsApp preview the link as "Join *{group}* on synkd"
 
 #### WF-047 · Block, remove friend, leave group
-- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `social` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-042, WF-043
 - **PRD:** FR-SOC-6
 
@@ -928,7 +950,7 @@ The ping part waits for WF-092 (it can ship without it and be extended later).
 - [ ] Resuming restores the previous tiers
 
 #### WF-127 · Offline friends: add someone not on synkd and import their timetable
-- **Category:** `feature` · **Area:** `social`, `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `social`, `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-030, WF-031
 - **PRD:** FR-SOC-14, FR-SOC-15, FR-SOC-16, FR-SOC-18, FR-SOC-19, NFR-COMP-9, R14, D44, J8
 
@@ -964,7 +986,7 @@ The Find a time part waits for WF-098. The invite action uses friend invite link
 - [x] Status is never shown by colour alone (NFR-UX-1)
 
 #### WF-130 · Generated handle for every new user
-- **Category:** `feature` · **Area:** `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `backend`, `web` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-040
 - **PRD:** FR-AUTH-2, FR-SOC-1, D45, D47
 
@@ -976,7 +998,7 @@ Every account gets a unique handle made from its name when it's created, so frie
 - [x] A new user gets a unique handle based on their name, without a step of their own
 - [x] The handle can be changed to any valid handle nobody else has (ignoring case), and can't be cleared
 - [x] Existing users without a handle are given one
-- [ ] Email and password sign-up asks for the person's first and last name (Clerk dashboard setting, owner)
+- [ ] Email and password sign-up asks for the person's first and last name (Clerk dashboard setting, owner) *(not verified when closed on 2026-10-05)*
 
 ---
 
@@ -1008,7 +1030,7 @@ Every account gets a unique handle made from its name when it's created, so frie
 - [x] `freeIntervals(users[], range)` for up to 20 users over 14 days runs in ≤ 1 s (NFR-PERF-5). Measured at about 25–40 ms.
 
 #### WF-062 · Available hours (onboarding slider and settings)
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-014, WF-060
 - **PRD:** FR-AVL-2, D24
 
@@ -1024,7 +1046,7 @@ Every account gets a unique handle made from its name when it's created, so frie
 - [x] Times outside these hours show as `away`
 
 #### WF-063 · Manual status override
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-060
 - **PRD:** FR-AVL-3, J5
 
@@ -1040,7 +1062,7 @@ Every account gets a unique handle made from its name when it's created, so frie
 - [x] It overrides calendar-based status everywhere
 
 #### WF-064 · Now screen (real-time, redacted)
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-041, WF-042, WF-043, WF-061
 - **PRD:** FR-VIEW-1, FR-VIEW-2, FR-VIEW-3, §8.5 (Now screen), NFR-PERF-1, NFR-PERF-3
 
@@ -1055,12 +1077,12 @@ Every account gets a unique handle made from its name when it's created, so frie
 - [x] The `now_for_viewer` database function returns connections already redacted by `resolve_tier` and the redaction path (WF-041)
 - [x] Sections: Free now, Free soon (within 60 minutes), Busy/Away, Not sharing yet. Each status shows "until X".
 - [x] A group filter
-- [ ] Status changes reach viewers in ≤ 5 s (Realtime Broadcast signal from a database trigger, then a re-fetch)
+- [ ] Status changes reach viewers in ≤ 5 s (Realtime Broadcast signal from a database trigger, then a re-fetch) *(not verified when closed on 2026-10-05)*
 - [x] A timer on the client re-evaluates "until X" boundaries without polling the server
 - [x] Status is never shown by colour alone (NFR-UX-1)
 
 #### WF-065 · Friend detail and My schedule views
-- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** B · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** B · **Status:** `done`
 - **Depends on:** WF-064
 - **PRD:** FR-VIEW-4, FR-VIEW-5
 
@@ -1092,7 +1114,7 @@ The Google sync-failure trigger only starts working once WF-082 exists. The end-
 - [ ] The same flag appears in the slot finder (WF-098)
 
 #### WF-068 · End-to-end onboarding flow
-- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `web` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-005, WF-030, WF-045, WF-062
 - **PRD:** J1, FR-WEB-5
 
@@ -1233,7 +1255,7 @@ Google event titles often contain sensitive details ("Therapy", "Clinic", "Court
 ### Phase 5: Pings & slot finder
 
 #### WF-090 · PWA manifest and service worker (Serwist)
-- **Category:** `infra` · **Area:** `pwa` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `infra` · **Area:** `pwa` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-002
 - **PRD:** FR-PWA-1
 
@@ -1244,10 +1266,10 @@ Could start at any point after WF-002. It's placed here because push notificatio
 **Acceptance criteria**
 - [x] A manifest with icons, a splash screen and `display: standalone`
 - [x] A Serwist service worker precaches the app shell
-- [ ] The app can be installed on Android Chrome and iOS Safari (verified in headless Chrome only; needs a device test on a deploy)
+- [ ] The app can be installed on Android Chrome and iOS Safari (verified in headless Chrome only; needs a device test on a deploy) *(not verified when closed on 2026-10-05)*
 
 #### WF-091 · Web Push infrastructure
-- **Category:** `infra` · **Area:** `pwa`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `infra` · **Area:** `pwa`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-004, WF-090
 - **PRD:** FR-PWA-4, FR-PING-3, NFR-COMPAT-2
 
@@ -1259,7 +1281,7 @@ Could start at any point after WF-002. It's placed here because push notificatio
 - [x] An in-app inbox as a fallback for anyone without push
 
 #### WF-092 · Send pings and inbox
-- **Category:** `feature` · **Area:** `ping` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `ping` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-064, WF-091
 - **PRD:** FR-PING-1, FR-PING-2, FR-PING-3, J3, D14, D31
 
@@ -1273,7 +1295,7 @@ Could start at any point after WF-002. It's placed here because push notificatio
 - [x] Ping text never appears in logs or analytics
 
 #### WF-093 · Ping replies
-- **Category:** `feature` · **Area:** `ping` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `ping` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-092
 - **PRD:** FR-PING-4
 
@@ -1283,7 +1305,7 @@ Could start at any point after WF-002. It's placed here because push notificatio
 - [x] One-tap replies ("I'm down", "In 10", "Can't right now") from notification buttons where the platform supports them, and from the app otherwise
 - [x] A short free-text reply is possible
 - [x] The sender is notified of the reply
-- [ ] A ping and its reply take under 10 s end to end on Android (needs a device test)
+- [ ] A ping and its reply take under 10 s end to end on Android (needs a device test) *(not verified when closed on 2026-10-05)*
 
 #### WF-094 · Ping rate limits, mute, quiet hours
 - **Category:** `security` · **Area:** `ping` · **Priority:** P0 · **Milestone:** Gate · **Status:** `todo`
@@ -1359,7 +1381,7 @@ Could start at any point after WF-002. It's placed here because push notificatio
 - [ ] Cached data only ever contains what was already redacted for this viewer
 
 #### WF-111 · Install prompt and iOS guide
-- **Category:** `feature` · **Area:** `pwa` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `pwa` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-090
 - **PRD:** FR-PWA-3, R5
 
@@ -1529,7 +1551,7 @@ A temporary way to meet data-subject rights at public launch, before the self-se
 ---
 
 #### WF-137 · In-app feedback and bug reports
-- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `in-review`
+- **Category:** `feature` · **Area:** `web`, `backend` · **Priority:** P0 · **Milestone:** A · **Status:** `done`
 - **Depends on:** WF-014
 - **PRD:** FR-WEB-10, NFR-SEC-1, NFR-SEC-9, NFR-SEC-11, D41
 
@@ -1544,7 +1566,7 @@ A way for testers and beta users to report bugs and send ideas from inside the a
 - [x] Only the team can read feedback: no client can select it, its author included (tests)
 - [x] Rate limited to 10 a day; the message is never logged
 - [x] Deleting the account deletes its feedback
-- [ ] Owner applies the migration and sends a test message from a phone
+- [ ] Owner applies the migration and sends a test message from a phone *(not verified when closed on 2026-10-05)*
 
 ---
 
@@ -1583,7 +1605,7 @@ Log bugs here using the [bug template](#bug-template). Each bug takes the next f
 
 
 #### WF-131 · Offline friend's upload stays on "Waiting in line" (parse job never dispatched)
-- **Category:** `bug` · **Area:** `web` · **Severity:** S2 · **Status:** `in-review`
+- **Category:** `bug` · **Area:** `web` · **Severity:** S2 · **Status:** `done`
 - **Found in:** dev + hosted Supabase · 2026-10-01
 - **Related to:** WF-027 (dispatch, NFR-REL-4), WF-127, PRD D46
 - **Depends on:** —
@@ -1602,7 +1624,7 @@ Log bugs here using the [bug template](#bug-template). Each bug takes the next f
 - [x] Fix merged with a test that fails without it (`lib/parse/dispatch.test.ts`: falls back to running the job here; stalled jobs are nudged)
 
 #### WF-132 · Status chip shows the previous status "until now" right after a status change
-- **Category:** `bug` · **Area:** `web` · **Severity:** S3 · **Status:** `in-review`
+- **Category:** `bug` · **Area:** `web` · **Severity:** S3 · **Status:** `done`
 - **Found in:** dev (localhost) + hosted Supabase · headless Chromium 1440×900 · 2026-10-03 (E2E run, `docs/e2e-test-report-2026-10-03.md`, E2E-23/24)
 - **Related to:** WF-063, WF-064, PRD FR-AVL-3
 - **Depends on:** —
@@ -1624,7 +1646,7 @@ Log bugs here using the [bug template](#bug-template). Each bug takes the next f
 - [x] Fix merged with a test that fails without it (`lib/presence/compute.test.ts`: "settleOwnNow")
 
 #### WF-133 · Realtime join is sent without the token, so changes in the first ~7 s after a page load are lost
-- **Category:** `bug` · **Area:** `web` · **Severity:** S2 · **Status:** `in-review`
+- **Category:** `bug` · **Area:** `web` · **Severity:** S2 · **Status:** `done`
 - **Found in:** dev (localhost) + hosted Supabase · headless Chromium · 2026-10-03 (E2E-12/13/19/30)
 - **Related to:** WF-064 (status changes reach viewers in ≤ 5 s), WF-092, WF-027 (upload card), PRD FR-VIEW-3, D41
 - **Depends on:** —
@@ -1646,7 +1668,7 @@ Log bugs here using the [bug template](#bug-template). Each bug takes the next f
 - [x] Fix merged with a test that fails without it (`lib/realtime/subscribe.test.ts`)
 
 #### WF-134 · Unbuilt screens show mock people and placeholder results to real users
-- **Category:** `bug` · **Area:** `web` · **Severity:** S2 · **Status:** `in-review`
+- **Category:** `bug` · **Area:** `web` · **Severity:** S2 · **Status:** `done`
 - **Found in:** dev (localhost) + hosted Supabase · 2026-10-03 (E2E run)
 - **Related to:** WF-048, WF-065, WF-066, WF-069, WF-098, PRD FR-VIEW-4, FR-VIEW-7
 - **Depends on:** —
@@ -1680,7 +1702,7 @@ Log bugs here using the [bug template](#bug-template). Each bug takes the next f
 - [x] No route or action reachable from the app reads `lib/mock` or reports a success it didn't do (`src/no-placeholders.test.ts`: no mock imports, no `mockDelay`, no TODO-marked action returning `ok`; fails on the old code)
 
 #### WF-135 · Remove friend, block, leave, make admin and delete group happen on one tap with no confirmation
-- **Category:** `bug` · **Area:** `web` · **Severity:** S3 · **Status:** `in-review`
+- **Category:** `bug` · **Area:** `web` · **Severity:** S3 · **Status:** `done`
 - **Found in:** dev (localhost) · 2026-10-03 (E2E-33, 34, 44, 45)
 - **Related to:** WF-043, WF-047, PRD FR-SOC-6
 - **Depends on:** —
@@ -1699,7 +1721,7 @@ Log bugs here using the [bug template](#bug-template). Each bug takes the next f
 - [x] Each of the five actions asks first, with a test that fails without it (`lib/confirmations.test.ts`)
 
 #### WF-136 · Polish from the 2026-10-03 E2E run (plurals, copy, tap targets, a11y)
-- **Category:** `bug` · **Area:** `web` · **Severity:** S4 · **Status:** `in-review`
+- **Category:** `bug` · **Area:** `web` · **Severity:** S4 · **Status:** `done`
 - **Found in:** dev (localhost) · 2026-10-03 (E2E run)
 - **Related to:** WF-014, WF-029, WF-040, WF-042, WF-043, WF-127
 - **Depends on:** —
