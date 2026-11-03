@@ -21,7 +21,7 @@
     "@synkd/shared": "workspace:*",
     "heic-decode": "2.1.0",
     "sharp": "0.35.5",
-    "zod": "^4.6.5"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/node": "^22.20.4",
