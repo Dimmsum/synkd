@@ -15,18 +15,18 @@
     "db:generate": "pnpm db:types && pnpm db:init"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.8",
-    "@electric-sql/pglite-socket": "^0.2.11",
+    "@electric-sql/pglite": "^0.5.17",
+    "@electric-sql/pglite-socket": "^0.2.20",
     "@types/node": "^20.19.43",
     "@synkd/availability": "workspace:*",
     "@synkd/config": "workspace:*",
     "@synkd/shared": "workspace:*",
-    "eslint": "^10.11.0",
-    "fast-check": "^4.10.2",
-    "prettier": "^3.9.9",
+    "eslint": "^10.15.0",
+    "fast-check": "^4.11.0",
+    "prettier": "^3.10.1",
     "supabase": "^2.118.0",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.12"
   }
 }
